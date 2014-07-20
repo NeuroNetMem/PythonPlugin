@@ -12,8 +12,11 @@
   #endif
 #endif
 
+__PYX_EXTERN_C DL_IMPORT(void) pluginStartup(void);
+__PYX_EXTERN_C DL_IMPORT(int) getParamNum(void);
 __PYX_EXTERN_C DL_IMPORT(void) pluginFunction(float *, int, int);
 __PYX_EXTERN_C DL_IMPORT(int) pluginisready(void);
+__PYX_EXTERN_C DL_IMPORT(void) getParamConfig(struct ParamConfig *);
 
 #endif /* !__PYX_HAVE_API__negate4__plugin */
 
