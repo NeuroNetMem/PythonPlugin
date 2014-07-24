@@ -13,10 +13,10 @@ class Negate(object):
     def plugin_name(self):
         return "Negate"
 
-    def isReady(self):
+    def is_ready(self):
         return 1
 
-    def paramConfig(self):
+    def param_config(self):
         return (("toggle", "enabled" , True),)
 
     def bufferfunction(self, n_arr):
@@ -53,10 +53,10 @@ cdef public void pluginStartup():
     pluginOp.startup()
 
 cdef public int getParamNum():
-    return len(pluginOp.paramConfig())
+    return len(pluginOp.param_config())
 
 cdef public void getParamConfig(ParamConfig *params):
-    ppc = pluginOp.paramConfig()
+    ppc = pluginOp.param_config()
     for i in range(len(ppc)):
         par = ppc[i]
         if par[0] == "toggle":
@@ -70,7 +70,7 @@ cdef public void pluginFunction(float *buffer, int nChans, int nSamples):
     pluginOp.bufferfunction(n_arr)
 
 cdef public int pluginisready():
-    return pluginOp.isReady()
+    return pluginOp.is_ready()
 
 cdef public void setIntParam(char *name, int value):
     print "In Python: ", name, ": ", value
