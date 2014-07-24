@@ -96,7 +96,7 @@ cdef public void getParamConfig(ParamConfig *params):
             params[i].rangeMax = par[3]
             params[i].startValue = par[4]
 
-        #TODO other types of commands
+
 
 cdef public void pluginFunction(float *buffer, int nChans, int nSamples):
     n_arr = np.asarray(<np.float32_t[:nChans, :nSamples]> buffer)
@@ -110,5 +110,5 @@ cdef public void setIntParam(char *name, int value):
     setattr(pluginOp, name, value)
 
 cdef public void setFloatParam(char *name, float value):
-    print "In Python: ", name, ": ", value
+    # print "In Python: ", name, ": ", value
     setattr(pluginOp, name, value)
