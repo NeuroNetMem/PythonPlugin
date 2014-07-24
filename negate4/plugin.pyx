@@ -1,12 +1,14 @@
 cimport numpy as np
 import numpy as np
+from libc.stdlib cimport malloc
+
 from cython cimport view
 
 
 class Negate(object):
     def __init__(self):
         self.enabled = 1
-
+        self.channel = 1
     def startup(self):
         self.enabled = 1
 
@@ -17,13 +19,17 @@ class Negate(object):
         return 1
 
     def param_config(self):
-        return (("toggle", "enabled" , True),)
+        chan_labels = range(16);
+        return (("toggle", "enabled" , True),
+                ("int_set", "channel", chan_labels))
 
     def bufferfunction(self, n_arr):
         #print "plugin start"
         cdef float mult
+        cdef int chan
+        chan = self.channel
         mult = 1. - 2. * self.enabled
-        n_arr[4,:] = mult * n_arr[4,:]
+        n_arr[chan,:] = mult * n_arr[chan,:]
         #print "plugin end"
 
 
@@ -46,7 +52,8 @@ cdef extern from "../../Source/Processors/PythonParamConfig.h":
         paramType type
         char *name
         int isEnabled
-
+        int nEntries
+        int *entries
 
 
 cdef public void pluginStartup():
@@ -56,13 +63,23 @@ cdef public int getParamNum():
     return len(pluginOp.param_config())
 
 cdef public void getParamConfig(ParamConfig *params):
+    cdef int *ent
     ppc = pluginOp.param_config()
     for i in range(len(ppc)):
         par = ppc[i]
         if par[0] == "toggle":
-            params[0].type = TOGGLE
-            params[0].name = par[1]
-            params[0].isEnabled = par[2]
+            params[i].type = TOGGLE
+            params[i].name = par[1]
+            params[i].isEnabled = par[2]
+        elif par[0] == "int_set":
+            params[i].type = INT_SET
+            params[i].name = par[1]
+            params[i].nEntries = len(par[2])
+            ent = <int *> malloc (sizeof (int) * len(par[2]) )
+            for k in range(len(par[2])):
+                ent[k] = par[2][k]
+            params[i].entries = ent
+
         #TODO other types of commands
 
 cdef public void pluginFunction(float *buffer, int nChans, int nSamples):
