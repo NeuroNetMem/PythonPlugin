@@ -1,11 +1,9 @@
 cimport numpy as np
 import numpy as np
-from libc.stdlib cimport malloc
+from libc.stdlib cimport malloc, calloc
 
 from cython cimport view
 
-
-class Negate(object):
 
 
 cdef extern from "../../Source/Processors/PythonParamConfig.h":
@@ -52,6 +50,7 @@ cdef extern from "../../Source/Processors/PythonEvent.h":
         unsigned char *eventData
         PythonEvent *nextEvent
 
+class Negate(object):
     def __init__(self):
         self.enabled = 1
         self.channel = 1
@@ -63,6 +62,7 @@ cdef extern from "../../Source/Processors/PythonEvent.h":
 
     def startup(self):
         self.enabled = 1
+
 
     def plugin_name(self):
         return "Negate"
@@ -78,34 +78,36 @@ cdef extern from "../../Source/Processors/PythonEvent.h":
 
     def bufferfunction(self, n_arr):
         #print "plugin start"
+        events = []
         cdef float mult
         cdef int chan
         chan = self.channel
         mult = self.mult
 
         n_arr[chan,:] = mult * n_arr[chan,:]
-        print self.idx
         self.idx += 1
+        if self.idx == 50:
+            self.idx = 0
+            events.append({'type': 3, 'sampleNum': 10})
+
         #print "plugin end"
+        return events
 
 
-cdef Negate pluginOp = Negate()
+pluginOp = Negate()
 
 ############## here starts the C++ interface
 
 
 cdef public void pluginStartup():
-    cdef Negate po = pluginOp
-    po.startup()
+    pluginOp.startup()
 
 cdef public int getParamNum():
-    cdef Negate po = pluginOp
-    return len(po.param_config())
+    return len(pluginOp.param_config())
 
 cdef public void getParamConfig(ParamConfig *params):
     cdef int *ent
-    cdef Negate po = pluginOp
-    ppc = po.param_config()
+    ppc = pluginOp.param_config()
     for i in range(len(ppc)):
         par = ppc[i]
         if par[0] == "toggle":
@@ -133,20 +135,48 @@ cdef public void pluginFunction(float *buffer, int nChans, int nSamples, PythonE
     n_arr = np.asarray(<np.float32_t[:nChans, :nSamples]> buffer)
     #pluginOp.set_events(events)
     #pm2 = PluginModule(pm)
-    cdef Negate po = pluginOp
-    po.set_events(events)
-    po.bufferfunction(n_arr)
+    events_to_add = pluginOp.bufferfunction(n_arr)
+
+        # struct PythonEvent:
+        # unsigned char type
+        # int sampleNum
+        # unsigned char eventId
+        # unsigned char eventChannel
+        # unsigned char numBytes
+        # unsigned char *eventData
+        # PythonEvent *nextEvent
+    if len(events_to_add) > 0:
+        e_py = events_to_add[0]
+        e_c = events
+        add_event(e_c, e_py)
+        last_e_c = e_c
+        for i in range(1,len(events_to_add)):
+            e_py = events_to_add[i]
+            e_c = <PythonEvent *>calloc(1, sizeof(PythonEvent))
+            last_e_c.nextEvent = e_c
+            add_event(e_c, e_py)
+            last_e_c = e_c
+
+cdef void add_event(PythonEvent *e_c, object e_py):
+    e_c.type = <unsigned char>e_py['type']
+    e_c.sampleNum = <int>e_py['sampleNum']
+    if 'eventId' in e_py:
+        e_c.eventId = <unsigned char>e_py['eventId']
+    if 'eventChannel' in e_py:
+        e_c.eventChannel = <unsigned char>e_py['eventChannel']
+    if 'numBytes' in e_py:
+        e_c.numBytes = <unsigned char>e_py['numBytes']
+    if 'eventData' in e_py:
+        e_c.eventData = <unsigned char *>e_py['eventData'] #TODO this leaves the brunt of converting to a uint8 pointer to the plugin module
+        # it will be desirable to have this expressed as a numpy array so that we don't need to have C pointers in the plugin necessarily
 
 cdef public int pluginisready():
-    cdef Negate po = pluginOp
-    return po.is_ready()
+    return pluginOp.is_ready()
 
 cdef public void setIntParam(char *name, int value):
-    cdef Negate po = pluginOp
     print "In Python: ", name, ": ", value
-    setattr(po, name, value)
+    setattr(pluginOp, name, value)
 
 cdef public void setFloatParam(char *name, float value):
     # print "In Python: ", name, ": ", value
-    cdef Negate po = pluginOp
-    setattr(po, name, value)
+    setattr(pluginOp, name, value)
