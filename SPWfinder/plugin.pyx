@@ -1,8 +1,19 @@
-cimport numpy as np
+import sys
 import numpy as np
+cimport numpy as np
+from cython cimport view
+
+# try:
+#     import scipy.signal
+# except ImportError as detail:
+#     print "couldn't import scipy ", detail
+
+print "ciao"
+import scipy.signal
+print "sono io"
 from libc.stdlib cimport malloc, calloc
 
-from cython cimport view
+
 
 
 
@@ -53,19 +64,31 @@ cdef extern from "../../Source/Processors/PythonEvent.h":
 class SPWFinder(object):
     def __init__(self):
         self.enabled = 1
-        self.channel = 1
-        self.mult = 1.
-        self.range_min = 0.2
-        self.range_max = 5
-        self.start_value = 1
-        self.idx = 1
+        self.chan_in = 0
+        self.chan_ripples = 1
+        self.band_lo_min = 50
+        self.band_lo_max = 200
+        self.band_lo_start = 100
+        self.band_lo = self.band_lo_start
+
+        self.band_hi_min = 100
+        self.band_hi_max = 500
+        self.band_hi_start = 300
+        self.band_hi = self.band_hi_start
+
         self.samplingRate = 0.
         self.polarity = 0
 
+        self.filter_a = []
+        self.filter_b = []
+
     def startup(self, sr):
-        self.enabled = 1
         self.samplingRate = sr
         print self.samplingRate
+        # self.filter_b, self_filter_a = signal.butter(3,
+        #                      (self.band_lo/(self.samplingRate/2), self.band_hi/(self.samplingRate/2)),
+        #                      'pass')
+        self.enabled = 1
 
     def plugin_name(self):
         return "SPWFinder"
@@ -75,25 +98,24 @@ class SPWFinder(object):
 
     def param_config(self):
         chan_labels = range(16)
-        return (("toggle", "enabled" , True),
-                ("int_set", "channel", chan_labels),
-                ("float_range", "mult", self.range_min, self.range_max, self.start_value))
+        return (("toggle", "Enabled", True),
+                ("int_set", "chan_in", chan_labels),
+                ("int_set", "chan_ripples", chan_labels),
+                ("float_range", "band_lo", self.band_lo_min, self.band_lo_max, self.band_lo_start),
+                ("float_range", "band_hi", self.band_hi_min, self.band_hi_max, self.band_hi_start))
+        # return (("toggle", "enabled" , True),
+        #         ("int_set", "channel", chan_labels),
+        #         ("float_range", "mult", self.range_min, self.range_max, self.start_value))
 
     def bufferfunction(self, n_arr):
         #print "plugin start"
         events = []
-        cdef float mult
-        cdef int chan
-        chan = self.channel
-        mult = self.mult
+        cdef int chan_in
+        cdef int chan_out
+        chan_in = self.chan_in
+        chan_out = self.chan_ripples
 
-        n_arr[chan,:] = mult * n_arr[chan,:]
-        self.idx += 1
-        if self.idx == 25:
-            self.idx = 0
-            evId = 1 + 4 * (1 - self.polarity)
-            self.polarity = 1 - self.polarity
-            events.append({'type': 3, 'sampleNum': 10, 'eventId': evId})
+        # n_arr[chan_out,:] = signal.filtfilt(self.filter_b, self.filter_a, n_arr[chan_in,:])
 
         #print "plugin end"
         return events
@@ -105,6 +127,8 @@ pluginOp = SPWFinder()
 
 
 cdef public void pluginStartup(float samplingRate):
+    print "executable is", sys.executable
+#    print "signal is", scipy.signal
     sr = samplingRate
     pluginOp.startup(sr)
 
