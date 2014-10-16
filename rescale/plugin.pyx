@@ -50,7 +50,7 @@ cdef extern from "../../Source/Processors/PythonEvent.h":
         unsigned char *eventData
         PythonEvent *nextEvent
 
-class Negate(object):
+class Rescale(object):
     def __init__(self):
         self.enabled = 1
         self.channel = 1
@@ -59,13 +59,16 @@ class Negate(object):
         self.range_max = 5
         self.start_value = 1
         self.idx = 1
+        self.samplingRate = 0.
+        self.polarity = 0
 
-    def startup(self):
+    def startup(self, sr):
         self.enabled = 1
-
+        self.samplingRate = sr
+        print self.samplingRate
 
     def plugin_name(self):
-        return "Negate"
+        return "Rescale"
 
     def is_ready(self):
         return 1
@@ -86,21 +89,24 @@ class Negate(object):
 
         n_arr[chan,:] = mult * n_arr[chan,:]
         self.idx += 1
-        if self.idx == 50:
+        if self.idx == 25:
             self.idx = 0
-            events.append({'type': 3, 'sampleNum': 10})
+            evId = 1 + 4 * (1 - self.polarity)
+            self.polarity = 1 - self.polarity
+            events.append({'type': 3, 'sampleNum': 10, 'eventId': evId})
 
         #print "plugin end"
         return events
 
 
-pluginOp = Negate()
+pluginOp = Rescale()
 
 ############## here starts the C++ interface
 
 
-cdef public void pluginStartup():
-    pluginOp.startup()
+cdef public void pluginStartup(float samplingRate):
+    sr = samplingRate
+    pluginOp.startup(sr)
 
 cdef public int getParamNum():
     return len(pluginOp.param_config())
@@ -149,10 +155,12 @@ cdef public void pluginFunction(float *buffer, int nChans, int nSamples, PythonE
         e_py = events_to_add[0]
         e_c = events
         add_event(e_c, e_py)
+        print "in Plugin, event ", e_c.eventId, " added"
         last_e_c = e_c
         for i in range(1,len(events_to_add)):
             e_py = events_to_add[i]
             e_c = <PythonEvent *>calloc(1, sizeof(PythonEvent))
+            print "in Plugin, event ", e_c.eventId, " added"
             last_e_c.nextEvent = e_c
             add_event(e_c, e_py)
             last_e_c = e_c
