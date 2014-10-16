@@ -76,18 +76,24 @@ class SPWFinder(object):
         self.band_hi_start = 300
         self.band_hi = self.band_hi_start
 
+        self.thresh_min = 20
+        self.thresh_max = 200
+        self.thresh_start = 30
+        self.threshold = self.thresh_start
+
+
+        self.triggered = 0
         self.samplingRate = 0.
         self.polarity = 0
-
         self.filter_a = []
         self.filter_b = []
 
     def startup(self, sr):
         self.samplingRate = sr
         print self.samplingRate
-        # self.filter_b, self_filter_a = signal.butter(3,
-        #                      (self.band_lo/(self.samplingRate/2), self.band_hi/(self.samplingRate/2)),
-        #                      'pass')
+        self.filter_b, self.filter_a = scipy.signal.butter(3,
+                                                     (self.band_lo/(self.samplingRate/2), self.band_hi/(self.samplingRate/2)),
+                                                     'pass')
         self.enabled = 1
 
     def plugin_name(self):
@@ -98,14 +104,15 @@ class SPWFinder(object):
 
     def param_config(self):
         chan_labels = range(16)
+        # return (("toggle", "Enabled", True),
+        #         ("int_set", "chan_in", chan_labels),
+        #         ("int_set", "chan_ripples", chan_labels),
+        #         ("float_range", "band_lo", self.band_lo_min, self.band_lo_max, self.band_lo_start),
+        #         ("float_range", "band_hi", self.band_hi_min, self.band_hi_max, self.band_hi_start))
         return (("toggle", "Enabled", True),
                 ("int_set", "chan_in", chan_labels),
-                ("int_set", "chan_ripples", chan_labels),
-                ("float_range", "band_lo", self.band_lo_min, self.band_lo_max, self.band_lo_start),
-                ("float_range", "band_hi", self.band_hi_min, self.band_hi_max, self.band_hi_start))
-        # return (("toggle", "enabled" , True),
-        #         ("int_set", "channel", chan_labels),
-        #         ("float_range", "mult", self.range_min, self.range_max, self.start_value))
+                ("float_range", "threshold", self.thresh_min, self.thresh_max, self.thresh_start))
+
 
     def bufferfunction(self, n_arr):
         #print "plugin start"
@@ -114,8 +121,19 @@ class SPWFinder(object):
         cdef int chan_out
         chan_in = self.chan_in
         chan_out = self.chan_ripples
+        cdef int n_samples = n_arr.shape[1]
+        n_arr[chan_out,:] = scipy.signal.filtfilt(self.filter_b, self.filter_a, n_arr[chan_in,:])
+        n_arr[chan_out+1,:] = np.fabs(n_arr[chan_out,:])
+        n_arr[chan_out+2,:] = 5. *np.mean(n_arr[chan_out+1,:]) * np.ones((1,n_samples))
+        if np.mean(n_arr[chan_out+1,:]) > self.threshold:
+            events.append({'type': 3, 'sampleNum': 10, 'eventId': 1})
+            self.triggered = 1
+        elif self.triggered:
+            self.triggered = 0
+            events.append({'type': 3, 'sampleNum': 10, 'eventId': 5})
 
-        # n_arr[chan_out,:] = signal.filtfilt(self.filter_b, self.filter_a, n_arr[chan_in,:])
+
+
 
         #print "plugin end"
         return events
@@ -127,8 +145,12 @@ pluginOp = SPWFinder()
 
 
 cdef public void pluginStartup(float samplingRate):
-    print "executable is", sys.executable
+    #import scipy.signal
+    #import PIL
+    #print "executable is", sys.executable
 #    print "signal is", scipy.signal
+    print "path is"
+    print sys.path
     sr = samplingRate
     pluginOp.startup(sr)
 
