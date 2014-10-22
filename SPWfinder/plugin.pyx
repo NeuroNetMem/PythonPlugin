@@ -2,6 +2,7 @@ import sys
 import numpy as np
 cimport numpy as np
 from cython cimport view
+import serial
 
 # try:
 #     import scipy.signal
@@ -81,16 +82,21 @@ class SPWFinder(object):
         self.thresh_start = 30
         self.threshold = self.thresh_start
 
-
+        self.pulseNo = 0
         self.triggered = 0
         self.samplingRate = 0.
         self.polarity = 0
         self.filter_a = []
         self.filter_b = []
+        self.arduino = []
 
     def startup(self, sr):
         self.samplingRate = sr
         print self.samplingRate
+        try:
+            self.arduino = serial.Serial('/dev/tty.usbmodem1411', 57600)
+        except OSError:
+            print "Can't open Arduino"
         self.filter_b, self.filter_a = scipy.signal.butter(3,
                                                      (self.band_lo/(self.samplingRate/2), self.band_hi/(self.samplingRate/2)),
                                                      'pass')
@@ -109,7 +115,7 @@ class SPWFinder(object):
         #         ("int_set", "chan_ripples", chan_labels),
         #         ("float_range", "band_lo", self.band_lo_min, self.band_lo_max, self.band_lo_start),
         #         ("float_range", "band_hi", self.band_hi_min, self.band_hi_max, self.band_hi_start))
-        return (("toggle", "Enabled", True),
+        return (("toggle", "enabled", True),
                 ("int_set", "chan_in", chan_labels),
                 ("float_range", "threshold", self.thresh_min, self.thresh_max, self.thresh_start))
 
@@ -125,12 +131,30 @@ class SPWFinder(object):
         n_arr[chan_out,:] = scipy.signal.filtfilt(self.filter_b, self.filter_a, n_arr[chan_in,:])
         n_arr[chan_out+1,:] = np.fabs(n_arr[chan_out,:])
         n_arr[chan_out+2,:] = 5. *np.mean(n_arr[chan_out+1,:]) * np.ones((1,n_samples))
-        if np.mean(n_arr[chan_out+1,:]) > self.threshold:
-            events.append({'type': 3, 'sampleNum': 10, 'eventId': 1})
-            self.triggered = 1
-        elif self.triggered:
-            self.triggered = 0
-            events.append({'type': 3, 'sampleNum': 10, 'eventId': 5})
+        if not self.enabled:
+            if np.mean(n_arr[chan_out+1,:]) > self.threshold:
+                events.append({'type': 3, 'sampleNum': 10, 'eventId': 3})
+                self.triggered = 1
+            elif self.triggered:
+                self.triggered = 0
+                events.append({'type': 3, 'sampleNum': 10, 'eventId': 5})
+        else:
+            if np.mean(n_arr[chan_out+1,:]) > self.threshold and not self.triggered:
+                events.append({'type': 3, 'sampleNum': 10, 'eventId': 1})
+                self.triggered = 1
+                try:
+                    self.arduino.write('1')
+                except AttributeError:
+                    print "Can't send pulse"
+                self.pulseNo += 1
+                print "generating pulse ", self.pulseNo
+            elif np.mean(n_arr[chan_out+1,:]) > self.threshold and  self.triggered:
+                pass
+            elif self.triggered:
+                self.triggered = 0
+                events.append({'type': 3, 'sampleNum': 10, 'eventId': 5})
+
+
 
 
 
