@@ -93,14 +93,15 @@ class SPWFinder(object):
     def startup(self, sr):
         self.samplingRate = sr
         print self.samplingRate
-        try:
-            self.arduino = serial.Serial('/dev/tty.usbmodem1411', 57600)
-        except OSError:
-            print "Can't open Arduino"
+
         self.filter_b, self.filter_a = scipy.signal.butter(3,
                                                      (self.band_lo/(self.samplingRate/2), self.band_hi/(self.samplingRate/2)),
                                                      'pass')
         self.enabled = 1
+        try:
+            self.arduino = serial.Serial('/dev/tty.usbmodem1411', 57600)
+        except OSError, serial.serialutil.SerialException:
+            print "Can't open Arduino"
 
     def plugin_name(self):
         return "SPWFinder"
