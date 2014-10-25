@@ -64,7 +64,10 @@ cdef extern from "../../Source/Processors/PythonEvent.h":
 
 class SPWFinder(object):
     def __init__(self):
-        self.enabled = 1
+        self.enabled = True
+        self.jitter = False
+        self.jitter_count_down = -2
+        self.jitter_time = 200 # in ms
         self.chan_in = 0
         self.chan_ripples = 1
         self.band_lo_min = 50
@@ -88,7 +91,7 @@ class SPWFinder(object):
         self.polarity = 0
         self.filter_a = []
         self.filter_b = []
-        self.arduino = []
+        self.arduino = None
 
     def startup(self, sr):
         self.samplingRate = sr
@@ -98,6 +101,7 @@ class SPWFinder(object):
                                                      (self.band_lo/(self.samplingRate/2), self.band_hi/(self.samplingRate/2)),
                                                      'pass')
         self.enabled = 1
+        self.jitter = 0
         try:
             self.arduino = serial.Serial('/dev/tty.usbmodem1411', 57600)
         except OSError, serial.serialutil.SerialException:
@@ -117,6 +121,7 @@ class SPWFinder(object):
         #         ("float_range", "band_lo", self.band_lo_min, self.band_lo_max, self.band_lo_start),
         #         ("float_range", "band_hi", self.band_hi_min, self.band_hi_max, self.band_hi_start))
         return (("toggle", "enabled", True),
+                ("toggle", "jitter", False),
                 ("int_set", "chan_in", chan_labels),
                 ("float_range", "threshold", self.thresh_min, self.thresh_max, self.thresh_start))
 
@@ -141,26 +146,45 @@ class SPWFinder(object):
                 events.append({'type': 3, 'sampleNum': 10, 'eventId': 5})
         else:
             if np.mean(n_arr[chan_out+1,:]) > self.threshold and not self.triggered:
-                events.append({'type': 3, 'sampleNum': 10, 'eventId': 1})
                 self.triggered = 1
-                try:
-                    self.arduino.write('1')
-                except AttributeError:
-                    print "Can't send pulse"
-                self.pulseNo += 1
-                print "generating pulse ", self.pulseNo
+                if not self.jitter:
+                    events.append({'type': 3, 'sampleNum': 10, 'eventId': 1})
+                    try:
+                        self.arduino.write('1')
+                    except AttributeError:
+                        print "Can't send pulse"
+                    self.pulseNo += 1
+                    print "generating pulse ", self.pulseNo
+                else:
+                    events.append({'type': 3, 'sampleNum': 10, 'eventId': 4})
+                    frame_time = 1000. * n_samples / self.samplingRate
+                    self.jitter_count_down = int(self.jitter_time / frame_time)
             elif np.mean(n_arr[chan_out+1,:]) > self.threshold and  self.triggered:
                 pass
             elif self.triggered:
                 self.triggered = 0
                 events.append({'type': 3, 'sampleNum': 10, 'eventId': 5})
 
+            if self.jitter and self.jitter_count_down == -1:
+                events = [{'type': 3, 'sampleNum': 10, 'eventId': 5},] # close the 1 event
+                # FIXME apparently it bombs if more evnets are generated in the same frame!!!
+                self.jitter_count_down = -2
 
 
+            if self.jitter and self.jitter_count_down >= 0:
+                if self.jitter_count_down == 0:
+                    events.append({'type': 3, 'sampleNum': 10, 'eventId': 1})
+                    try:
+                        self.arduino.write('1')
+                    except AttributeError:
+                        print "Can't send pulse"
+                    self.pulseNo += 1
+                    print "generating pulse ", self.pulseNo
+                    self.jitter_count_down = -1
+                else:
+                    self.jitter_count_down -= 1
 
 
-
-        #print "plugin end"
         return events
 
 
