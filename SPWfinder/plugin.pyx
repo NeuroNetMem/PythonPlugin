@@ -62,6 +62,9 @@ cdef extern from "../../Source/Processors/PythonEvent.h":
         unsigned char *eventData
         PythonEvent *nextEvent
 
+
+########### plugin starts here
+
 class SPWFinder(object):
     def __init__(self):
         self.enabled = True
