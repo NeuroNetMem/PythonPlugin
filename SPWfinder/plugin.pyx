@@ -153,7 +153,7 @@ class SPWFinder(object):
                 if not self.jitter:
                     events.append({'type': 3, 'sampleNum': 10, 'eventId': 1})
                     try:
-                        self.arduino.write('1')
+                        self.arduino.write('1' )
                     except AttributeError:
                         print "Can't send pulse"
                     self.pulseNo += 1
@@ -178,7 +178,7 @@ class SPWFinder(object):
                 if self.jitter_count_down == 0:
                     events.append({'type': 3, 'sampleNum': 10, 'eventId': 1})
                     try:
-                        self.arduino.write('1')
+                        self.arduino.write('1'* 64)
                     except AttributeError:
                         print "Can't send pulse"
                     self.pulseNo += 1
