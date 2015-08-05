@@ -18,7 +18,7 @@ from libc.stdlib cimport malloc, calloc
 
 
 
-cdef extern from "../../Source/Processors/PythonParamConfig.h":
+cdef extern from "../../Source/Processors/PythonProcessor/PythonParamConfig.h":
     enum paramType:
         TOGGLE, INT_SET, FLOAT_RANGE
 
@@ -29,7 +29,7 @@ cdef extern from "../../Source/Processors/PythonParamConfig.h":
 #     int isEnabled;
 # };
 
-cdef extern from "../../Source/Processors/PythonParamConfig.h":
+cdef extern from "../../Source/Processors/PythonProcessor/PythonParamConfig.h":
     struct ParamConfig:
         paramType type
         char *name
@@ -52,7 +52,7 @@ cdef extern from "../../Source/Processors/PythonParamConfig.h":
 # };
 
 
-cdef extern from "../../Source/Processors/PythonEvent.h":
+cdef extern from "../../Source/Processors/PythonProcessor/PythonEvent.h":
     struct PythonEvent:
         unsigned char type
         int sampleNum
@@ -95,6 +95,7 @@ class SPWFinder(object):
         self.filter_a = []
         self.filter_b = []
         self.arduino = None
+        print "finished SPWfinder constructor"
 
     def startup(self, sr):
         self.samplingRate = sr
