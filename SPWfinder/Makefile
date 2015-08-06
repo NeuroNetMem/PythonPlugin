@@ -2,7 +2,6 @@ all:
 	cython plugin.pyx
 	gcc -g -O2 -fpic -c plugin.c -o plugin.o `python-config --includes` -I`python -c "import numpy; print numpy.get_include()"`
 	gcc -g -O2 -shared -o spwfinder.so plugin.o `python-config --ldflags`
-	cp spwfinder.so plugin.so
-
+	install_name_tool -change /System/Library/Frameworks/Python.framework/Versions/2.7/Python /anaconda/lib/libpython2.7.dylib spwfinder.so
 clean:
 	rm -f plugin.c plugin.h *.o *.so
