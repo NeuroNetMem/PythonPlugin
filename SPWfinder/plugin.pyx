@@ -9,9 +9,8 @@ import serial
 # except ImportError as detail:
 #     print "couldn't import scipy ", detail
 
-print "ciao"
+
 import scipy.signal
-print "sono io"
 from libc.stdlib cimport malloc, calloc
 
 
@@ -138,7 +137,7 @@ class SPWFinder(object):
         chan_in = self.chan_in
         chan_out = self.chan_ripples
         cdef int n_samples = n_arr.shape[1]
-        n_arr[chan_out,:] = scipy.signal.filtfilt(self.filter_b, self.filter_a, n_arr[chan_in,:])
+        n_arr[chan_out,:] = scipy.signal.lfilter(self.filter_b, self.filter_a, n_arr[chan_in,:])
         n_arr[chan_out+1,:] = np.fabs(n_arr[chan_out,:])
         n_arr[chan_out+2,:] = 5. *np.mean(n_arr[chan_out+1,:]) * np.ones((1,n_samples))
         if not self.enabled:
