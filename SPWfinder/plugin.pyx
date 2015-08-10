@@ -4,13 +4,9 @@ cimport numpy as np
 from cython cimport view
 import serial
 
-# try:
-#     import scipy.signal
-# except ImportError as detail:
-#     print "couldn't import scipy ", detail
-
 
 import scipy.signal
+import numpy.random
 from libc.stdlib cimport malloc, calloc
 
 
@@ -69,22 +65,22 @@ class SPWFinder(object):
         self.enabled = True
         self.jitter = False
         self.jitter_count_down = -2
-        self.jitter_time = 200 # in ms
+        self.jitter_time = 200. # in ms
         self.chan_in = 0
         self.chan_ripples = 1
-        self.band_lo_min = 50
-        self.band_lo_max = 200
-        self.band_lo_start = 100
+        self.band_lo_min = 50.
+        self.band_lo_max = 200.
+        self.band_lo_start = 100.
         self.band_lo = self.band_lo_start
 
-        self.band_hi_min = 100
-        self.band_hi_max = 500
-        self.band_hi_start = 300
+        self.band_hi_min = 100.
+        self.band_hi_max = 500.
+        self.band_hi_start = 300.
         self.band_hi = self.band_hi_start
 
-        self.thresh_min = 20
-        self.thresh_max = 200
-        self.thresh_start = 30
+        self.thresh_min = 20.
+        self.thresh_max = 200.
+        self.thresh_start = 30.
         self.threshold = self.thresh_start
 
         self.pulseNo = 0
@@ -94,6 +90,7 @@ class SPWFinder(object):
         self.filter_a = []
         self.filter_b = []
         self.arduino = None
+        self.lfp_buffer = np.zeros((500,))
         print "finished SPWfinder constructor"
 
     def startup(self, sr):
@@ -103,6 +100,12 @@ class SPWFinder(object):
         self.filter_b, self.filter_a = scipy.signal.butter(3,
                                                      (self.band_lo/(self.samplingRate/2), self.band_hi/(self.samplingRate/2)),
                                                      'pass')
+        print self.filter_a
+        print self.filter_b
+        print self.band_lo
+        print self.band_hi
+        print self.band_lo/(self.samplingRate/2)
+        print self.band_hi/(self.samplingRate/2)
         self.enabled = 1
         self.jitter = 0
         try:
@@ -137,7 +140,12 @@ class SPWFinder(object):
         chan_in = self.chan_in
         chan_out = self.chan_ripples
         cdef int n_samples = n_arr.shape[1]
-        n_arr[chan_out,:] = scipy.signal.lfilter(self.filter_b, self.filter_a, n_arr[chan_in,:])
+        signal_to_filter = np.hstack((self.lfp_buffer, n_arr[chan_in,:]))
+
+        filtered_signal = scipy.signal.lfilter(self.filter_b, self.filter_a, signal_to_filter)
+
+        n_arr[chan_out,:] = filtered_signal[self.lfp_buffer.size:]
+        self.lfp_buffer = n_arr[chan_in,:]
         n_arr[chan_out+1,:] = np.fabs(n_arr[chan_out,:])
         n_arr[chan_out+2,:] = 5. *np.mean(n_arr[chan_out+1,:]) * np.ones((1,n_samples))
         if not self.enabled:
