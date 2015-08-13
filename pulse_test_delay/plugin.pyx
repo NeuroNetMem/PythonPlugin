@@ -17,7 +17,7 @@ from libc.stdlib cimport malloc, calloc
 
 
 
-cdef extern from "../../Source/Processors/PythonParamConfig.h":
+cdef extern from "../../Source/Processors/PythonProcessor/PythonParamConfig.h":
     enum paramType:
         TOGGLE, INT_SET, FLOAT_RANGE
 
@@ -28,7 +28,7 @@ cdef extern from "../../Source/Processors/PythonParamConfig.h":
 #     int isEnabled;
 # };
 
-cdef extern from "../../Source/Processors/PythonParamConfig.h":
+cdef extern from "../../Source/Processors/PythonProcessor/PythonParamConfig.h":
     struct ParamConfig:
         paramType type
         char *name
@@ -51,7 +51,7 @@ cdef extern from "../../Source/Processors/PythonParamConfig.h":
 # };
 
 
-cdef extern from "../../Source/Processors/PythonEvent.h":
+cdef extern from "../../Source/Processors/PythonProcessor/PythonEvent.h":
     struct PythonEvent:
         unsigned char type
         int sampleNum
@@ -65,8 +65,8 @@ class SPWFinder(object):
     def __init__(self):
         self.enabled = 1
         self.chan_in = 0
-        self.thresh_min = -32768
-        self.thresh_max = 32768
+        self.thresh_min = -2
+        self.thresh_max = 2
         self.thresh_start = 0
         self.threshold = self.thresh_start
         self.arduino = None
@@ -78,17 +78,18 @@ class SPWFinder(object):
     def startup(self, sr):
         self.samplingRate = sr
         print self.samplingRate
-        self.arduino = serial.Serial('/dev/tty.usbmodem1411', 57600)
+        self.arduino = serial.Serial('/dev/tty.usbmodem45561', 57600)
+        print "Arduino: ", self.arduino
         self.enabled = 1
 
     def plugin_name(self):
-        return "SPWFinder"
+        return "pulse_test_delay"
 
     def is_ready(self):
         return 1
 
     def param_config(self):
-        chan_labels = range(1,17)
+        chan_labels = range(1,44)
 
         return (("toggle", "Enabled", True),
                 ("int_set", "chan_in", chan_labels),
@@ -102,22 +103,24 @@ class SPWFinder(object):
         cdef int chan_out
         chan_in = self.chan_in
         cdef int n_samples = n_arr.shape[1]
-        print 'Max: ', np.max(n_arr[chan_in-1,:])
-        print 'Min: ', np.min(n_arr[chan_in-1,:])
+        #print 'Shape: ', n_arr.shape
+        #print 'Max: ', np.max(n_arr[chan_in-1,:])
+        #print 'Min: ', np.min(n_arr[chan_in-1,:])
 
         if np.any(n_arr[chan_in-1,:] > self.threshold):
             if not self.triggered:
-
+                #print 'triggered'
                 events.append({'type': 3, 'sampleNum': 10, 'eventId': 1})
                 self.triggered = 1
                 self.arduino.write('1')
-            n_arr[chan_in,:] = 100 * np.ones((1,n_samples))
+                #n_arr[chan_in-2,:] = 1 * np.ones((1,n_samples))
         elif self.triggered:
             self.triggered = 0
             events.append({'type': 3, 'sampleNum': 10, 'eventId': 5})
-            n_arr[chan_in,:] = np.zeros((1,n_samples))
+            #n_arr[chan_in-2,:] = np.zeros((1,n_samples))
         else:
-            n_arr[chan_in,:] = np.zeros((1,n_samples))
+            pass
+            # n_arr[chan_in-2,:] = np.zeros((1,n_samples))
 
 
 
