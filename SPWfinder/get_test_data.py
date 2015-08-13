@@ -64,7 +64,7 @@ def lookup_data(tStart, tEnd):
 
 
 if __name__ == '__main__':
-    lookup_data(18,20)
+    lookup_data(65,71)
 
 
 

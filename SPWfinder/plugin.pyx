@@ -141,7 +141,7 @@ class SPWFinder(object):
         chan_out = self.chan_ripples
         cdef int n_samples = n_arr.shape[1]
         signal_to_filter = np.hstack((self.lfp_buffer, n_arr[chan_in,:]))
-
+        signal_to_filter = signal_to_filter - np.mean(signal_to_filter)
         filtered_signal = scipy.signal.lfilter(self.filter_b, self.filter_a, signal_to_filter)
 
         n_arr[chan_out,:] = filtered_signal[self.lfp_buffer.size:]
