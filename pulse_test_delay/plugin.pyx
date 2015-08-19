@@ -177,7 +177,6 @@ cdef public void pluginFunction(float *buffer, int nChans, int nSamples, PythonE
     #pluginOp.set_events(events)
     #pm2 = PluginModule(pm)
     events_to_add = pluginOp.bufferfunction(n_arr)
-
         # struct PythonEvent:
         # unsigned char type
         # int sampleNum
