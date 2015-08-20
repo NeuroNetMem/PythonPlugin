@@ -11,7 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 pluginDir = "/Users/fpbatta/src/GUImerge/GUI/Plugins"
-testDataFile = "/Users/fpbatta/dataLisa/disruption0724/100_raw.kwd"
+testDataFile = "/Users/fpbatta/dataLisa/disruption0724/100_raw_test.kwd"
 sys.path.append(pluginDir)
 
 import SPWfinder.plugin
@@ -21,8 +21,10 @@ tFile = h5py.File(testDataFile)
 tData = tFile["/recordings/0/data"]
 sample_rate = tFile["/recordings/0"].attrs["sample_rate"][0]
 bit_volts = tFile["/recordings/0/application_data"].attrs["channel_bit_volts"]
-samples_per_frame = 1024 # audio frame in OE
-frame = samples_per_frame /44100.
+
+samples_in_441k_rate = 1024
+
+samples_per_frame = int(samples_in_441k_rate * sample_rate / 44100.)
 
 print "tData: ", tData
 print "sample_rate: ", sample_rate
@@ -45,19 +47,20 @@ def lookup_data(tStart, tEnd):
 
     data = tData[iStart:iEnd, :] * bit_volts
     spread = 1000
-    chans_to_plot = [1, 2, 3, 4, 9]
+    chans_to_plot = [1, 2, 3, 4, 5, 9]
     nSamples = data.shape[0]
     nChans = data.shape[1]
     print nSamples
 
-    plugin.chan_in = 9-1
+    plugin.chan_in = 1-1
     print "chan_in: ", plugin.chan_in
     frame_starts = np.arange(iStart, iEnd, samples_per_frame, dtype=np.int)
     data = np.zeros([0,nChans], dtype=np.float32)
     for ix in frame_starts:
         d = tData[ix:(ix+samples_per_frame), :].astype(np.float32)
         #d0 = d.copy()
-        plugin.bufferfunction(d.transpose())
+        d = d * 0.195
+        plugin.bufferfunction(d.transpose() )
         data = np.concatenate((data, d), axis=0)
 
     t = np.linspace(tStart, tEnd, data.shape[0])
@@ -70,7 +73,7 @@ def lookup_data(tStart, tEnd):
 
 
 if __name__ == '__main__':
-    lookup_data(17,19)
+    lookup_data(49, 55)
 
 
 

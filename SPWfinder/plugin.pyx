@@ -6,6 +6,7 @@ import serial
 
 
 import scipy.signal
+import math
 import numpy.random
 from libc.stdlib cimport malloc, calloc
 
@@ -93,8 +94,8 @@ class SPWFinder(object):
         self.lfp_buffer = np.zeros((500,))
         print "finished SPWfinder constructor"
 
-    def startup(self, sr):
-        self.samplingRate = sr
+    def startup(self, samplingRate):
+        self.samplingRate = samplingRate
         print self.samplingRate
 
         self.filter_b, self.filter_a = scipy.signal.butter(3,
@@ -134,32 +135,36 @@ class SPWFinder(object):
 
     def bufferfunction(self, n_arr):
         #print "plugin start"
+
+        print "shape: ", n_arr.shape
         events = []
         cdef int chan_in
         cdef int chan_out
         chan_in = self.chan_in
         chan_out = self.chan_ripples
+
         cdef int n_samples = n_arr.shape[1]
         signal_to_filter = np.hstack((self.lfp_buffer, n_arr[chan_in,:]))
-        signal_to_filter = signal_to_filter - np.mean(signal_to_filter)
+        signal_to_filter = signal_to_filter - signal_to_filter[-1]
         filtered_signal = scipy.signal.lfilter(self.filter_b, self.filter_a, signal_to_filter)
 
         n_arr[chan_out,:] = filtered_signal[self.lfp_buffer.size:]
         self.lfp_buffer = n_arr[chan_in,:]
         n_arr[chan_out+1,:] = np.fabs(n_arr[chan_out,:])
         n_arr[chan_out+2,:] = 5. *np.mean(n_arr[chan_out+1,:]) * np.ones((1,n_samples))
+        print "done processing"
         if not self.enabled:
             if np.mean(n_arr[chan_out+1,:]) > self.threshold:
-                events.append({'type': 3, 'sampleNum': 10, 'eventId': 3})
+                events.append({'type': 3, 'sampleNum': n_samples-1, 'eventId': 3})
                 self.triggered = 1
             elif self.triggered:
                 self.triggered = 0
-                events.append({'type': 3, 'sampleNum': 10, 'eventId': 5})
+                events.append({'type': 3, 'sampleNum': n_samples-1, 'eventId': 5})
         else:
             if np.mean(n_arr[chan_out+1,:]) > self.threshold and not self.triggered:
                 self.triggered = 1
                 if not self.jitter:
-                    events.append({'type': 3, 'sampleNum': 10, 'eventId': 1})
+                    events.append({'type': 3, 'sampleNum': n_samples-1, 'eventId': 1})
                     try:
                         self.arduino.write('1' )
                     except AttributeError:
@@ -167,24 +172,24 @@ class SPWFinder(object):
                     self.pulseNo += 1
                     print "generating pulse ", self.pulseNo
                 else:
-                    events.append({'type': 3, 'sampleNum': 10, 'eventId': 4})
+                    events.append({'type': 3, 'sampleNum': n_samples-1, 'eventId': 4})
                     frame_time = 1000. * n_samples / self.samplingRate
                     self.jitter_count_down = int(self.jitter_time / frame_time)
             elif np.mean(n_arr[chan_out+1,:]) > self.threshold and  self.triggered:
                 pass
             elif self.triggered:
                 self.triggered = 0
-                events.append({'type': 3, 'sampleNum': 10, 'eventId': 5})
+                events.append({'type': 3, 'sampleNum': n_samples-1, 'eventId': 5})
 
             if self.jitter and self.jitter_count_down == -1:
-                events = [{'type': 3, 'sampleNum': 10, 'eventId': 5},] # close the 1 event
+                events = [{'type': 3, 'sampleNum': n_samples-1, 'eventId': 5},] # close the 1 event
                 # FIXME apparently it bombs if more evnets are generated in the same frame!!!
                 self.jitter_count_down = -2
 
 
             if self.jitter and self.jitter_count_down >= 0:
                 if self.jitter_count_down == 0:
-                    events.append({'type': 3, 'sampleNum': 10, 'eventId': 1})
+                    events.append({'type': 3, 'sampleNum': n_samples-1, 'eventId': 1})
                     try:
                         self.arduino.write('1'* 64)
                     except AttributeError:
@@ -200,11 +205,12 @@ class SPWFinder(object):
 
 
 pluginOp = SPWFinder()
-
+sr = 1.
 ############## here starts the C++ interface
 
 
 cdef public void pluginStartup(float samplingRate):
+    global sr
     #import scipy.signal
     #import PIL
     #print "executable is", sys.executable
@@ -244,10 +250,14 @@ cdef public void getParamConfig(ParamConfig *params):
 
 
 cdef public void pluginFunction(float *buffer, int nChans, int nSamples, PythonEvent *events):
+    global sr
     n_arr = np.asarray(<np.float32_t[:nChans, :nSamples]> buffer)
     #pluginOp.set_events(events)
     #pm2 = PluginModule(pm)
-    events_to_add = pluginOp.bufferfunction(n_arr)
+
+    print "sr: ", sr
+    samples_to_read = int(nSamples * sr / 44100.)
+    events_to_add = pluginOp.bufferfunction(n_arr[:,0:samples_to_read])
 
         # struct PythonEvent:
         # unsigned char type
