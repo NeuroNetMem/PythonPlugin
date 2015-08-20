@@ -304,3 +304,13 @@ cdef public void setIntParam(char *name, int value):
 cdef public void setFloatParam(char *name, float value):
     # print "In Python: ", name, ": ", value
     setattr(pluginOp, name, value)
+
+cdef public int getIntParam(char *name,):
+    print "In Python getIntParam: ", name
+    value = getattr(pluginOp, name)
+    return <int>value
+
+cdef public float getFloatParam(char *name):
+    # print "In Python: ", name, ": ", value
+    value =  getattr(pluginOp, name)
+    return <float>value
