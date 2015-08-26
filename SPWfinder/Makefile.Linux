@@ -3,7 +3,7 @@ SOURCE_DIR := $(shell pwd )
 
 spwfinder.so:
 	cython plugin.pyx
-	gcc -g -O2 -fpic -c plugin.c -o plugin.o `python-config --includes` -I`python -c "import numpy; print numpy.get_include()"`
+	gcc -g -O2 -fpic -DWITH_THREAD=1 -c plugin.c -o plugin.o `python-config --includes` -I`python -c "import numpy; print numpy.get_include()"`
 	gcc -g -O2 -shared -o spwfinder.so plugin.o `python-config --ldflags` -L$(SOURCE_DIR)/../../python-libs/ -Wl,-rpath=$(SOURCE_DIR)/../../python-libs
 
 clean:
