@@ -280,7 +280,8 @@ cdef public void pluginFunction(float *buffer, int nChans, int nSamples, PythonE
             last_e_c.nextEvent = e_c
             add_event(e_c, e_py)
             last_e_c = e_c
-
+        last_e_c.nextEvent = NULL
+        
 cdef void add_event(PythonEvent *e_c, object e_py) with gil:
     e_c.type = <unsigned char>e_py['type']
     e_c.sampleNum = <int>e_py['sampleNum']
