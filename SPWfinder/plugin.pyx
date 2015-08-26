@@ -209,7 +209,7 @@ sr = 1.
 ############## here starts the C++ interface
 
 
-cdef public void pluginStartup(float samplingRate):
+cdef public void pluginStartup(float samplingRate) with gil:
     global sr
     #import scipy.signal
     #import PIL
@@ -220,10 +220,10 @@ cdef public void pluginStartup(float samplingRate):
     sr = samplingRate
     pluginOp.startup(sr)
 
-cdef public int getParamNum():
+cdef public int getParamNum()  with gil:
     return len(pluginOp.param_config())
 
-cdef public void getParamConfig(ParamConfig *params):
+cdef public void getParamConfig(ParamConfig *params) with gil:
     cdef int *ent
     ppc = pluginOp.param_config()
     for i in range(len(ppc)):
@@ -249,7 +249,7 @@ cdef public void getParamConfig(ParamConfig *params):
 
 
 
-cdef public void pluginFunction(float *buffer, int nChans, int nSamples, PythonEvent *events):
+cdef public void pluginFunction(float *buffer, int nChans, int nSamples, PythonEvent *events) with gil:
     global sr
     n_arr = np.asarray(<np.float32_t[:nChans, :nSamples]> buffer)
     #pluginOp.set_events(events)
@@ -281,7 +281,7 @@ cdef public void pluginFunction(float *buffer, int nChans, int nSamples, PythonE
             add_event(e_c, e_py)
             last_e_c = e_c
 
-cdef void add_event(PythonEvent *e_c, object e_py):
+cdef void add_event(PythonEvent *e_c, object e_py) with gil:
     e_c.type = <unsigned char>e_py['type']
     e_c.sampleNum = <int>e_py['sampleNum']
     if 'eventId' in e_py:
@@ -294,23 +294,23 @@ cdef void add_event(PythonEvent *e_c, object e_py):
         e_c.eventData = <unsigned char *>e_py['eventData'] #TODO this leaves the brunt of converting to a uint8 pointer to the plugin module
         # it will be desirable to have this expressed as a numpy array so that we don't need to have C pointers in the plugin necessarily
 
-cdef public int pluginisready():
+cdef public int pluginisready() with gil:
     return pluginOp.is_ready()
 
-cdef public void setIntParam(char *name, int value):
+cdef public void setIntParam(char *name, int value) with gil:
     print "In Python: ", name, ": ", value
     setattr(pluginOp, name, value)
 
-cdef public void setFloatParam(char *name, float value):
+cdef public void setFloatParam(char *name, float value) with gil:
     # print "In Python: ", name, ": ", value
     setattr(pluginOp, name, value)
 
-cdef public int getIntParam(char *name,):
+cdef public int getIntParam(char *name) with gil:
     print "In Python getIntParam: ", name
     value = getattr(pluginOp, name)
     return <int>value
 
-cdef public float getFloatParam(char *name):
+cdef public float getFloatParam(char *name) with gil:
     # print "In Python: ", name, ": ", value
     value =  getattr(pluginOp, name)
     return <float>value
