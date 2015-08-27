@@ -155,16 +155,16 @@ class SPWFinder(object):
         print "done processing"
         if not self.enabled:
             if np.mean(n_arr[chan_out+1,:]) > self.threshold:
-                events.append({'type': 3, 'sampleNum': n_samples-1, 'eventId': 3})
+                events.append({'type': 3, 'sampleNum': n_samples-10, 'eventId': 3})
                 self.triggered = 1
             elif self.triggered:
                 self.triggered = 0
-                events.append({'type': 3, 'sampleNum': n_samples-1, 'eventId': 5})
+                events.append({'type': 3, 'sampleNum': n_samples-10, 'eventId': 5})
         else:
             if np.mean(n_arr[chan_out+1,:]) > self.threshold and not self.triggered:
                 self.triggered = 1
                 if not self.jitter:
-                    events.append({'type': 3, 'sampleNum': n_samples-1, 'eventId': 1})
+                    events.append({'type': 3, 'sampleNum': n_samples-10, 'eventId': 1})
                     try:
                         self.arduino.write('1' )
                     except AttributeError:
@@ -172,24 +172,23 @@ class SPWFinder(object):
                     self.pulseNo += 1
                     print "generating pulse ", self.pulseNo
                 else:
-                    events.append({'type': 3, 'sampleNum': n_samples-1, 'eventId': 4})
+                    events.append({'type': 3, 'sampleNum': n_samples-10, 'eventId': 4})
                     frame_time = 1000. * n_samples / self.samplingRate
                     self.jitter_count_down = int(self.jitter_time / frame_time)
             elif np.mean(n_arr[chan_out+1,:]) > self.threshold and  self.triggered:
                 pass
             elif self.triggered:
                 self.triggered = 0
-                events.append({'type': 3, 'sampleNum': n_samples-1, 'eventId': 5})
+                events.append({'type': 3, 'sampleNum': n_samples-10, 'eventId': 5})
 
             if self.jitter and self.jitter_count_down == -1:
-                events = [{'type': 3, 'sampleNum': n_samples-1, 'eventId': 5},] # close the 1 event
-                # FIXME apparently it bombs if more evnets are generated in the same frame!!!
+                events = [{'type': 3, 'sampleNum': n_samples-10, 'eventId': 5},] # close the 1 event
                 self.jitter_count_down = -2
 
 
             if self.jitter and self.jitter_count_down >= 0:
                 if self.jitter_count_down == 0:
-                    events.append({'type': 3, 'sampleNum': n_samples-1, 'eventId': 1})
+                    events.append({'type': 3, 'sampleNum': n_samples-10, 'eventId': 1})
                     try:
                         self.arduino.write('1'* 64)
                     except AttributeError:
