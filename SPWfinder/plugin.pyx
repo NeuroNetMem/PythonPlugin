@@ -135,8 +135,8 @@ class SPWFinder(object):
 
     def bufferfunction(self, n_arr):
         #print "plugin start"
-
-        print "shape: ", n_arr.shape
+        if isDebug:
+            print "shape: ", n_arr.shape
         events = []
         cdef int chan_in
         cdef int chan_out
@@ -152,7 +152,8 @@ class SPWFinder(object):
         self.lfp_buffer = n_arr[chan_in,:]
         n_arr[chan_out+1,:] = np.fabs(n_arr[chan_out,:])
         n_arr[chan_out+2,:] = 5. *np.mean(n_arr[chan_out+1,:]) * np.ones((1,n_samples))
-        print "done processing"
+        if isDebug:
+            print "done processing"
         if not self.enabled:
             if np.mean(n_arr[chan_out+1,:]) > self.threshold:
                 events.append({'type': 3, 'sampleNum': n_samples-10, 'eventId': 3})
@@ -205,6 +206,7 @@ class SPWFinder(object):
 
 pluginOp = SPWFinder()
 sr = 1.
+isDebug = False
 ############## here starts the C++ interface
 
 
@@ -214,8 +216,9 @@ cdef public void pluginStartup(float samplingRate) with gil:
     #import PIL
     #print "executable is", sys.executable
 #    print "signal is", scipy.signal
-    print "path is"
-    print sys.path
+    if isDebug:
+        print "The python path is"
+        print sys.path
     sr = samplingRate
     pluginOp.startup(sr)
 
@@ -254,7 +257,8 @@ cdef public void pluginFunction(float *buffer, int nChans, int nSamples, PythonE
     #pluginOp.set_events(events)
     #pm2 = PluginModule(pm)
 
-    print "sr: ", sr
+    if isDebug:
+        print "sr: ", sr
     samples_to_read = int(nSamples * sr / 44100.)
     events_to_add = pluginOp.bufferfunction(n_arr[:,0:samples_to_read])
 
@@ -270,12 +274,14 @@ cdef public void pluginFunction(float *buffer, int nChans, int nSamples, PythonE
         e_py = events_to_add[0]
         e_c = events
         add_event(e_c, e_py)
-        print "in Plugin, event ", e_c.eventId, " added"
+        if isDebug:
+            print "in Plugin, event ", e_c.eventId, " added"
         last_e_c = e_c
         for i in range(1,len(events_to_add)):
             e_py = events_to_add[i]
             e_c = <PythonEvent *>calloc(1, sizeof(PythonEvent))
-            print "in Plugin, event ", e_c.eventId, " added"
+            if isDebug:
+                print "in Plugin, event ", e_c.eventId, " added"
             last_e_c.nextEvent = e_c
             add_event(e_c, e_py)
             last_e_c = e_c
@@ -298,7 +304,8 @@ cdef public int pluginisready() with gil:
     return pluginOp.is_ready()
 
 cdef public void setIntParam(char *name, int value) with gil:
-    print "In Python: ", name, ": ", value
+    if isDebug:
+        print "In Python: ", name, ": ", value
     setattr(pluginOp, name, value)
 
 cdef public void setFloatParam(char *name, float value) with gil:
@@ -306,7 +313,8 @@ cdef public void setFloatParam(char *name, float value) with gil:
     setattr(pluginOp, name, value)
 
 cdef public int getIntParam(char *name) with gil:
-    print "In Python getIntParam: ", name
+    if isDebug:
+        print "In Python getIntParam: ", name
     value = getattr(pluginOp, name)
     return <int>value
 
