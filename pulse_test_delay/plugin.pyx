@@ -5,10 +5,6 @@ cimport numpy as np
 from cython cimport view
 import serial
 
-# try:
-#     import scipy.signal
-# except ImportError as detail:
-#     print "couldn't import scipy ", detail
 
 
 from libc.stdlib cimport malloc, calloc
@@ -22,11 +18,7 @@ cdef extern from "../../Source/Processors/PythonProcessor/PythonParamConfig.h":
         TOGGLE, INT_SET, FLOAT_RANGE
 
 
-# struct ParamConfig {
-#     paramType type;
-#     char name[255];
-#     int isEnabled;
-# };
+
 
 cdef extern from "../../Source/Processors/PythonProcessor/PythonParamConfig.h":
     struct ParamConfig:
@@ -40,15 +32,6 @@ cdef extern from "../../Source/Processors/PythonProcessor/PythonParamConfig.h":
         float startValue
 
 
-# struct PythonEvent {
-#     unsigned char type;
-#     int sampleNum;
-#     unsigned char eventId;
-#     unsigned char eventChannel;
-#     unsigned char numBytes;
-#     unsigned char *eventData;
-#     struct PythonEvent *nextEvent
-# };
 
 
 cdef extern from "../../Source/Processors/PythonProcessor/PythonEvent.h":
@@ -103,9 +86,6 @@ class SPWFinder(object):
         cdef int chan_out
         chan_in = self.chan_in
         cdef int n_samples = n_arr.shape[1]
-        #print 'Shape: ', n_arr.shape
-        #print 'Max: ', np.max(n_arr[chan_in-1,:])
-        #print 'Min: ', np.min(n_arr[chan_in-1,:])
 
         if np.any(n_arr[chan_in-1,:] > self.threshold):
             if not self.triggered:
