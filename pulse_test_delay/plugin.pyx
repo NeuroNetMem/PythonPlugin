@@ -129,6 +129,7 @@ class SPWFinder(object):
 
 
 pluginOp = SPWFinder()
+isDebug = False
 
 ############## here starts the C++ interface
 
@@ -172,7 +173,7 @@ cdef public void getParamConfig(ParamConfig *params):
 
 
 
-cdef public void pluginFunction(float *buffer, int nChans, int nSamples, PythonEvent *events):
+cdef public void pluginFunction(float *buffer, int nChans, int nSamples, PythonEvent *events) with gil:
     n_arr = np.asarray(<np.float32_t[:nChans, :nSamples]> buffer)
     #pluginOp.set_events(events)
     #pm2 = PluginModule(pm)
@@ -199,7 +200,7 @@ cdef public void pluginFunction(float *buffer, int nChans, int nSamples, PythonE
             add_event(e_c, e_py)
             last_e_c = e_c
 
-cdef void add_event(PythonEvent *e_c, object e_py):
+cdef void add_event(PythonEvent *e_c, object e_py) with gil:
     e_c.type = <unsigned char>e_py['type']
     e_c.sampleNum = <int>e_py['sampleNum']
     if 'eventId' in e_py:
@@ -215,10 +216,22 @@ cdef void add_event(PythonEvent *e_c, object e_py):
 cdef public int pluginisready():
     return pluginOp.is_ready()
 
-cdef public void setIntParam(char *name, int value):
+cdef public void setIntParam(char *name, int value) with gil:
     print "In Python: ", name, ": ", value
     setattr(pluginOp, name, value)
 
-cdef public void setFloatParam(char *name, float value):
+cdef public void setFloatParam(char *name, float value) with gil:
     # print "In Python: ", name, ": ", value
     setattr(pluginOp, name, value)
+
+
+cdef public int getIntParam(char *name) with gil:
+    if isDebug:
+        print "In Python getIntParam: ", name
+    value = getattr(pluginOp, name)
+    return <int>value
+
+cdef public float getFloatParam(char *name) with gil:
+    # print "In Python: ", name, ": ", value
+    value =  getattr(pluginOp, name)
+    return <float>value
