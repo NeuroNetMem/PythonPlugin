@@ -64,8 +64,12 @@ class SPWFinder(object):
     def __init__(self):
         self.enabled = True
         self.jitter = False
-        self.jitter_count_down = -2
+        self.jitter_count_down_thresh = 0
+        self.jitter_count_down = 0
         self.jitter_time = 200. # in ms
+        self.refractory_count_down_thresh = 0
+        self.refractory_count_down = 0
+        self.refractory_time = 100.
         self.chan_in = 0
         self.chan_out = 0
         self.n_samples = 0
@@ -80,7 +84,7 @@ class SPWFinder(object):
         self.band_hi_start = 300.
         self.band_hi = self.band_hi_start
 
-        self.thresh_min = 20.
+        self.thresh_min = 5.
         self.thresh_max = 200.
         self.thresh_start = 30.
         self.threshold = self.thresh_start
@@ -93,6 +97,13 @@ class SPWFinder(object):
         self.filter_b = []
         self.arduino = None
         self.lfp_buffer = np.zeros((500,))
+
+        self.READY=1
+        self.ARMED=2
+        self.REFRACTORY=3
+        self.FIRING = 4
+        self.state = self.READY
+
         print "finished SPWfinder constructor"
 
     def startup(self, sampling_rate):
@@ -141,11 +152,13 @@ class SPWFinder(object):
             self.arduino.write('1'* 64)
         except AttributeError:
             print "Can't send pulse"
-            self.pulseNo += 1
-            print "generating pulse ", self.pulseNo
+        self.pulseNo += 1
+        print "generating pulse ", self.pulseNo
 
-    def new_event(self, events, code):
-        events.append({'type': 3, 'sampleNum': self.n_samples-10, 'eventId': code})
+    def new_event(self, events, code, timestamp=None):
+        if not timestamp:
+            timestamp = self.n_samples
+        events.append({'type': 3, 'sampleNum': timestamp, 'eventId': code})
 
     def bufferfunction(self, n_arr):
         #print "plugin start"
@@ -160,8 +173,8 @@ class SPWFinder(object):
         self.n_samples = int(n_arr.shape[1])
 
         frame_time = 1000. * self.n_samples / self.samplingRate
-        self.jitter_count_down = int(self.jitter_time / frame_time)
-
+        self.jitter_count_down_thresh = int(self.jitter_time / frame_time)
+        self.refractory_count_down_thresh = int(self.refractory_time / frame_time)
         signal_to_filter = np.hstack((self.lfp_buffer, n_arr[chan_in,:]))
         signal_to_filter = signal_to_filter - signal_to_filter[-1]
         filtered_signal = scipy.signal.lfilter(self.filter_b, self.filter_a, signal_to_filter)
@@ -176,57 +189,61 @@ class SPWFinder(object):
             print "done processing"
 
         #events
-        # 1: triggered, enabled, pulse sent
+        # 1: pulse sent
+        # 2: jittered, pulse_sent
         # 3: triggered, not enabled
         # 4: trigger armed, jittered
-        # 5: triggered off, not enabled, turn trigger event off
+        # 5: terminating pulse
 
         # machines:
         # ENABLED vs. DISABLED vs. JITTERED
         # states:
-        # READY, REFRACTORY, ARMED
-
+        # READY, REFRACTORY, ARMED, FIRING
 
         if not self.enabled:
+            # DISABLED machine, has only READY state
             if self.spw_condition(n_arr):
                 self.new_event(events, 3)
-                self.triggered = 1
-            elif self.triggered:
-                self.triggered = 0
-                self.new_event(events, 5)
-        else:
-            if self.spw_condition(n_arr) and not self.triggered:
-                self.triggered = 1
-                if not self.jitter:
-                    self.new_event(events, 1)
-                    try:
-                        self.arduino.write('1' )
-                    except AttributeError:
-                        print "Can't send pulse"
-                    self.pulseNo += 1
-                    print "generating pulse ", self.pulseNo
-                else:
-                    self.new_event(events, 4)
-            elif self.spw_condition(n_arr) and  self.triggered:
-                pass
-            elif self.triggered:
-                self.triggered = 0
-                self.new_event(events, 5)
-
-            if self.jitter and self.jitter_count_down == -1:
-
-                self.new_event(events, 5)
-                self.jitter_count_down = -2
-
-
-            if self.jitter and self.jitter_count_down >= 0:
-                if self.jitter_count_down == 0:
+        elif not self.jitter:
+            # ENABLED machine, has READY, REFRACTORY, FIRING states
+            if self.state == self.READY:
+                if self.spw_condition(n_arr):
                     self.stimulate()
                     self.new_event(events, 1)
-                    self.jitter_count_down = -1
-                else:
-                    self.jitter_count_down -= 1
-
+                    self.state = self.FIRING
+            elif self.state == self.FIRING:
+                self.refractory_count_down = self.refractory_count_down_thresh-1
+                self.state = self.REFRACTORY
+                self.new_event(events, 5)
+            elif self.state == self.REFRACTORY:
+                self.refractory_count_down -= 1
+                if self.refractory_count_down == 0:
+                    self.state = self.READY
+            else:
+                # checking for a leftover ARMED state
+                self.state = self.READY
+        else:
+            # JITTERED machine, has READY, ARMED, FIRING and REFRACTORY states
+            if self.state == self.READY:
+                if self.spw_condition(n_arr):
+                    self.jitter_count_down = self.jitter_count_down_thresh
+                    self.state = self.ARMED
+                    self.new_event(events, 4)
+            elif self.state == self.ARMED:
+                self.jitter_count_down -= 1
+                if self.jitter_count_down == 0:
+                    self.stimulate()
+                    self.new_event(events, 2)
+                    self.state = self.FIRING
+                    self.new_event(events, 1)
+            elif self.state == self.FIRING:
+                self.refractory_count_down = self.refractory_count_down_thresh-1
+                self.state = self.REFRACTORY
+                self.new_event(events, 5)
+            else:
+                self.refractory_count_down -= 1
+                if self.refractory_count_down == 0:
+                    self.state = self.READY
 
         return events
 
