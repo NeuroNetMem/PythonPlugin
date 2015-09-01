@@ -6,8 +6,7 @@ import serial
 
 
 import scipy.signal
-import math
-import numpy.random
+
 from libc.stdlib cimport malloc, calloc
 
 
@@ -68,6 +67,8 @@ class SPWFinder(object):
         self.jitter_count_down = -2
         self.jitter_time = 200. # in ms
         self.chan_in = 0
+        self.chan_out = 0
+        self.n_samples = 0
         self.chan_ripples = 1
         self.band_lo_min = 50.
         self.band_lo_max = 200.
@@ -94,8 +95,8 @@ class SPWFinder(object):
         self.lfp_buffer = np.zeros((500,))
         print "finished SPWfinder constructor"
 
-    def startup(self, samplingRate):
-        self.samplingRate = samplingRate
+    def startup(self, sampling_rate):
+        self.samplingRate = sampling_rate
         print self.samplingRate
 
         self.filter_b, self.filter_a = scipy.signal.butter(3,
@@ -132,6 +133,19 @@ class SPWFinder(object):
                 ("int_set", "chan_in", chan_labels),
                 ("float_range", "threshold", self.thresh_min, self.thresh_max, self.thresh_start))
 
+    def spw_condition(self, n_arr):
+        return np.mean(n_arr[self.chan_out+1,:]) > self.threshold
+
+    def stimulate(self):
+        try:
+            self.arduino.write('1'* 64)
+        except AttributeError:
+            print "Can't send pulse"
+            self.pulseNo += 1
+            print "generating pulse ", self.pulseNo
+
+    def new_event(self, events, code):
+        events.append({'type': 3, 'sampleNum': self.n_samples-10, 'eventId': code})
 
     def bufferfunction(self, n_arr):
         #print "plugin start"
@@ -141,31 +155,50 @@ class SPWFinder(object):
         cdef int chan_in
         cdef int chan_out
         chan_in = self.chan_in
-        chan_out = self.chan_ripples
+        self.chan_out = self.chan_ripples
 
-        cdef int n_samples = n_arr.shape[1]
+        self.n_samples = int(n_arr.shape[1])
+
+        frame_time = 1000. * self.n_samples / self.samplingRate
+        self.jitter_count_down = int(self.jitter_time / frame_time)
+
         signal_to_filter = np.hstack((self.lfp_buffer, n_arr[chan_in,:]))
         signal_to_filter = signal_to_filter - signal_to_filter[-1]
         filtered_signal = scipy.signal.lfilter(self.filter_b, self.filter_a, signal_to_filter)
 
-        n_arr[chan_out,:] = filtered_signal[self.lfp_buffer.size:]
+        n_arr[self.chan_out,:] = filtered_signal[self.lfp_buffer.size:]
         self.lfp_buffer = n_arr[chan_in,:]
-        n_arr[chan_out+1,:] = np.fabs(n_arr[chan_out,:])
-        n_arr[chan_out+2,:] = 5. *np.mean(n_arr[chan_out+1,:]) * np.ones((1,n_samples))
+        n_arr[self.chan_out+1,:] = np.fabs(n_arr[self.chan_out,:])
+        n_arr[self.chan_out+2,:] = 5. *np.mean(n_arr[self.chan_out+1,:]) * np.ones((1,self.n_samples))
+
+
         if isDebug:
             print "done processing"
+
+        #events
+        # 1: triggered, enabled, pulse sent
+        # 3: triggered, not enabled
+        # 4: trigger armed, jittered
+        # 5: triggered off, not enabled, turn trigger event off
+
+        # machines:
+        # ENABLED vs. DISABLED vs. JITTERED
+        # states:
+        # READY, REFRACTORY, ARMED
+
+
         if not self.enabled:
-            if np.mean(n_arr[chan_out+1,:]) > self.threshold:
-                events.append({'type': 3, 'sampleNum': n_samples-10, 'eventId': 3})
+            if self.spw_condition(n_arr):
+                self.new_event(events, 3)
                 self.triggered = 1
             elif self.triggered:
                 self.triggered = 0
-                events.append({'type': 3, 'sampleNum': n_samples-10, 'eventId': 5})
+                self.new_event(events, 5)
         else:
-            if np.mean(n_arr[chan_out+1,:]) > self.threshold and not self.triggered:
+            if self.spw_condition(n_arr) and not self.triggered:
                 self.triggered = 1
                 if not self.jitter:
-                    events.append({'type': 3, 'sampleNum': n_samples-10, 'eventId': 1})
+                    self.new_event(events, 1)
                     try:
                         self.arduino.write('1' )
                     except AttributeError:
@@ -173,29 +206,23 @@ class SPWFinder(object):
                     self.pulseNo += 1
                     print "generating pulse ", self.pulseNo
                 else:
-                    events.append({'type': 3, 'sampleNum': n_samples-10, 'eventId': 4})
-                    frame_time = 1000. * n_samples / self.samplingRate
-                    self.jitter_count_down = int(self.jitter_time / frame_time)
-            elif np.mean(n_arr[chan_out+1,:]) > self.threshold and  self.triggered:
+                    self.new_event(events, 4)
+            elif self.spw_condition(n_arr) and  self.triggered:
                 pass
             elif self.triggered:
                 self.triggered = 0
-                events.append({'type': 3, 'sampleNum': n_samples-10, 'eventId': 5})
+                self.new_event(events, 5)
 
             if self.jitter and self.jitter_count_down == -1:
-                events = [{'type': 3, 'sampleNum': n_samples-10, 'eventId': 5},] # close the 1 event
+
+                self.new_event(events, 5)
                 self.jitter_count_down = -2
 
 
             if self.jitter and self.jitter_count_down >= 0:
                 if self.jitter_count_down == 0:
-                    events.append({'type': 3, 'sampleNum': n_samples-10, 'eventId': 1})
-                    try:
-                        self.arduino.write('1'* 64)
-                    except AttributeError:
-                        print "Can't send pulse"
-                    self.pulseNo += 1
-                    print "generating pulse ", self.pulseNo
+                    self.stimulate()
+                    self.new_event(events, 1)
                     self.jitter_count_down = -1
                 else:
                     self.jitter_count_down -= 1
@@ -210,7 +237,8 @@ isDebug = False
 ############## here starts the C++ interface
 
 
-cdef public void pluginStartup(float samplingRate) with gil:
+# noinspection PyPep8Naming
+cdef public void pluginStartup(float sampling_rate) with gil:
     global sr
     #import scipy.signal
     #import PIL
@@ -219,12 +247,14 @@ cdef public void pluginStartup(float samplingRate) with gil:
     if isDebug:
         print "The python path is"
         print sys.path
-    sr = samplingRate
+    sr = sampling_rate
     pluginOp.startup(sr)
 
+# noinspection PyPep8Naming
 cdef public int getParamNum()  with gil:
     return len(pluginOp.param_config())
 
+# noinspection PyPep8Naming
 cdef public void getParamConfig(ParamConfig *params) with gil:
     cdef int *ent
     ppc = pluginOp.param_config()
@@ -251,9 +281,10 @@ cdef public void getParamConfig(ParamConfig *params) with gil:
 
 
 
-cdef public void pluginFunction(float *buffer, int nChans, int nSamples, PythonEvent *events) with gil:
+# noinspection PyPep8Naming
+cdef public void pluginFunction(float *data_buffer, int nChans, int nSamples, PythonEvent *events) with gil:
     global sr
-    n_arr = np.asarray(<np.float32_t[:nChans, :nSamples]> buffer)
+    n_arr = np.asarray(<np.float32_t[:nChans, :nSamples]> data_buffer)
     #pluginOp.set_events(events)
     #pm2 = PluginModule(pm)
 
@@ -303,21 +334,25 @@ cdef void add_event(PythonEvent *e_c, object e_py) with gil:
 cdef public int pluginisready() with gil:
     return pluginOp.is_ready()
 
+# noinspection PyPep8Naming
 cdef public void setIntParam(char *name, int value) with gil:
     if isDebug:
         print "In Python: ", name, ": ", value
     setattr(pluginOp, name, value)
 
+# noinspection PyPep8Naming
 cdef public void setFloatParam(char *name, float value) with gil:
     # print "In Python: ", name, ": ", value
     setattr(pluginOp, name, value)
 
+# noinspection PyPep8Naming
 cdef public int getIntParam(char *name) with gil:
     if isDebug:
         print "In Python getIntParam: ", name
     value = getattr(pluginOp, name)
     return <int>value
 
+# noinspection PyPep8Naming
 cdef public float getFloatParam(char *name) with gil:
     # print "In Python: ", name, ": ", value
     value =  getattr(pluginOp, name)
