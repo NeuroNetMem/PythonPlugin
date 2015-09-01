@@ -69,7 +69,7 @@ class SPWFinder(object):
         self.jitter_time = 200. # in ms
         self.refractory_count_down_thresh = 0
         self.refractory_count_down = 0
-        self.refractory_time = 100.
+        self.refractory_time = 100. # time that the plugin will not react to trigger after one pulse
         self.chan_in = 0
         self.chan_out = 0
         self.n_samples = 0
