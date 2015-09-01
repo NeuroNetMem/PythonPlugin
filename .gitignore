@@ -2,3 +2,4 @@
 **/*.h
 **/*.cpp
 **/*.pyc
+**/.ipynb_checkpoints
