@@ -133,7 +133,7 @@ class SPWFinder(object):
         return 1
 
     def param_config(self):
-        chan_labels = range(16)
+        chan_labels = range(32)
         # return (("toggle", "Enabled", True),
         #         ("int_set", "chan_in", chan_labels),
         #         ("int_set", "chan_ripples", chan_labels),

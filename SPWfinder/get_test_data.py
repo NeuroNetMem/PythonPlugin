@@ -8,6 +8,8 @@ import sys
 import h5py
 import math
 import numpy as np
+import matplotlib
+matplotlib.use('Qt4Agg')
 import matplotlib.pyplot as plt
 
 pluginDir = "/Users/fpbatta/src/GUImerge/GUI/Plugins"
@@ -45,14 +47,14 @@ def lookup_data(tStart, tEnd):
 
     print "iEnd: ", iEnd
 
+    plugin.chan_in = 18-1
     data = tData[iStart:iEnd, :] * bit_volts
     spread = 1000
-    chans_to_plot = [1, 2, 3, 4, 5, 9]
+    chans_to_plot = [1, 2, 3, 4, 5, plugin.chan_in+1]
     nSamples = data.shape[0]
     nChans = data.shape[1]
     print nSamples
 
-    plugin.chan_in = 1-1
     print "chan_in: ", plugin.chan_in
     frame_starts = np.arange(iStart, iEnd, samples_per_frame, dtype=np.int)
     data = np.zeros([0,nChans], dtype=np.float32)
@@ -70,10 +72,11 @@ def lookup_data(tStart, tEnd):
         plt.plot(x, y)
         plt.text(tStart+(tEnd-tStart)*1., -ix*spread, str(ch))
     plt.show()
-
+    mng = plt.get_current_fig_manager()
+    mng.window._raise()
 
 if __name__ == '__main__':
-    lookup_data(49, 55)
+    lookup_data(60, 75)
 
 
 
