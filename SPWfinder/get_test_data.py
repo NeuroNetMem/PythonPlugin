@@ -11,7 +11,7 @@ import numpy as np
 import matplotlib
 matplotlib.use('Qt4Agg')
 import matplotlib.pyplot as plt
-
+plt.ion()
 pluginDir = "/Users/fpbatta/src/GUImerge/GUI/Plugins"
 testDataFile = "/Users/fpbatta/dataLisa/disruption0724/100_raw_test.kwd"
 sys.path.append(pluginDir)
@@ -58,25 +58,40 @@ def lookup_data(tStart, tEnd):
     print "chan_in: ", plugin.chan_in
     frame_starts = np.arange(iStart, iEnd, samples_per_frame, dtype=np.int)
     data = np.zeros([0,nChans], dtype=np.float32)
+    t = 0.
+    event_time = tStart
+    frame_duration = float(samples_per_frame) / sample_rate
+    print "frame duration: ", frame_duration
+    event_times = np.empty([0,], dtype=np.float64)
+
+    print frame_duration
     for ix in frame_starts:
         d = tData[ix:(ix+samples_per_frame), :].astype(np.float32)
         #d0 = d.copy()
-        d = d * 0.195
-        plugin.bufferfunction(d.transpose() )
+        d *= 0.195
+        events = plugin.bufferfunction(d.transpose() )
         data = np.concatenate((data, d), axis=0)
+        event_time += frame_duration
+        if events:
+            for e in events:
+                if e['eventId'] == 1:
+                    event_times = np.append(event_times, event_time)
+
 
     t = np.linspace(tStart, tEnd, data.shape[0])
+    print event_times
     for ix, ch in enumerate(chans_to_plot):
         x = t
         y = data[:,ch-1]-ix*spread
         plt.plot(x, y)
         plt.text(tStart+(tEnd-tStart)*1., -ix*spread, str(ch))
+    plt.plot(event_times, -3000 * np.ones(event_times.shape), 'go')
     plt.show()
     mng = plt.get_current_fig_manager()
-    mng.window._raise()
-
+    mng.window.raise_()
+    plt.waitforbuttonpress()
 if __name__ == '__main__':
-    lookup_data(60, 75)
+    lookup_data(55, 65)
 
 
 
