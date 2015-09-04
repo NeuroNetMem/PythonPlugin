@@ -13,7 +13,7 @@ matplotlib.use('Qt4Agg')
 import matplotlib.pyplot as plt
 plt.ion()
 pluginDir = "/Users/fpbatta/src/GUImerge/GUI/Plugins"
-testDataFile = "/Users/fpbatta/dataLisa/disruption0724/100_raw_test.kwd"
+testDataFile = "/Users/fpbatta/dataLisa/disruption0902/100_raw_test.kwd"
 sys.path.append(pluginDir)
 
 import SPWfinder.plugin

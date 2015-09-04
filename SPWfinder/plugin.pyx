@@ -183,7 +183,7 @@ class SPWFinder(object):
         self.lfp_buffer = n_arr[chan_in,:]
         n_arr[self.chan_out+1,:] = np.fabs(n_arr[self.chan_out,:])
         n_arr[self.chan_out+2,:] = 5. *np.mean(n_arr[self.chan_out+1,:]) * np.ones((1,self.n_samples))
-
+        print "Mean: ", np.mean(n_arr[self.chan_out+1,:])
 
         if isDebug:
             print "done processing"
