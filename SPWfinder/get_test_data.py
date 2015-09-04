@@ -47,10 +47,10 @@ def lookup_data(tStart, tEnd):
 
     print "iEnd: ", iEnd
 
-    plugin.chan_in = 18-1
+    plugin.chan_in = 18
     data = tData[iStart:iEnd, :] * bit_volts
     spread = 1000
-    chans_to_plot = [1, 2, 3, 4, 5, plugin.chan_in+1]
+    chans_to_plot = [1, 2, 3, 4, 5, plugin.chan_in]
     nSamples = data.shape[0]
     nChans = data.shape[1]
     print nSamples
@@ -86,7 +86,7 @@ def lookup_data(tStart, tEnd):
         plt.plot(x, y)
         plt.text(tStart+(tEnd-tStart)*1., -ix*spread, str(ch))
     plt.plot(event_times, -3000 * np.ones(event_times.shape), 'go')
-    plt.show()
+    plt.show(block=True)
     mng = plt.get_current_fig_manager()
     mng.window.raise_()
     plt.waitforbuttonpress()

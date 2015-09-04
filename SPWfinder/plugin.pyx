@@ -180,12 +180,11 @@ class SPWFinder(object):
         filtered_signal = scipy.signal.lfilter(self.filter_b, self.filter_a, signal_to_filter)
 
         n_arr[self.chan_out,:] = filtered_signal[self.lfp_buffer.size:]
-        self.lfp_buffer = n_arr[chan_in,:]
+        self.lfp_buffer = n_arr[chan_in,:].copy()
         n_arr[self.chan_out+1,:] = np.fabs(n_arr[self.chan_out,:])
         n_arr[self.chan_out+2,:] = 5. *np.mean(n_arr[self.chan_out+1,:]) * np.ones((1,self.n_samples))
-        print "Mean: ", np.mean(n_arr[self.chan_out+1,:])
-
         if isDebug:
+            print "Mean: ", np.mean(n_arr[self.chan_out+1,:])
             print "done processing"
 
         #events
