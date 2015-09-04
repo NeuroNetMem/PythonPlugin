@@ -91,7 +91,7 @@ def lookup_data(tStart, tEnd):
     mng.window.raise_()
     plt.waitforbuttonpress()
 if __name__ == '__main__':
-    lookup_data(55, 65)
+    lookup_data(0, 10)
 
 
 
