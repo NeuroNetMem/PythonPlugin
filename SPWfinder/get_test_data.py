@@ -74,9 +74,11 @@ def lookup_data(tStart, tEnd):
         event_time += frame_duration
         if events:
             for e in events:
-                if e['eventId'] == 1:
-                    event_times = np.append(event_times, event_time)
-
+                try:
+                    if e['eventId'] == 1:
+                        event_times = np.append(event_times, event_time)
+                except TypeError:
+                    print "wrong event: ", e
 
     t = np.linspace(tStart, tEnd, data.shape[0])
     print event_times
@@ -91,7 +93,7 @@ def lookup_data(tStart, tEnd):
     mng.window.raise_()
     plt.waitforbuttonpress()
 if __name__ == '__main__':
-    lookup_data(0, 10)
+    lookup_data(0, 900)
 
 
 

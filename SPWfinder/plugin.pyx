@@ -89,6 +89,19 @@ class SPWFinder(object):
         self.thresh_start = 30.
         self.threshold = self.thresh_start
 
+
+        self.swing_thresh_min = 100.
+        self.swing_thresh_max = 20000.
+        self.swing_thresh_start = 1000.
+        self.swing_thresh = self.swing_thresh_start
+
+        self.SWINGING = 1
+        self.NOT_SWINGING = 0
+        self.swing_state = self.NOT_SWINGING
+        self.swing_count_down_thresh = 0
+        self.swing_count_down = 0
+        self.swing_down_time = 2000. # time that it will be prevetned from firing after a swing event
+
         self.pulseNo = 0
         self.triggered = 0
         self.samplingRate = 0.
@@ -142,10 +155,11 @@ class SPWFinder(object):
         return (("toggle", "enabled", True),
                 ("toggle", "jitter", False),
                 ("int_set", "chan_in", chan_labels),
-                ("float_range", "threshold", self.thresh_min, self.thresh_max, self.thresh_start))
+                ("float_range", "threshold", self.thresh_min, self.thresh_max, self.thresh_start),
+                ("float_range", "swing_threshold", self.swing_thresh_min, self.swing_thresh_max, self.swing_thresh_start))
 
     def spw_condition(self, n_arr):
-        return np.mean(n_arr[self.chan_out+1,:]) > self.threshold
+        return (np.mean(n_arr[self.chan_out+1,:]) > self.threshold) and self.swing_state == self.NOT_SWINGING
 
     def stimulate(self):
         try:
@@ -167,22 +181,39 @@ class SPWFinder(object):
         events = []
         cdef int chan_in
         cdef int chan_out
-        chan_in = self.chan_in -1
+        chan_in = self.chan_in - 1
         self.chan_out = self.chan_ripples
 
         self.n_samples = int(n_arr.shape[1])
 
+        # setting up frame dependent parameters
         frame_time = 1000. * self.n_samples / self.samplingRate
         self.jitter_count_down_thresh = int(self.jitter_time / frame_time)
         self.refractory_count_down_thresh = int(self.refractory_time / frame_time)
+        self.swing_count_down_thresh = int(self.swing_down_time / frame_time)
+
         signal_to_filter = np.hstack((self.lfp_buffer, n_arr[chan_in,:]))
         signal_to_filter = signal_to_filter - signal_to_filter[-1]
         filtered_signal = scipy.signal.lfilter(self.filter_b, self.filter_a, signal_to_filter)
-
         n_arr[self.chan_out,:] = filtered_signal[self.lfp_buffer.size:]
         self.lfp_buffer = n_arr[chan_in,:].copy()
         n_arr[self.chan_out+1,:] = np.fabs(n_arr[self.chan_out,:])
         n_arr[self.chan_out+2,:] = 5. *np.mean(n_arr[self.chan_out+1,:]) * np.ones((1,self.n_samples))
+
+
+        # the swing detector state machine
+        max_swing = np.max(np.fabs(n_arr[chan_in,:]))
+        if self.swing_state == self.NOT_SWINGING:
+            if max_swing > self.swing_thresh:
+                self.swing_state = self.SWINGING
+                self.swing_count_down = self.swing_count_down_thresh
+                self.new_event(events, 6)
+        else:
+            self.swing_count_down -= 1
+            if self.swing_count_down == 0:
+                self.swing_state = self.NOT_SWINGING
+
+
         if isDebug:
             print "Mean: ", np.mean(n_arr[self.chan_out+1,:])
             print "done processing"
@@ -193,7 +224,7 @@ class SPWFinder(object):
         # 3: triggered, not enabled
         # 4: trigger armed, jittered
         # 5: terminating pulse
-
+        # 6: swing detected
         # machines:
         # ENABLED vs. DISABLED vs. JITTERED
         # states:
