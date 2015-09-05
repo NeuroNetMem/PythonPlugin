@@ -375,8 +375,8 @@ cdef void add_event(PythonEvent *e_c, object e_py) with gil:
     if 'numBytes' in e_py:
         e_c.numBytes = <unsigned char>e_py['numBytes']
     if 'eventData' in e_py:
-        e_c.eventData = <unsigned char *>e_py['eventData'] #TODO this leaves the brunt of converting to a uint8 pointer to the plugin module
-        # it will be desirable to have this expressed as a numpy array so that we don't need to have C pointers in the plugin necessarily
+        e_c.eventData = <unsigned char *>e_py['eventData']
+        # TODO to be tested if this works with a numpy input
 
 cdef public int pluginisready() with gil:
     return pluginOp.is_ready()
