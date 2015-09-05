@@ -10,14 +10,9 @@ import serial
 from libc.stdlib cimport malloc, calloc
 
 
-
-
-
 cdef extern from "../../Source/Processors/PythonProcessor/PythonParamConfig.h":
     enum paramType:
         TOGGLE, INT_SET, FLOAT_RANGE
-
-
 
 
 cdef extern from "../../Source/Processors/PythonProcessor/PythonParamConfig.h":
@@ -32,8 +27,6 @@ cdef extern from "../../Source/Processors/PythonProcessor/PythonParamConfig.h":
         float startValue
 
 
-
-
 cdef extern from "../../Source/Processors/PythonProcessor/PythonEvent.h":
     struct PythonEvent:
         unsigned char type
@@ -43,6 +36,7 @@ cdef extern from "../../Source/Processors/PythonProcessor/PythonEvent.h":
         unsigned char numBytes
         unsigned char *eventData
         PythonEvent *nextEvent
+
 
 class SPWFinder(object):
     def __init__(self):

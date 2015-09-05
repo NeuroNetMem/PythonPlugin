@@ -2,7 +2,7 @@ __author__ = 'fpbatta'
 
 
 import matplotlib
-matplotlib.use('Qt4Agg')
+#matplotlib.use('Qt4Agg')
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -29,3 +29,4 @@ for i in np.arange(0, 1, 0.02):
     figure.canvas.draw()
     figure.canvas.flush_events()
     sleep(0.02)
+    raw_input('ciao')
