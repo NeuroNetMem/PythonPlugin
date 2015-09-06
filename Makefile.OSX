@@ -3,12 +3,12 @@
 SUBDIRS = spwfinder pulse_test_delay signal_plot
 
 
-.PHONY: clean subdirs $(SUBDIRS)
+.PHONY: clean subdirs spwfinder $(SUBDIRS)
 
 subdirs: $(SUBDIRS)
 
 
-$(SUBDIRS): $@/$@.so
+%: %/%.so
 
 %.so: %.o
 	gcc -g -O2 -shared -o $@ $< `python-config --ldflags`
@@ -25,4 +25,6 @@ $(SUBDIRS): $@/$@.so
 
 clean:
 	for dir in $(SUBDIRS) ; do \
-	rm $$dir/$$dir.c $$dir/$$dir.h $$dir/$$dir.so; done
+	rm $$dir/$$dir.c \
+	$$dir/$$dir.h \
+	$$dir/$$dir.so; done

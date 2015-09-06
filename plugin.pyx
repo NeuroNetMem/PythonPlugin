@@ -10,7 +10,7 @@ from libc.stdlib cimport malloc, calloc
 
 
 
-
+sr = 1.
 
 cdef extern from "../../Source/Processors/PythonProcessor/PythonParamConfig.h":
     enum paramType:
