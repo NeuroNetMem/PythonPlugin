@@ -227,4 +227,4 @@ class SPWFinder(object):
 
 pluginOp = SPWFinder()
 
-include "plugin.pyx"
+include "../plugin.pyx"

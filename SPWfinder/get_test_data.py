@@ -5,10 +5,12 @@ simple data extractor for testing the plugins
 """
 
 import sys
-import h5py
 import math
+
+import h5py
 import numpy as np
 import matplotlib
+
 matplotlib.use('Qt4Agg')
 import matplotlib.pyplot as plt
 plt.ion()
@@ -16,9 +18,9 @@ pluginDir = "/Users/fpbatta/src/GUImerge/GUI/Plugins"
 testDataFile = "/Users/fpbatta/dataLisa/disruption0902/100_raw_test.kwd"
 sys.path.append(pluginDir)
 
-import SPWfinder.plugin
+import plugin
 
-plugin = SPWfinder.plugin.SPWFinder()
+plugin = plugin.SPWFinder()
 tFile = h5py.File(testDataFile)
 tData = tFile["/recordings/0/data"]
 sample_rate = tFile["/recordings/0"].attrs["sample_rate"][0]
@@ -33,8 +35,8 @@ print "sample_rate: ", sample_rate
 
 plugin.startup(sample_rate)
 def reload_plugin():
-    reload(SPWfinder.plugin)
-    plugin = SPWfinder.plugin.SPWFinder()
+    reload(plugin)
+    plugin = plugin.SPWFinder()
 
 
 def lookup_data(tStart, tEnd):
