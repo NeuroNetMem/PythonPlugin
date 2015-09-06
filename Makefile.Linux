@@ -1,0 +1,15 @@
+SOURCE_DIR := $(shell pwd )
+
+
+%.so: %.o
+	gcc -g -O2 -shared -o $@ $< `python-config --ldflags`
+
+
+%.o: %.c
+	gcc -g -O2 -fpic -DWITH_THREAD=1 -c $< -o $@ `python-config --includes` -I`python -c "import numpy; print numpy.get_include()"` -L$(SOURCE_DIR)/../python-libs/ -Wl,-rpath=$(SOURCE_DIR)/../python-libs
+
+
+%.c: %.pyx plugin.pyx
+	cython $<
+	
+	

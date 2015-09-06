@@ -64,7 +64,7 @@ class SPWFinder(object):
         self.FIRING = 4
         self.state = self.READY
 
-        print "finished SPWfinder constructor"
+        print "finished spwfinder constructor"
 
     def startup(self, sampling_rate):
         self.samplingRate = sampling_rate
