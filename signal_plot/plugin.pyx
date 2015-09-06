@@ -2,7 +2,6 @@ import sys
 import numpy as np
 cimport numpy as np
 from cython cimport view
-import serial
 import matplotlib
 #matplotlib.use('Qt4Agg')
 
@@ -43,7 +42,7 @@ class SimplePlotter(object):
         #define variables
         self.y = np.empty([0,], dtype = np.float32)
         self.chan_in = 2
-        self.plotting_interval = 1000. # in ms
+        self.plotting_interval = 250. # in ms
         self.frame_count = 0
         self.frame_max = 0
         self.sampling_rate = 0.
