@@ -2,13 +2,7 @@ import sys
 import numpy as np
 cimport numpy as np
 from cython cimport view
-import serial
-
-
-
 from libc.stdlib cimport malloc, calloc
-
-
 
 sr = 1.
 
@@ -17,11 +11,6 @@ cdef extern from "../../Source/Processors/PythonProcessor/PythonParamConfig.h":
         TOGGLE, INT_SET, FLOAT_RANGE
 
 
-# struct ParamConfig {
-#     paramType type;
-#     char name[255];
-#     int isEnabled;
-# };
 
 cdef extern from "../../Source/Processors/PythonProcessor/PythonParamConfig.h":
     struct ParamConfig:
@@ -35,17 +24,6 @@ cdef extern from "../../Source/Processors/PythonProcessor/PythonParamConfig.h":
         float startValue
 
 
-# struct PythonEvent {
-#     unsigned char type;
-#     int sampleNum;
-#     unsigned char eventId;
-#     unsigned char eventChannel;
-#     unsigned char numBytes;
-#     unsigned char *eventData;
-#     struct PythonEvent *nextEvent
-# };
-
-
 cdef extern from "../../Source/Processors/PythonProcessor/PythonEvent.h":
     struct PythonEvent:
         unsigned char type
@@ -57,11 +35,11 @@ cdef extern from "../../Source/Processors/PythonProcessor/PythonEvent.h":
         PythonEvent *nextEvent
 
 
-
-
 # noinspection PyPep8Naming
 cdef public void pluginStartup(float sampling_rate) with gil:
     global sr
+    global isDebug
+    global pluginOp
     #import scipy.signal
     #import PIL
     #print "executable is", sys.executable
