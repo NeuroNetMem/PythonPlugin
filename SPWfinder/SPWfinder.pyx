@@ -57,7 +57,7 @@ class SPWFinder(object):
         self.filter_b = []
         self.arduino = None
         self.lfp_buffer = np.zeros((500,))
-
+        self.lfp_buffer_max_count = 500
         self.READY=1
         self.ARMED=2
         self.REFRACTORY=3
@@ -143,7 +143,9 @@ class SPWFinder(object):
         signal_to_filter = signal_to_filter - signal_to_filter[-1]
         filtered_signal = scipy.signal.lfilter(self.filter_b, self.filter_a, signal_to_filter)
         n_arr[self.chan_out,:] = filtered_signal[self.lfp_buffer.size:]
-        self.lfp_buffer = n_arr[chan_in,:].copy()
+        self.lfp_buffer = np.append(self.lfp_buffer, n_arr[chan_in,:])
+        if self.lfp_buffer.size > self.lfp_buffer_max_count:
+            self.lfp_buffer = self.lfp_buffer[-self.lfp_buffer_max_count:]
         n_arr[self.chan_out+1,:] = np.fabs(n_arr[self.chan_out,:])
         n_arr[self.chan_out+2,:] = 5. *np.mean(n_arr[self.chan_out+1,:]) * np.ones((1,self.n_samples))
 

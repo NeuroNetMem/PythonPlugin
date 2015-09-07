@@ -82,7 +82,7 @@ cdef public void getParamConfig(ParamConfig *params) with gil:
 
 
 # noinspection PyPep8Naming
-cdef public void pluginFunction(float *data_buffer, int nChans, int nSamples, PythonEvent *events) with gil:
+cdef public void pluginFunction(float *data_buffer, int nChans, int nSamples, int nRealSamples, PythonEvent *events) with gil:
     global sr
     n_arr = np.asarray(<np.float32_t[:nChans, :nSamples]> data_buffer)
     #pluginOp.set_events(events)
@@ -90,7 +90,7 @@ cdef public void pluginFunction(float *data_buffer, int nChans, int nSamples, Py
 
     if isDebug:
         print "sr: ", sr
-    samples_to_read = int(nSamples * sr / 44100.)
+    samples_to_read = nRealSamples
     events_to_add = pluginOp.bufferfunction(n_arr[:,0:samples_to_read])
 
         # struct PythonEvent:
