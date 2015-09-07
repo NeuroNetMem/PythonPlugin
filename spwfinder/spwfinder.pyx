@@ -132,13 +132,16 @@ class SPWFinder(object):
         self.chan_out = self.chan_ripples
 
         self.n_samples = int(n_arr.shape[1])
+
+        if self.n_samples == 0:
+            return events
+
         print "in Python num samples = ", self.n_samples
         # setting up frame dependent parameters
         frame_time = 1000. * self.n_samples / self.samplingRate
-        if frame_time > 0.: 
-            self.jitter_count_down_thresh = int(self.jitter_time / frame_time)
-            self.refractory_count_down_thresh = int(self.refractory_time / frame_time)
-            self.swing_count_down_thresh = int(self.swing_down_time / frame_time)
+        self.jitter_count_down_thresh = int(self.jitter_time / frame_time)
+        self.refractory_count_down_thresh = int(self.refractory_time / frame_time)
+        self.swing_count_down_thresh = int(self.swing_down_time / frame_time)
 
         signal_to_filter = np.hstack((self.lfp_buffer, n_arr[chan_in,:]))
         signal_to_filter = signal_to_filter - signal_to_filter[-1]
