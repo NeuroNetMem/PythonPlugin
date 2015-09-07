@@ -5,7 +5,6 @@ from cython cimport view
 # import matplotlib
 # matplotlib.use('CocoaAgg')
 import matplotlib.pyplot as plt
-from matplotlib.widgets import Slider
 
 isDebug = False
 
@@ -22,30 +21,18 @@ class SimplePlotter(object):
         self.hl = None
         self.figure = None
         self.n_samples = 0
-        self.ylim = 100
-        self.syax = None
 
     def startup(self, sr):
         #initialize plot
         self.sampling_rate = sr
         self.figure, self.ax = plt.subplots()
-        plt.subplots_adjust(left=0.25, bottom=0.25)
-        axcolor = 'lightgoldenrodyellow'
-        axyax = plt.axes([0.25, 0.1, 0.65, 0.03], axisbg=axcolor)
-        self.syax = Slider(axyax, 'Freq', 50, 2000, valinit=self.ylim)
-        #self.syax.on_changed(self.update_ylim)
-        # timer = self.figure.canvas.new_timer(interval=100)
-        # timer.add_callback(self.update_ylim)
-        # timer.start()
         self.hl, = self.ax.plot([],[])
-        #self.ax.set_autoscaley_on(True)
+        self.ax.set_autoscaley_on(True)
         self.ax.margins(y=0.1)
         self.ax.set_xlim(0., 4. * np.pi)
         plt.ion()
         plt.show()
 
-    def update_ylim(self):
-        self.ylim = self.syax.val
 
     def plugin_name(self):
         return "SimplePlotter"
@@ -72,7 +59,6 @@ class SimplePlotter(object):
             self.hl.set_ydata(self.y)
             self.hl.set_xdata(x)
             self.ax.set_xlim(0., self.plotting_interval)
-            self.ax.set_ylim(-self.ylim, self.ylim)
             self.ax.relim()
             self.ax.autoscale_view(True,True,True)
             self.figure.canvas.draw()
