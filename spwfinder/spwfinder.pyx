@@ -37,7 +37,7 @@ class SPWFinder(object):
         self.threshold = self.thresh_start
 
 
-        self.swing_thresh_min = 100.
+        self.swing_thresh_min = 10.
         self.swing_thresh_max = 20000.
         self.swing_thresh_start = 1000.
         self.swing_thresh = self.swing_thresh_start
@@ -136,7 +136,6 @@ class SPWFinder(object):
         if self.n_samples == 0:
             return events
 
-        print "in Python num samples = ", self.n_samples
         # setting up frame dependent parameters
         frame_time = 1000. * self.n_samples / self.samplingRate
         self.jitter_count_down_thresh = int(self.jitter_time / frame_time)
@@ -161,10 +160,12 @@ class SPWFinder(object):
                 self.swing_state = self.SWINGING
                 self.swing_count_down = self.swing_count_down_thresh
                 self.new_event(events, 6)
+                print "SWINGING"
         else:
             self.swing_count_down -= 1
             if self.swing_count_down == 0:
                 self.swing_state = self.NOT_SWINGING
+                print "NOT_SWINGING"
 
 
         if isDebug:
