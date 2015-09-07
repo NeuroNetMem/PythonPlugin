@@ -103,7 +103,7 @@ class SPWFinder(object):
                 ("toggle", "jitter", False),
                 ("int_set", "chan_in", chan_labels),
                 ("float_range", "threshold", self.thresh_min, self.thresh_max, self.thresh_start),
-                ("float_range", "swing_threshold", self.swing_thresh_min, self.swing_thresh_max, self.swing_thresh_start))
+                ("float_range", "swing_thresh", self.swing_thresh_min, self.swing_thresh_max, self.swing_thresh_start))
 
     def spw_condition(self, n_arr):
         return (np.mean(n_arr[self.chan_out+1,:]) > self.threshold) and self.swing_state == self.NOT_SWINGING
