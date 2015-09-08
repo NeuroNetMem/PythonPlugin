@@ -91,7 +91,9 @@ cdef public void pluginFunction(float *data_buffer, int nChans, int nSamples, in
     if isDebug:
         print "sr: ", sr
     samples_to_read = nRealSamples
-    events_to_add = pluginOp.bufferfunction(n_arr[:,0:samples_to_read])
+    events_to_add = []
+    if samples_to_read > 0:
+        events_to_add = pluginOp.bufferfunction(n_arr[:,0:samples_to_read])
 
         # struct PythonEvent:
         # unsigned char type
