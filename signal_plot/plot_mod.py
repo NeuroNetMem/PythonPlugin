@@ -14,7 +14,7 @@ x = np.linspace(0., 4. * np.pi, 200)
 y = np.sin(x)
 
 figure, ax = plt.subplots()
-hl, = ax.plot([],[])
+hl, = ax.bufferfunction([],[])
 ax.set_autoscaley_on(True)
 #ax.set_ylim(-1.2, 1.2)
 ax.margins(y=0.1)

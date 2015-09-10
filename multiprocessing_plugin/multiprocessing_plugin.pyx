@@ -2,74 +2,76 @@ import sys
 import numpy as np
 cimport numpy as np
 from cython cimport view
-# import matplotlib
-# matplotlib.use('CocoaAgg')
-import matplotlib.pyplot as plt
 
+from multiprocessing import Process, Pipe
+
+sys.path.append('/Users/fpbatta/src/GUImerge/GUI/Plugins/multiprocessing_plugin')
+from simple_plotter import SimplePlotter
 isDebug = False
 
-class SimplePlotter(object):
+class MultiprocessingPlugin(object):
     def __init__(self):
+        self.if_params = ()
         #define variables
-        self.y = np.empty([0,], dtype = np.float32)
-        self.chan_in = 2
-        self.plotting_interval = 250. # in ms
-        self.frame_count = 0
-        self.frame_max = 0
-        self.sampling_rate = 0.
-        self.ax = None
-        self.hl = None
-        self.figure = None
-        self.n_samples = 0
+        self.plot_pipe = None
+        self.plotter = None
+        self.plot_process = None
+        self.has_child = False
+
 
     def startup(self, sr):
-        #initialize plot
-        self.sampling_rate = sr
-        self.figure, self.ax = plt.subplots()
-        self.hl, = self.ax.plot([],[])
-        self.ax.set_autoscaley_on(True)
-        self.ax.margins(y=0.1)
-        self.ax.set_xlim(0., 4. * np.pi)
-        plt.ion()
-        plt.show()
+        self.plot_pipe, plotter_pipe = Pipe()
 
+
+        self.plotter = SimplePlotter(20000.)
+        self.plot_process = Process(target=self.plotter,
+                                    args=(plotter_pipe, ))
+        self.plot_process.daemon = True
+        self.plot_process.start()
+        self.has_child = True
+        self.if_params = self.plotter.param_config()
 
     def plugin_name(self):
         return "SimplePlotter"
 
     def is_ready(self):
-        return 1
+        return self.has_child
 
     def param_config(self):
-        return ()
+        return self.plotter.param_config()
 
-    def bufferfunction(self, n_arr):
-        # setting up frame dependent parameters
-        self.n_samples = int(n_arr.shape[1])
-
-        frame_time = 1000. * self.n_samples / self.sampling_rate
-        self.frame_max = int(self.plotting_interval / frame_time)
-        #increment the buffer
-        self.y = np.append(self.y, n_arr[self.chan_in-1, :])
-        self.frame_count += 1
-
-        if self.frame_count == self.frame_max:
-            #update the plot
-            x = np.arange(len(self.y), dtype=np.float32) * 1000. / self.sampling_rate
-            self.hl.set_ydata(self.y)
-            self.hl.set_xdata(x)
-            self.ax.set_xlim(0., self.plotting_interval)
-            self.ax.relim()
-            self.ax.autoscale_view(True,True,True)
-            self.figure.canvas.draw()
-            self.figure.canvas.flush_events()
-
-            self.frame_count = 0
-            self.y = np.empty([0,], dtype = np.float32)
+    def bufferfunction(self, n_arr = None, finished=False):
+        # print "entering plot"
+        send = self.plot_pipe.send
+        if finished:
+            send(None)
+        else:
+            # print "sending data"
+            send({'data': n_arr})
 
         events = []
+        while 1:
+            if not self.plot_pipe.poll():
+                break
+            e = self.plot_pipe.recv()
+            events.append(e)
+            print e
         return events
 
+    def set_param(self, name, value):
+        self.plot_pipe.send({'param': {name: value}})
 
-pluginOp = SimplePlotter()
+    def __setattr__(self, key, value):
+        if hasattr(self, "if_params"):
+            for l in self.if_params:
+                if key == l[1]:
+                    self.set_param(key, value)
+                    return
+        object.__setattr__(self, key, value)
+
+    def __del__(self):
+        self.bufferfunction(finished=True)
+
+
+pluginOp = MultiprocessingPlugin()
 include "../plugin.pyx"

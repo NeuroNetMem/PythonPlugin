@@ -15,7 +15,7 @@ from matplotlib import animation
 # First set up the figure, the axis, and the plot element we want to animate
 fig = plt.figure()
 ax = plt.axes(xlim=(0, 2), ylim=(-2, 2))
-line, = ax.plot([], [], lw=2)
+line, = ax.bufferfunction([], [], lw=2)
 
 # initialization function: plot the background of each frame
 def init():
