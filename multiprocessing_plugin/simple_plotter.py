@@ -1,15 +1,14 @@
+__author__ = 'fpbatta'
+
 import time
 import numpy as np
-# import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
 
-from multiprocessing import Pipe, Process
-import sys
-__author__ = 'fpbatta'
+from plot_subprocess import PlotSubprocess
 
 
-class SimplePlotter(object):  # TODO more configuration stuff that may be obtained
+class SimplePlotter(PlotSubprocess):
     def __init__(self, sampling_rate):
         """
         :param sampling_rate: the sampling rate of the process
@@ -18,6 +17,9 @@ class SimplePlotter(object):  # TODO more configuration stuff that may be obtain
         no matplotlib object should be defined in here because they can't be pickled and sent it
         through the process borders. The constructor gets called in the
         """
+
+        super(SimplePlotter, self).__init__()
+
         self.y = np.empty((0, ), dtype=np.float32)  # the buffer for the data that gets accumulated
         self.chan_in = 2
         self.plotting_interval = 250.  # in ms
@@ -33,12 +35,7 @@ class SimplePlotter(object):  # TODO more configuration stuff that may be obtain
         self.pipe = None
         self.code = 0
 
-    def __call__(self, pipe):
-        # initialize plot, this is the "main" of the child process
-
-        # initialize pipe
-        self.pipe = pipe
-
+    def startup(self):
         # build the plot
         ylim0 = 200
         print "starting plot"
@@ -64,50 +61,15 @@ class SimplePlotter(object):  # TODO more configuration stuff that may be obtain
         timer = self.figure.canvas.new_timer(interval=100, )
         timer.add_callback(self.callback)  # will it work like this?
         timer.start()
-
-        # start plotting thread
-        plt.show()
+        plt.show(block=True)
 
     @staticmethod
     def param_config():
         chan_labels = range(32)
         return ("int_set", "chan_in", chan_labels),
 
-    def is_ready(self):  # TODO propagate to plugin method
-        return 1
-
-    def callback(self):  # TODO send events
-        # print "entering callback"
-
-        events = []
-
-        while 1:
-            if not self.pipe.poll():
-                break
-
-            command = self.pipe.recv()
-            for k, v in command.iteritems():
-                if k == 'data':
-                    events = self.update_plot(v)
-                elif k == 'param':
-                    for name, value in v.iteritems():
-                        setattr(self, name, value)
-                        # DEBUG
-                        print v, " chan_in = ", self.chan_in
-                elif k == 'terminate':
-                    print "terminating"
-                    self.terminate()
-        # print "finishing callback"
-        if events:
-            print "sending events"
-            for e in events:
-                self.pipe.send(e)
-
-        return True
-
     def update_plot(self, n_arr):
         # setting up frame dependent parameters
-        # print "updating plot"
         self.n_samples = int(n_arr.shape[1])
         events = []
         frame_time = 1000. * self.n_samples / self.sampling_rate
@@ -135,10 +97,8 @@ class SimplePlotter(object):  # TODO more configuration stuff that may be obtain
         #     self.code += 1
         return events
 
-    def terminate(self):
-        print "terminating plot process"
-        plt.close()
-        sys.exit(0)
+
+from multiprocessing import Pipe, Process
 
 
 class MPPlugin(object):
@@ -151,14 +111,15 @@ class MPPlugin(object):
         self.plot_process.daemon = True
         self.plot_process.start()
 
-    def bufferfunction(self, n_arr = None, finished=False):
+    def bufferfunction(self, n_arr=None, finished=False):
         # print "entering plot"
         send = self.plot_pipe.send
         if finished:
             send(None)
         else:
             # print "sending data"
-            data = np.random.random((11, 1000))
+            if not n_arr:
+                n_arr = np.random.random((11, 1000))
             send({'data': n_arr})
 
         while 1:
