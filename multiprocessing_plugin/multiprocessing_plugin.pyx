@@ -5,9 +5,12 @@ from cython cimport view
 
 from multiprocessing import Process, Pipe
 
-sys.path.append('/Users/fpbatta/src/GUImerge/GUI/Plugins/multiprocessing_plugin')
-from simple_plotter import SimplePlotter
+sys.path.append('/home/fpbatta/src/GUI/Plugins')
+sys.path.append('/home/fpbatta/src/GUI/Plugins/multiprocessing_plugin')
+
 isDebug = False
+
+from simple_plotter import SimplePlotter
 
 class MultiprocessingPlugin(object):
     def __init__(self):
@@ -44,7 +47,8 @@ class MultiprocessingPlugin(object):
         # print "entering plot"
         send = self.plot_pipe.send
         if finished:
-            send(None)
+            print "sending stop signal"
+            send({'terminate': 0})
         else:
             # print "sending data"
             send({'data': n_arr})
@@ -70,6 +74,7 @@ class MultiprocessingPlugin(object):
         object.__setattr__(self, key, value)
 
     def __del__(self):
+        print "deleting mp" # DEBUG
         self.bufferfunction(finished=True)
 
 

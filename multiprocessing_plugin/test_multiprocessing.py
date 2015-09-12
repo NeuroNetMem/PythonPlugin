@@ -15,7 +15,8 @@ m.startup(20000.)
 m.bufferfunction(np.random.random((11,1000)))
 
 for i in range(100):
-    m.bufferfunction(np.random.random((11,1000)))
+    m.bufferfunction(200. * np.random.random((11,1000)))
     time.sleep(0.05)
 
-time.sleep(5)
+time.sleep(2)
+del m
