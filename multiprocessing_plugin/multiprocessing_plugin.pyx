@@ -3,10 +3,12 @@ import numpy as np
 cimport numpy as np
 from cython cimport view
 
-from multiprocessing import Process, Pipe
 
-sys.path.append('/home/fpbatta/src/GUI/Plugins')
-sys.path.append('/home/fpbatta/src/GUI/Plugins/multiprocessing_plugin')
+import multiprocessing as mp
+# print "the file"
+# print __file__
+sys.path.append('/Users/fpbatta/src/GUImerge/GUI/Plugins')
+sys.path.append('/Users/fpbatta/src/GUImerge/GUI/Plugins/multiprocessing_plugin')
 
 isDebug = False
 
@@ -23,11 +25,11 @@ class MultiprocessingPlugin(object):
 
 
     def startup(self, sr):
-        self.plot_pipe, plotter_pipe = Pipe()
+        self.plot_pipe, plotter_pipe = mp.Pipe()
 
 
         self.plotter = SimplePlotter(20000.)
-        self.plot_process = Process(target=self.plotter,
+        self.plot_process = mp.Process(target=self.plotter,
                                     args=(plotter_pipe, ))
         self.plot_process.daemon = True
         self.plot_process.start()

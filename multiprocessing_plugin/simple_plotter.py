@@ -2,6 +2,8 @@ __author__ = 'fpbatta'
 
 import time
 import numpy as np
+import matplotlib
+matplotlib.use('QT4Agg')
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
 
@@ -19,7 +21,7 @@ class SimplePlotter(PlotSubprocess):
         """
 
         super(SimplePlotter, self).__init__()
-
+        print "in init"
         self.y = np.empty((0, ), dtype=np.float32)  # the buffer for the data that gets accumulated
         self.chan_in = 2
         self.plotting_interval = 250.  # in ms
