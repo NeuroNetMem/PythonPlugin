@@ -64,7 +64,7 @@ class SPWFinder(object):
         self.FIRING = 4
         self.state = self.READY
 
-        print ("finished spwfinder constructor")
+        print ("finished SPWfinder constructor")
 
     def startup(self, sampling_rate):
         self.samplingRate = sampling_rate
@@ -122,7 +122,7 @@ class SPWFinder(object):
         events.append({'type': 3, 'sampleNum': timestamp, 'eventId': code})
 
     def bufferfunction(self, n_arr):
-        #print "plugin start"
+        #print("plugin start")
         if isDebug:
             print("shape: ", n_arr.shape)
         events = []

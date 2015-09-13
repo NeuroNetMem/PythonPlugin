@@ -3,6 +3,7 @@ import numpy as np
 cimport numpy as np
 from cython cimport view
 from libc.stdlib cimport malloc, calloc
+from libc.string cimport memcpy
 
 sr = 1.
 
@@ -45,8 +46,8 @@ cdef public void pluginStartup(float sampling_rate) with gil:
     #print "executable is", sys.executable
 #    print "signal is", scipy.signal
     if isDebug:
-        print "The python path is"
-        print sys.path
+        print("The python path is")
+        print(sys.path)
     sr = sampling_rate
     pluginOp.startup(sr)
 
@@ -57,16 +58,34 @@ cdef public int getParamNum()  with gil:
 # noinspection PyPep8Naming
 cdef public void getParamConfig(ParamConfig *params) with gil:
     cdef int *ent
+    cdef char * par_name
+    cdef size_t par_len
     ppc = pluginOp.param_config()
     for i in range(len(ppc)):
         par = ppc[i]
+        print("par[0], ", par[0])
+        print("par[1], ", par[1])
+        print("par[2], ", par[2])
+
+        par_len = len(par[1])+1
+        print("par len: ",par_len)
+        par_name = <char *>malloc(par_len)
+        par_bytes = par[1].encode('utf-8')
+        print("par_bytes: ", par_bytes)
+        print("par_name 1: ", par_name)
+
+        memcpy(par_name, <char*>par_bytes, int(par_len-1))
+        #par_name = par_bytes
+        par_name[par_len-1] = 0
+        print("par_name 2: ", par_name)
+
         if par[0] == "toggle":
             params[i].type = TOGGLE
-            params[i].name = par[1]
+            params[i].name = par_name
             params[i].isEnabled = par[2]
         elif par[0] == "int_set":
             params[i].type = INT_SET
-            params[i].name = par[1]
+            params[i].name = par_name
             params[i].nEntries = len(par[2])
             ent = <int *> malloc (sizeof (int) * len(par[2]) )
             for k in range(len(par[2])):
@@ -74,7 +93,7 @@ cdef public void getParamConfig(ParamConfig *params) with gil:
             params[i].entries = ent
         elif par[0] == "float_range":
             params[i].type = FLOAT_RANGE
-            params[i].name = par[1]
+            params[i].name = par_name
             params[i].rangeMin = par[2]
             params[i].rangeMax = par[3]
             params[i].startValue = par[4]
@@ -89,7 +108,7 @@ cdef public void pluginFunction(float *data_buffer, int nChans, int nSamples, in
     #pm2 = PluginModule(pm)
 
     if isDebug:
-        print "sr: ", sr
+        print("sr: ", sr)
     samples_to_read = nRealSamples
     events_to_add = []
     if samples_to_read > 0:
@@ -108,13 +127,13 @@ cdef public void pluginFunction(float *data_buffer, int nChans, int nSamples, in
         e_c = events
         add_event(e_c, e_py)
         if isDebug:
-            print "in Plugin, event ", e_c.eventId, " added"
+            print("in Plugin, event ", e_c.eventId, " added")
         last_e_c = e_c
         for i in range(1,len(events_to_add)):
             e_py = events_to_add[i]
             e_c = <PythonEvent *>calloc(1, sizeof(PythonEvent))
             if isDebug:
-                print "in Plugin, event ", e_c.eventId, " added"
+                print("in Plugin, event ", e_c.eventId, " added")
             last_e_c.nextEvent = e_c
             add_event(e_c, e_py)
             last_e_c = e_c
@@ -139,23 +158,23 @@ cdef public int pluginisready() with gil:
 # noinspection PyPep8Naming
 cdef public void setIntParam(char *name, int value) with gil:
     if isDebug:
-        print "In Python: ", name, ": ", value
-    setattr(pluginOp, name, value)
+        print("In Python: ", name, ": ", value)
+    setattr(pluginOp, name.decode('utf-8'), value)
 
 # noinspection PyPep8Naming
 cdef public void setFloatParam(char *name, float value) with gil:
     # print "In Python: ", name, ": ", value
-    setattr(pluginOp, name, value)
+    setattr(pluginOp, name.decode('utf-8'), value)
 
 # noinspection PyPep8Naming
 cdef public int getIntParam(char *name) with gil:
     if isDebug:
-        print "In Python getIntParam: ", name
-    value = getattr(pluginOp, name)
+        print("In Python getIntParam: ", name)
+    value = getattr(pluginOp, name.decode('utf-8'))
     return <int>value
 
 # noinspection PyPep8Naming
 cdef public float getFloatParam(char *name) with gil:
     # print "In Python: ", name, ": ", value
-    value =  getattr(pluginOp, name)
+    value =  getattr(pluginOp, name.decode('utf-8'))
     return <float>value

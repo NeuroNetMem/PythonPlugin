@@ -1,7 +1,6 @@
 
 
-SUBDIRS = spwfinder pulse_test_delay signal_plot
-
+SUBDIRS = spwfinder pulse_test_delay signal_plot multiprocessing_plugin
 
 
 .PHONY:  clean
@@ -15,12 +14,12 @@ FORCE:
 spwfinder: spwfinder/spwfinder.so
 
 %.so: %.o
-	gcc -g -O2 -shared -o $@ $< `python-config --ldflags`
-	install_name_tool -change /System/Library/Frameworks/Python.framework/Versions/2.7/Python /usr/local/anaconda/lib/libpython2.7.dylib $@
+	gcc -g -O2 -shared -o $@ $< -L`python3-config --prefix`/lib   `python3-config --ldflags | sed 's/-Wl,-stack_size,1000000//'`
+	install_name_tool -change libpython3.4m.dylib `python3-config --prefix`/lib/libpython3.4m.dylib $@
 
 
 %.o: %.c
-	gcc -g -O2 -fpic -DWITH_THREAD=1 -c $< -o $@ `python-config --includes` -I`python -c "import numpy; print numpy.get_include()"`
+	gcc -g -O2 -fpic -DWITH_THREAD=1 -c $< -o $@ `python3-config --includes` -I`python -c "import numpy; print(numpy.get_include())"`
 
 
 %.c: %.pyx plugin.pyx
