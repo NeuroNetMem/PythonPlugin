@@ -37,15 +37,15 @@ class PlotSubprocess(object):  # TODO more configuration stuff that may be obtai
                 break
 
             command = self.pipe.recv()
-            for k, v in command.iteritems():
+            for k, v in command.items():
                 if k == 'data':
                     events = self.update_plot(v)
                 elif k == 'param':
-                    for name, value in v.iteritems():
+                    for name, value in v.items():
                         setattr(self, name, value)
                         # DEBUG
                 elif k == 'terminate':
-                    print "terminating"
+                    print("terminating")
                     self.terminate()
         # print "finishing callback"
         if events:

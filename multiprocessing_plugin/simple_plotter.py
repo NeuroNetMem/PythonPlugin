@@ -7,7 +7,7 @@ matplotlib.use('QT4Agg')
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
 
-from plot_subprocess import PlotSubprocess
+from .plot_subprocess import PlotSubprocess
 
 
 class SimplePlotter(PlotSubprocess):
@@ -21,7 +21,7 @@ class SimplePlotter(PlotSubprocess):
         """
 
         super(SimplePlotter, self).__init__()
-        print "in init"
+        print("in init")
         self.y = np.empty((0, ), dtype=np.float32)  # the buffer for the data that gets accumulated
         self.chan_in = 2
         self.plotting_interval = 250.  # in ms
@@ -40,7 +40,7 @@ class SimplePlotter(PlotSubprocess):
     def startup(self):
         # build the plot
         ylim0 = 200
-        print "starting plot"
+        print("starting plot")
         self.figure, self.ax = plt.subplots()
         plt.subplots_adjust(left=0.1, bottom=0.2)
         axcolor = 'lightgoldenrodyellow'
@@ -67,7 +67,7 @@ class SimplePlotter(PlotSubprocess):
 
     @staticmethod
     def param_config():
-        chan_labels = range(32)
+        chan_labels = list(range(32))
         return ("int_set", "chan_in", chan_labels),
 
     def update_plot(self, n_arr):
@@ -128,7 +128,7 @@ class MPPlugin(object):
             if not self.plot_pipe.poll():
                 break
             e = self.plot_pipe.recv()
-            print e
+            print(e)
 
     def setparam(self, name, value):
         self.plot_pipe.send({'param': {name: value}})
@@ -141,7 +141,7 @@ def main():
             pl.bufferfunction()
             time.sleep(0.02)
         pl.setparam('chan_in', jj)
-    raw_input('press Enter...')
+    input('press Enter...')
     pl.bufferfunction(finished=True)
     pl.plot_process.join()
 

@@ -24,9 +24,9 @@ class Pulse_test_delay(object):
 
     def startup(self, sr):
         self.samplingRate = sr
-        print self.samplingRate
+        print (self.samplingRate)
         self.arduino = serial.Serial('/dev/tty.usbmodem45561', 57600)
-        print "Arduino: ", self.arduino
+        print ("Arduino: ", self.arduino)
         self.enabled = 1
 
     def plugin_name(self):
@@ -36,7 +36,7 @@ class Pulse_test_delay(object):
         return 1
 
     def param_config(self):
-        chan_labels = range(1,44)
+        chan_labels = list(range(1,44))
 
         return (("toggle", "Enabled", True),
                 ("int_set", "chan_in", chan_labels),
@@ -44,7 +44,7 @@ class Pulse_test_delay(object):
 
 
     def bufferfunction(self, n_arr):
-        #print "plugin start"
+        #print ("plugin start")
         events = []
         cdef int chan_in
         cdef int chan_out
@@ -53,7 +53,7 @@ class Pulse_test_delay(object):
 
         if np.any(n_arr[chan_in-1,:] > self.threshold):
             if not self.triggered:
-                #print 'triggered'
+                #print ('triggered')
                 events.append({'type': 3, 'sampleNum': 10, 'eventId': 1})
                 self.triggered = 1
                 self.arduino.write('1')
@@ -68,7 +68,7 @@ class Pulse_test_delay(object):
 
 
 
-        #print "plugin end"
+        #print( "plugin end")
         return events
 
 pluginOp = Pulse_test_delay()

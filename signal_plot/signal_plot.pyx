@@ -11,7 +11,7 @@ isDebug = False
 
 class SimplePlotter(object):
     def __init__(self):
-        print "init"
+        print ("init")
         #define variables
         self.y = np.empty([0,], dtype = np.float32)
         self.chan_in = 2
@@ -25,11 +25,11 @@ class SimplePlotter(object):
         self.n_samples = 0
 
     def startup(self, sr):
-        print "startup"
+        print ("startup")
         #initialize plot
         self.sampling_rate = sr
         self.figure, self.ax = plt.subplots()
-        print "figure: ", self.figure
+        print ("figure: ", self.figure)
         self.hl, = self.ax.plot([],[])
         self.ax.set_autoscaley_on(True)
         self.ax.margins(y=0.1)
@@ -65,9 +65,9 @@ class SimplePlotter(object):
 
         if self.frame_count == self.frame_max:
             #update the plot
-            print "updating plot"
+            print ("updating plot")
             x = np.arange(len(self.y), dtype=np.float32) * 1000. / self.sampling_rate
-            print x[-1]
+            print( x[-1])
             self.hl.set_ydata(self.y)
             self.hl.set_xdata(x)
             self.ax.set_xlim(0., self.plotting_interval)

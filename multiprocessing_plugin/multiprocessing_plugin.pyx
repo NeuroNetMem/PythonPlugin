@@ -5,8 +5,8 @@ from cython cimport view
 
 
 import multiprocessing as mp
-# print "the file"
-# print __file__
+# print ("the file")
+# print (__file__)
 sys.path.append('/Users/fpbatta/src/GUImerge/GUI/Plugins')
 sys.path.append('/Users/fpbatta/src/GUImerge/GUI/Plugins/multiprocessing_plugin')
 
@@ -46,10 +46,10 @@ class MultiprocessingPlugin(object):
         return self.plotter.param_config()
 
     def bufferfunction(self, n_arr = None, finished=False):
-        # print "entering plot"
+        # print("entering plot")
         send = self.plot_pipe.send
         if finished:
-            print "sending stop signal"
+            print("sending stop signal")
             send({'terminate': 0})
         else:
             # print "sending data"
@@ -61,7 +61,7 @@ class MultiprocessingPlugin(object):
                 break
             e = self.plot_pipe.recv()
             events.append(e)
-            print e
+            print(e)
         return events
 
     def set_param(self, name, value):
@@ -76,7 +76,7 @@ class MultiprocessingPlugin(object):
         object.__setattr__(self, key, value)
 
     def __del__(self):
-        print "deleting mp" # DEBUG
+        print("deleting mp") # DEBUG
         self.bufferfunction(finished=True)
 
 

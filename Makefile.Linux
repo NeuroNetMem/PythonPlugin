@@ -10,6 +10,11 @@ SOURCE_DIR := $(shell pwd )
 
 
 %.c: %.pyx plugin.pyx
-	cython $<
+	cython -3 $<
 	
-	
+
+clean:
+	for dir in $(SUBDIRS) ; do \
+	rm $$dir/$$dir.c \
+	$$dir/$$dir.h \
+	$$dir/$$dir.so; done

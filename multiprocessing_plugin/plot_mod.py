@@ -29,4 +29,4 @@ for i in np.arange(0, 1, 0.02):
     figure.canvas.draw()
     figure.canvas.flush_events()
     sleep(0.02)
-    raw_input('ciao')
+    input('ciao')

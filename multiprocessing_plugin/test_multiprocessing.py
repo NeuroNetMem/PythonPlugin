@@ -6,7 +6,7 @@ import numpy as np
 import sys
 sys.path.append('/Users/fpbatta/src/GUImerge/GUI/Plugins')
 sys.path.append('/Users/fpbatta/src/GUImerge/GUI/Plugins/multiprocessing_plugin')
-from multiprocessing_plugin import MultiprocessingPlugin
+from .multiprocessing_plugin import MultiprocessingPlugin
 
 
 m = MultiprocessingPlugin()

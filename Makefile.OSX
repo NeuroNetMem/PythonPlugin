@@ -24,7 +24,7 @@ spwfinder: spwfinder/spwfinder.so
 
 
 %.c: %.pyx plugin.pyx
-	cython $<
+	cython -3 $<
 
 
 clean:

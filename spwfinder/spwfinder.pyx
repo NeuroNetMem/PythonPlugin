@@ -64,27 +64,27 @@ class SPWFinder(object):
         self.FIRING = 4
         self.state = self.READY
 
-        print "finished spwfinder constructor"
+        print ("finished spwfinder constructor")
 
     def startup(self, sampling_rate):
         self.samplingRate = sampling_rate
-        print self.samplingRate
+        print (self.samplingRate)
 
         self.filter_b, self.filter_a = scipy.signal.butter(3,
                                                      (self.band_lo/(self.samplingRate/2), self.band_hi/(self.samplingRate/2)),
                                                      'pass')
-        print self.filter_a
-        print self.filter_b
-        print self.band_lo
-        print self.band_hi
-        print self.band_lo/(self.samplingRate/2)
-        print self.band_hi/(self.samplingRate/2)
+        print(self.filter_a)
+        print(self.filter_b)
+        print(self.band_lo)
+        print(self.band_hi)
+        print(self.band_lo/(self.samplingRate/2))
+        print(self.band_hi/(self.samplingRate/2))
         self.enabled = 1
         self.jitter = 0
         try:
             self.arduino = serial.Serial('/dev/tty.usbmodem1411', 57600)
-        except OSError, serial.serialutil.SerialException:
-            print "Can't open Arduino"
+        except (OSError, serial.serialutil.SerialException):
+            print("Can't open Arduino")
 
     def plugin_name(self):
         return "SPWFinder"
@@ -112,9 +112,9 @@ class SPWFinder(object):
         try:
             self.arduino.write('1'* 64)
         except AttributeError:
-            print "Can't send pulse"
+            print("Can't send pulse")
         self.pulseNo += 1
-        print "generating pulse ", self.pulseNo
+        print("generating pulse ", self.pulseNo)
 
     def new_event(self, events, code, timestamp=None):
         if not timestamp:
@@ -124,7 +124,7 @@ class SPWFinder(object):
     def bufferfunction(self, n_arr):
         #print "plugin start"
         if isDebug:
-            print "shape: ", n_arr.shape
+            print("shape: ", n_arr.shape)
         events = []
         cdef int chan_in
         cdef int chan_out
@@ -160,17 +160,17 @@ class SPWFinder(object):
                 self.swing_state = self.SWINGING
                 self.swing_count_down = self.swing_count_down_thresh
                 self.new_event(events, 6)
-                print "SWINGING"
+                print("SWINGING")
         else:
             self.swing_count_down -= 1
             if self.swing_count_down == 0:
                 self.swing_state = self.NOT_SWINGING
-                print "NOT_SWINGING"
+                print("NOT_SWINGING")
 
 
         if isDebug:
-            print "Mean: ", np.mean(n_arr[self.chan_out+1,:])
-            print "done processing"
+            print("Mean: ", np.mean(n_arr[self.chan_out+1,:]))
+            print("done processing")
 
         #events
         # 1: pulse sent
