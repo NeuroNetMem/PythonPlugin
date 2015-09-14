@@ -3,8 +3,9 @@ import numpy as np
 cimport numpy as np
 from cython cimport view
 
-
 import multiprocessing as mp
+#mp.set_start_method('spawn')
+
 # print ("the file")
 # print (__file__)
 sys.path.append('/Users/fpbatta/src/GUImerge/GUI/Plugins')
@@ -12,7 +13,7 @@ sys.path.append('/Users/fpbatta/src/GUImerge/GUI/Plugins/multiprocessing_plugin'
 
 isDebug = False
 
-from simple_plotter import SimplePlotter
+import simple_plotter
 
 class MultiprocessingPlugin(object):
     def __init__(self):
@@ -25,13 +26,14 @@ class MultiprocessingPlugin(object):
 
 
     def startup(self, sr):
-        self.plot_pipe, plotter_pipe = mp.Pipe()
-
-
-        self.plotter = SimplePlotter(20000.)
-        self.plot_process = mp.Process(target=self.plotter,
+        ctx = mp.get_context('forkserver')
+        #mp.freeze_support()
+        self.plot_pipe, plotter_pipe = ctx.Pipe()
+        self.plotter = simple_plotter.SimplePlotter(20000.)
+        self.plot_process = ctx.Process(target=self.plotter,
                                     args=(plotter_pipe, ))
         self.plot_process.daemon = True
+
         self.plot_process.start()
         self.has_child = True
         self.if_params = self.plotter.param_config()

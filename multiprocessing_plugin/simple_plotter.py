@@ -7,7 +7,7 @@ matplotlib.use('QT4Agg')
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
 
-from .plot_subprocess import PlotSubprocess
+from plot_subprocess import PlotSubprocess
 
 
 class SimplePlotter(PlotSubprocess):
