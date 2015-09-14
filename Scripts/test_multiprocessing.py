@@ -14,9 +14,11 @@ if __name__ == '__main__':
     mp.set_start_method('forkserver', force=True)
     print("sm 2: ", sm)
 
-    sys.path.append('/Users/fpbatta/src/GUImerge/GUI/Plugins')
+    sys.path.append('/home/fpbatta/src/GUI/Plugins')
+    sys.path.append('/home/fpbatta/src/GUI/Plugins/multiprocessing_plugin')
+
     #sys.path.append('/Users/fpbatta/src/GUImerge/GUI/Plugins/multiprocessing_plugin')
-    from multiprocessing_plugin import MultiprocessingPlugin
+    from multiprocessing_plugin.multiprocessing_plugin import MultiprocessingPlugin
 
 
     m = MultiprocessingPlugin()
