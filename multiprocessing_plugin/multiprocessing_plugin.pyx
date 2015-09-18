@@ -8,8 +8,10 @@ import multiprocessing as mp
 
 # print ("the file")
 # print (__file__)
-sys.path.append('/home/fpbatta/src/GUI/Plugins')
-sys.path.append('/home/fpbatta/src/GUI/Plugins/multiprocessing_plugin') # TODO put the python path in the C++ executalbe
+# sys.path.append('/home/fpbatta/src/GUI/Plugins')
+# sys.path.append('/home/fpbatta/src/GUI/Plugins/multiprocessing_plugin') # TODO put the python path in the C++ executalbe
+sys.path.append('/Users/fpbatta/src/GUImerge/GUI/Plugins')
+sys.path.append('/Users/fpbatta/src/GUImerge/GUI/Plugins/multiprocessing_plugin') # TODO put the python path in the C++ executalbe
 
 isDebug = False
 
@@ -26,9 +28,9 @@ class MultiprocessingPlugin(object):
 
 
     def startup(self, sr):
-        ctx = mp.get_context('forkserver')
+        ctx = mp.get_context('spawn')
         #mp.freeze_support()
-        ctx.set_executable('/home/fpbatta/anaconda3/bin/python') # TODO make choice of executable automatic
+        ctx.set_executable('/usr/local/anaconda3/anaconda/bin/python') # TODO make choice of executable automatic
         self.plot_pipe, plotter_pipe = ctx.Pipe()
         self.plotter = simple_plotter.SimplePlotter(20000.)
         self.plot_process = ctx.Process(target=self.plotter,
