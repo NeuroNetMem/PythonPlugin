@@ -25,7 +25,7 @@ class SimplePlotter(PlotProcess):
         print("in init")
         self.y = np.empty((0, ), dtype=np.float32)  # the buffer for the data that gets accumulated
         self.chan_in = 2
-        self.plotting_interval = 250.  # in ms
+        self.plotting_interval = 1000.  # in ms
         self.frame_count = 0
         self.frame_max = 0
         self.sampling_rate = sampling_rate
@@ -50,7 +50,7 @@ class SimplePlotter(PlotProcess):
 
         def update(val):
             yl = sylim.val
-            self.ax.set_ylim(0, yl)
+            self.ax.set_ylim(-yl, yl)
             plt.draw()
 
         sylim.on_changed(update)
@@ -59,9 +59,9 @@ class SimplePlotter(PlotProcess):
         self.ax.set_autoscaley_on(True)
         self.ax.margins(y=0.1)
         self.ax.set_xlim(0., 1)
-        self.ax.set_ylim(0, ylim0)
+        self.ax.set_ylim(-ylim0, ylim0)
         # initialize timer
-        timer = self.figure.canvas.new_timer(interval=100, )
+        timer = self.figure.canvas.new_timer(interval=50, )
         timer.add_callback(self.callback)
         timer.start()
         plt.show(block=True)

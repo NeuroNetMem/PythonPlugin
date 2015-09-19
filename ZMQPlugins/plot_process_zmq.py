@@ -82,10 +82,14 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
                         c = header['content']
                         n_samples = c['nSamples']
                         n_channels = c['nChannels']
+                        n_real_samples = c['nRealSamples']
+
                         try:
                             n_arr = np.frombuffer(message[1], dtype=np.float32)
                             n_arr = np.reshape(n_arr, (n_channels, n_samples))
-                            self.update_plot(n_arr)
+                            if n_real_samples > 0:
+                                n_arr = n_arr[:,0:n_real_samples]
+                                self.update_plot(n_arr)
                         except IndexError as e:
                             print(e)
                             print(header)
@@ -94,8 +98,6 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
                                 print(len(message[1]))
                             else:
                                 print("only one frame???")
-
-
 
                     elif header['type'] == 'event':
 
