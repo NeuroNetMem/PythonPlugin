@@ -4,14 +4,14 @@ import time
 import numpy as np
 import matplotlib
 
-matplotlib.use('QT4Agg')
+# matplotlib.use('QT4Agg')
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
 
-from .plot_subprocess_zmq import PlotSubprocess
+from .plot_process_zmq import PlotProcess
 
 
-class SimplePlotter(PlotSubprocess):
+class SimplePlotter(PlotProcess):
     def __init__(self, sampling_rate):
         """
         :param sampling_rate: the sampling rate of the process
@@ -46,11 +46,11 @@ class SimplePlotter(PlotSubprocess):
         plt.subplots_adjust(left=0.1, bottom=0.2)
         axcolor = 'lightgoldenrodyellow'
         axylim = plt.axes([0.1, 0.05, 0.65, 0.03], axisbg=axcolor)
-        sylim = Slider(axylim, 'Freq', 50, 500, valinit=ylim0)
+        sylim = Slider(axylim, 'Ylim', 1, 600, valinit=ylim0)
 
         def update(val):
             yl = sylim.val
-            self.ax.set_ylim(-yl, yl)
+            self.ax.set_ylim(0, yl)
             plt.draw()
 
         sylim.on_changed(update)
@@ -59,10 +59,10 @@ class SimplePlotter(PlotSubprocess):
         self.ax.set_autoscaley_on(True)
         self.ax.margins(y=0.1)
         self.ax.set_xlim(0., 1)
-        self.ax.set_ylim(-ylim0, ylim0)
+        self.ax.set_ylim(0, ylim0)
         # initialize timer
         timer = self.figure.canvas.new_timer(interval=100, )
-        timer.add_callback(self.callback)  # will it work like this?
+        timer.add_callback(self.callback)
         timer.start()
         plt.show(block=True)
 
@@ -88,6 +88,7 @@ class SimplePlotter(PlotSubprocess):
             x = np.arange(len(self.y), dtype=np.float32) * 1000. / self.sampling_rate
             self.hl.set_ydata(self.y)
             self.hl.set_xdata(x)
+            print ("shape(x): ", x.shape, " shape(y): ", self.y.shape, " min:", np.min(self.y), " max:", np.max(self.y) )
             self.ax.set_xlim(0., self.plotting_interval)
             self.ax.relim()
             self.ax.autoscale_view(True, True, False)

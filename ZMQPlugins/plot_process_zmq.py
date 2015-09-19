@@ -6,7 +6,7 @@ import numpy as np
 __author__ = 'fpbatta'
 
 
-class PlotSubprocess(object):  # TODO more configuration stuff that may be obtained
+class PlotProcess(object):  # TODO more configuration stuff that may be obtained
     def __init__(self, ):
         # keep this slot for multiprocessing related initialization if needed
         self.context = zmq.Context()
@@ -49,6 +49,7 @@ class PlotSubprocess(object):  # TODO more configuration stuff that may be obtai
                     break
                 if message:
                     n_arr = np.frombuffer(message, dtype=np.float32)
+                    print("n_arr len", n_arr.shape)
                     n_arr = np.reshape(n_arr, (20,1000)) # TODO communciate array shape from other side
                     self.update_plot(n_arr)
                 else:
