@@ -72,7 +72,6 @@ class SimplePlotter(PlotProcess):
         return ("int_set", "chan_in", chan_labels),
 
     def update_plot(self, n_arr):
-        print("updating plots")
         # setting up frame dependent parameters
         self.n_samples = int(n_arr.shape[1])
         events = []
@@ -84,11 +83,10 @@ class SimplePlotter(PlotProcess):
 
         if self.frame_count == self.frame_max:
             # update the plot
-            print("#####now plotting")
             x = np.arange(len(self.y), dtype=np.float32) * 1000. / self.sampling_rate
             self.hl.set_ydata(self.y)
             self.hl.set_xdata(x)
-            print ("shape(x): ", x.shape, " shape(y): ", self.y.shape, " min:", np.min(self.y), " max:", np.max(self.y) )
+            # print ("shape(x): ", x.shape, " shape(y): ", self.y.shape, " min:", np.min(self.y), " max:", np.max(self.y) )
             self.ax.set_xlim(0., self.plotting_interval)
             self.ax.relim()
             self.ax.autoscale_view(True, True, False)
