@@ -7,7 +7,9 @@ __author__ = 'fpbatta'
 
 
 class OpenEphysEvent(object):
-    def __init__(self, _d):
+    event_types = {0: 'TIMESTAMP', 1: 'BUFFER_SIZE', 2: 'PARAMETER_CHANGE', 3: 'TTL', 4: 'SPIKE', 5: 'MESSAGE', 6: 'BINARY_MSG'}
+
+    def __init__(self, _d, _data=None):
         self.type = 1
         self.eventId = 0
         self.sampleNum = 0
@@ -15,13 +17,23 @@ class OpenEphysEvent(object):
         self.numBytes = 0
         self.data = b''
         self.__dict__.update(_d)
+        self.timestamp = None
+        self.type = OpenEphysEvent.event_types[self.type]
+        if _data:
+            self.data = _data
+            self.numBytes = len(_data)
+        if self.type == 'TIMESTAMP':
+            t = np.frombuffer(self.data, dtype=np.int64)
+            self.timestamp = t[0]
 
     def set_data(self, _data):
         self.data = _data
         self.numBytes = len(_data)
 
     def __str__(self):
-        return str(self.__dict__)
+        ds = self.__dict__.copy()
+        del ds['data']
+        return str(ds)
 
 
 class PlotProcess(object):  # TODO more configuration stuff that may be obtained
@@ -101,9 +113,10 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
 
                     elif header['type'] == 'event':
 
-                        event = OpenEphysEvent(header['content'])
                         if header['dataSize'] > 0:
-                            event.set_data(message[1])
+                            event = OpenEphysEvent(header['content'], message[1])
+                        else:
+                            event = OpenEphysEvent(header['content'])
                         print(event)
                         self.update_plot_event(event)
                     elif header['type'] == 'param':
