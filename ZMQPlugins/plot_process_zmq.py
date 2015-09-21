@@ -73,7 +73,7 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
                 pass
                 # TODO send multiple events
             else:
-                de = {'type': event_type, 'sample_num': sample_num, 'event_id': event_id, 'event_channel': event_channel}
+                de = {'type': event_type, 'sample_num': sample_num, 'event_id': event_id % 2 + 1, 'event_channel': event_channel}
                 d = {'application': self.app_name, 'uuid': self.uuid, 'type': 'event', 'event': de}
                 j_msg = json.dumps(d)
                 print(j_msg)
@@ -115,6 +115,8 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
                     print("got error: {0}".format(err))
                     break
                 if message:
+                    if len(message) < 2:
+                        print("no frames for message: ", message[0])
                     try:
                         header = json.loads(message[1].decode('utf-8'))
                     except ValueError as e:
