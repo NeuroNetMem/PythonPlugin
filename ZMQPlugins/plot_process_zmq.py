@@ -117,7 +117,7 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
                         print(message[1])
                     if self.message_no != -1 and header['message_no'] != self.message_no + 1:
                         print("missing a message at number", self.message_no)
-                    self.message_no = header['messageNo']
+                    self.message_no = header['message_no']
                     if header['type'] == 'data':
                         c = header['content']
                         n_samples = c['n_samples']
