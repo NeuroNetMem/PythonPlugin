@@ -24,7 +24,7 @@ class SimplePlotter(PlotProcess):
         super(SimplePlotter, self).__init__()
         print("in init")
         self.y = np.empty((0, ), dtype=np.float32)  # the buffer for the data that gets accumulated
-        self.chan_in = 2
+        self.chan_in = 10
         self.plotting_interval = 1000.  # in ms
         self.frame_count = 0
         self.frame_max = 0

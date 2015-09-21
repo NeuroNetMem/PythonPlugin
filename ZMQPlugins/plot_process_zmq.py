@@ -7,10 +7,11 @@ __author__ = 'fpbatta'
 
 
 class OpenEphysEvent(object):
-    event_types = {0: 'TIMESTAMP', 1: 'BUFFER_SIZE', 2: 'PARAMETER_CHANGE', 3: 'TTL', 4: 'SPIKE', 5: 'MESSAGE', 6: 'BINARY_MSG'}
+    event_types = {0: 'TIMESTAMP', 1: 'BUFFER_SIZE', 2: 'PARAMETER_CHANGE',
+                   3: 'TTL', 4: 'SPIKE', 5: 'MESSAGE', 6: 'BINARY_MSG'}
 
     def __init__(self, _d, _data=None):
-        self.type = 1
+        self.type = 0
         self.eventId = 0
         self.sampleNum = 0
         self.eventChannel = 0
@@ -41,8 +42,11 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
         # keep this slot for multiprocessing related initialization if needed
         self.context = zmq.Context()
         self.data_socket = None
+        self.event_socket = None
         self.poller = zmq.Poller()
         self.message_no = -1
+        self.event_waits_reply = False
+        self.eventNo = 0
 
     def startup(self):
         pass
@@ -58,6 +62,20 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
     def update_plot_event(self, event):
         pass
 
+    def send_event(self, eventList = None, type=3, sampleNum=0, eventId=2, eventChannel=1):
+        if not self.event_waits_reply:
+            if eventList:
+                pass
+                # TODO send multiple events
+            else:
+                d = {'type': type, 'sampleNum': sampleNum, 'eventId': eventId, 'eventChannel': eventChannel}
+                j_msg = json.dumps(d)
+                print(j_msg)
+                self.event_socket.send(j_msg.encode('utf-8'), 0)
+            self.event_waits_reply=True
+        else:
+            print("can't send event, still waiting for previous reply")
+
     def callback(self):
         events = []
 
@@ -65,11 +83,22 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
             print("init socket")
             self.data_socket = self.context.socket(zmq.SUB)
             self.data_socket.connect("tcp://localhost:5556")
+
+            self.event_socket = self.context.socket(zmq.REQ)
+            self.event_socket.connect("tcp://localhost:5557")
+
             # self.data_socket.connect("ipc://data.ipc")
             self.data_socket.setsockopt(zmq.SUBSCRIBE, b'')
             self.poller.register(self.data_socket, zmq.POLLIN)
-
+            self.poller.register(self.event_socket, zmq.POLLIN)
         # print("************new read")
+
+        # TODO: merely for testing
+        if np.random.random()< 0.05:
+            self.eventNo +=1
+            self.send_event(type=3, sampleNum=0, eventId=self.eventNo, eventChannel=1)
+
+
         while True:
             socks = dict(self.poller.poll(1))
             if not socks:
@@ -83,10 +112,10 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
                     break
                 if message:
                     try:
-                        header = json.loads(message[0].decode('utf-8'))
+                        header = json.loads(message[1].decode('utf-8'))
                     except ValueError as e:
                         print("ValueError: ", e)
-                        print(message[0])
+                        print(message[1])
                     if self.message_no != -1 and header['messageNo'] != self.message_no + 1:
                         print("missing a message at number", self.message_no)
                     self.message_no = header['messageNo']
@@ -97,7 +126,7 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
                         n_real_samples = c['nRealSamples']
 
                         try:
-                            n_arr = np.frombuffer(message[1], dtype=np.float32)
+                            n_arr = np.frombuffer(message[2], dtype=np.float32)
                             n_arr = np.reshape(n_arr, (n_channels, n_samples))
                             if n_real_samples > 0:
                                 n_arr = n_arr[:,0:n_real_samples]
@@ -105,19 +134,19 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
                         except IndexError as e:
                             print(e)
                             print(header)
-                            print(message[0])
+                            print(message[1])
                             if len(message) > 2:
-                                print(len(message[1]))
+                                print(len(message[2]))
                             else:
                                 print("only one frame???")
 
                     elif header['type'] == 'event':
 
                         if header['dataSize'] > 0:
-                            event = OpenEphysEvent(header['content'], message[1])
+                            event = OpenEphysEvent(header['content'], message[2])
                         else:
                             event = OpenEphysEvent(header['content'])
-                        print(event)
+                        # print(event)
                         self.update_plot_event(event)
                     elif header['type'] == 'param':
                         c = header['content']
@@ -130,7 +159,14 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
                     print("got not data")
 
                     break
-
+            elif self.event_socket in socks:
+                message = self.event_socket.recv()
+                print("event reply received")
+                print(message)
+                if self.event_waits_reply:
+                    self.event_waits_reply = False
+                else:
+                    print("???? gettign a reply before a send?")
         # print "finishing callback"
         if events:
             pass  # TODO implement the event passing

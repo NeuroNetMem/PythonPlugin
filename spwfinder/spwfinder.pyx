@@ -116,10 +116,10 @@ class SPWFinder(object):
         self.pulseNo += 1
         print("generating pulse ", self.pulseNo)
 
-    def new_event(self, events, code, timestamp=None):
+    def new_event(self, events, code, channel=0, timestamp=None):
         if not timestamp:
             timestamp = self.n_samples
-        events.append({'type': 3, 'sampleNum': timestamp, 'eventId': code})
+        events.append({'type': 3, 'sampleNum': timestamp, 'eventId': code, 'eventChannel': channel})
 
     def bufferfunction(self, n_arr):
         #print("plugin start")
@@ -212,8 +212,10 @@ class SPWFinder(object):
                 if self.spw_condition(n_arr):
                     self.jitter_count_down = self.jitter_count_down_thresh
                     self.state = self.ARMED
-                    self.new_event(events, 4)
+                    self.new_event(events, 1, 1)
             elif self.state == self.ARMED:
+                if self.jitter_count_down == self.jitter_count_down_thresh:
+                    self.new_event(events, 5, 1)
                 self.jitter_count_down -= 1
                 if self.jitter_count_down == 0:
                     self.stimulate()
