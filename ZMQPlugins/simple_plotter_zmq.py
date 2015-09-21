@@ -29,7 +29,7 @@ class SimplePlotter(PlotProcess):
         self.frame_count = 0
         self.frame_max = 0
         self.sampling_rate = sampling_rate
-
+        self.app_name = "Simple Plotter"
         # matplotlib members, initialized to None, they will be filled in the child process
         self.ax = None
         self.hl = None

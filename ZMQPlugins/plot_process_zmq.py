@@ -3,6 +3,7 @@ import zmq
 import sys
 import numpy as np
 import json
+import uuid
 __author__ = 'fpbatta'
 
 
@@ -46,7 +47,10 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
         self.poller = zmq.Poller()
         self.message_no = -1
         self.event_waits_reply = False
-        self.eventNo = 0
+        self.event_no = 0
+        self.app_name = 'Plot Process'
+        self.uuid = str(uuid.uuid4())
+
 
     def startup(self):
         pass
@@ -64,11 +68,13 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
 
     def send_event(self, event_list=None, event_type=3, sample_num=0, event_id=2, event_channel=1):
         if not self.event_waits_reply:
+            self.event_no += 1
             if event_list:
                 pass
                 # TODO send multiple events
             else:
-                d = {'type': event_type, 'sample_num': sample_num, 'event_id': event_id, 'event_channel': event_channel}
+                de = {'type': event_type, 'sample_num': sample_num, 'event_id': event_id, 'event_channel': event_channel}
+                d = {'application': self.app_name, 'uuid': self.uuid, 'type': 'event', 'event': de}
                 j_msg = json.dumps(d)
                 print(j_msg)
                 self.event_socket.send(j_msg.encode('utf-8'), 0)
@@ -95,8 +101,7 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
 
         # TODO: merely for testing
         if np.random.random()< 0.05:
-            self.eventNo += 1
-            self.send_event(event_type=3, sample_num=0, event_id=self.eventNo, event_channel=1)
+            self.send_event(event_type=3, sample_num=0, event_id=self.event_no, event_channel=1)
 
         while True:
             socks = dict(self.poller.poll(1))
