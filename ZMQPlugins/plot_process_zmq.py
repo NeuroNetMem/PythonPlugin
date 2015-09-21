@@ -62,17 +62,17 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
     def update_plot_event(self, event):
         pass
 
-    def send_event(self, eventList = None, type=3, sampleNum=0, eventId=2, eventChannel=1):
+    def send_event(self, event_list=None, event_type=3, sample_num=0, event_id=2, event_channel=1):
         if not self.event_waits_reply:
-            if eventList:
+            if event_list:
                 pass
                 # TODO send multiple events
             else:
-                d = {'type': type, 'sampleNum': sampleNum, 'eventId': eventId, 'eventChannel': eventChannel}
+                d = {'type': event_type, 'sample_num': sample_num, 'event_id': event_id, 'event_channel': event_channel}
                 j_msg = json.dumps(d)
                 print(j_msg)
                 self.event_socket.send(j_msg.encode('utf-8'), 0)
-            self.event_waits_reply=True
+            self.event_waits_reply = True
         else:
             print("can't send event, still waiting for previous reply")
 
@@ -95,9 +95,8 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
 
         # TODO: merely for testing
         if np.random.random()< 0.05:
-            self.eventNo +=1
-            self.send_event(type=3, sampleNum=0, eventId=self.eventNo, eventChannel=1)
-
+            self.eventNo += 1
+            self.send_event(event_type=3, sample_num=0, event_id=self.eventNo, event_channel=1)
 
         while True:
             socks = dict(self.poller.poll(1))
@@ -116,20 +115,20 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
                     except ValueError as e:
                         print("ValueError: ", e)
                         print(message[1])
-                    if self.message_no != -1 and header['messageNo'] != self.message_no + 1:
+                    if self.message_no != -1 and header['message_no'] != self.message_no + 1:
                         print("missing a message at number", self.message_no)
                     self.message_no = header['messageNo']
                     if header['type'] == 'data':
                         c = header['content']
-                        n_samples = c['nSamples']
-                        n_channels = c['nChannels']
-                        n_real_samples = c['nRealSamples']
+                        n_samples = c['n_samples']
+                        n_channels = c['n_channels']
+                        n_real_samples = c['n_real_samples']
 
                         try:
                             n_arr = np.frombuffer(message[2], dtype=np.float32)
                             n_arr = np.reshape(n_arr, (n_channels, n_samples))
                             if n_real_samples > 0:
-                                n_arr = n_arr[:,0:n_real_samples]
+                                n_arr = n_arr[:, 0:n_real_samples]
                                 self.update_plot(n_arr)
                         except IndexError as e:
                             print(e)
@@ -142,7 +141,7 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
 
                     elif header['type'] == 'event':
 
-                        if header['dataSize'] > 0:
+                        if header['data_size'] > 0:
                             event = OpenEphysEvent(header['content'], message[2])
                         else:
                             event = OpenEphysEvent(header['content'])
@@ -166,7 +165,7 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
                 if self.event_waits_reply:
                     self.event_waits_reply = False
                 else:
-                    print("???? gettign a reply before a send?")
+                    print("???? getting a reply before a send?")
         # print "finishing callback"
         if events:
             pass  # TODO implement the event passing
