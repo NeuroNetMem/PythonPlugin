@@ -100,7 +100,7 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
         # print("************new read")
 
         # TODO: merely for testing
-        if np.random.random()< 0.05:
+        if np.random.random()< 0.005:
             self.send_event(event_type=3, sample_num=0, event_id=self.event_no, event_channel=1)
 
         while True:
