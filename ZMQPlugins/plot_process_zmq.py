@@ -4,6 +4,7 @@ import sys
 import numpy as np
 import json
 import uuid
+import time
 __author__ = 'fpbatta'
 
 
@@ -50,7 +51,8 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
         self.event_no = 0
         self.app_name = 'Plot Process'
         self.uuid = str(uuid.uuid4())
-
+        self.last_heartbeat_time = 0
+        self.heartbeat_waits_reply = False
 
     def startup(self):
         pass
@@ -58,6 +60,8 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
     @staticmethod
     def param_config():
         # TODO we'll have to pass the parameter requests via a second socket
+        # this is meant to support a mechanism to set parameters of the application from the Open Ephys GUI.
+        # not sure if it will be needed actually, it may disappear
         return ()
 
     def update_plot(self, n_arr):
@@ -66,14 +70,23 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
     def update_plot_event(self, event):
         pass
 
+    def send_heartbeat(self):
+        d = {'application': self.app_name, 'uuid': self.uuid, 'type': 'heartbeat'}
+        j_msg = json.dumps(d)
+        self.event_socket.send(j_msg.encode('utf-8'))
+        self.last_heartbeat_time = time.time()
+        self.heartbeat_waits_reply = True
+
     def send_event(self, event_list=None, event_type=3, sample_num=0, event_id=2, event_channel=1):
         if not self.event_waits_reply:
             self.event_no += 1
             if event_list:
-                pass
-                # TODO send multiple events
+                for e in event_list:
+                    self.send_event(event_type=e['event_type'], sample_num=e['sample_num'], event_id=e['event_id'],
+                                    event_channel=e['event_channel'])
             else:
-                de = {'type': event_type, 'sample_num': sample_num, 'event_id': event_id % 2 + 1, 'event_channel': event_channel}
+                de = {'type': event_type, 'sample_num': sample_num, 'event_id': event_id % 2 + 1,
+                      'event_channel': event_channel}
                 d = {'application': self.app_name, 'uuid': self.uuid, 'type': 'event', 'event': de}
                 j_msg = json.dumps(d)
                 print(j_msg)
@@ -97,10 +110,14 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
             self.data_socket.setsockopt(zmq.SUBSCRIBE, b'')
             self.poller.register(self.data_socket, zmq.POLLIN)
             self.poller.register(self.event_socket, zmq.POLLIN)
-        # print("************new read")
+
+        # send every two seconds a "heartbeat" so that Open Ephys knows we're alive
+
+        if (time.time() - self.last_heartbeat_time) > 2.:
+            self.send_heartbeat()
 
         # TODO: merely for testing
-        if np.random.random()< 0.05:
+        if np.random.random() < 0.005:
             self.send_event(event_type=3, sample_num=0, event_id=self.event_no, event_channel=1)
 
         while True:
@@ -152,7 +169,6 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
                             event = OpenEphysEvent(header['content'], message[2])
                         else:
                             event = OpenEphysEvent(header['content'])
-                        # print(event)
                         self.update_plot_event(event)
                     elif header['type'] == 'param':
                         c = header['content']
@@ -171,6 +187,8 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
                 print(message)
                 if self.event_waits_reply:
                     self.event_waits_reply = False
+                elif self.heartbeat_waits_reply:
+                    self.heartbeat_waits_reply = False
                 else:
                     print("???? getting a reply before a send?")
         # print "finishing callback"

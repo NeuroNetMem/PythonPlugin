@@ -1,14 +1,14 @@
-__author__ = 'fpbatta'
 
-import time
+
 import numpy as np
-import matplotlib
-
+# import matplotlib
 # matplotlib.use('QT4Agg')
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
 
 from .plot_process_zmq import PlotProcess
+
+__author__ = 'fpbatta'
 
 
 class SimplePlotter(PlotProcess):
@@ -86,7 +86,8 @@ class SimplePlotter(PlotProcess):
             x = np.arange(len(self.y), dtype=np.float32) * 1000. / self.sampling_rate
             self.hl.set_ydata(self.y)
             self.hl.set_xdata(x)
-            # print ("shape(x): ", x.shape, " shape(y): ", self.y.shape, " min:", np.min(self.y), " max:", np.max(self.y) )
+            # print ("shape(x): ", x.shape, " shape(y): ", self.y.shape,
+            # " min:", np.min(self.y), " max:", np.max(self.y) )
             self.ax.set_xlim(0., self.plotting_interval)
             self.ax.relim()
             self.ax.autoscale_view(True, True, False)
@@ -100,7 +101,3 @@ class SimplePlotter(PlotProcess):
         #     events.append({'type': 3, 'sampleNum': 0, 'eventId': self.code})
         #     self.code += 1
         return events
-
-
-
-
