@@ -94,11 +94,6 @@ class SPWFinder(object):
 
     def param_config(self):
         chan_labels = range(32)
-        # return (("toggle", "Enabled", True),
-        #         ("int_set", "chan_in", chan_labels),
-        #         ("int_set", "chan_ripples", chan_labels),
-        #         ("float_range", "band_lo", self.band_lo_min, self.band_lo_max, self.band_lo_start),
-        #         ("float_range", "band_hi", self.band_hi_min, self.band_hi_max, self.band_hi_start))
         return (("toggle", "enabled", True),
                 ("toggle", "jitter", False),
                 ("int_set", "chan_in", chan_labels),
