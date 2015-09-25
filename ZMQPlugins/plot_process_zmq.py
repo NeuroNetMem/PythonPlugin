@@ -13,7 +13,7 @@ class OpenEphysEvent(object):
                    3: 'TTL', 4: 'SPIKE', 5: 'MESSAGE', 6: 'BINARY_MSG'}
 
     def __init__(self, _d, _data=None):
-        self.type = 0
+        self.type = None
         self.eventId = 0
         self.sampleNum = 0
         self.eventChannel = 0
@@ -39,6 +39,27 @@ class OpenEphysEvent(object):
         return str(ds)
 
 
+class OpenEphysSpikeEvent(object):
+    def __init__(self, _d, _data=None):
+        self.n_channels = 0
+        self.n_samples = 0
+        self.pc_proj = []
+        self.gain = []
+        self.electrode_id = 0
+        self.timestamp = 0
+        self.channel = 0
+        self.threshold = []
+        self.color = []
+        self.source = 0
+        self.__dict__.update(_d)
+        self.data = _data
+
+    def __str__(self):
+        ds = self.__dict__.copy()
+        del ds['data']
+        return str(ds)
+
+
 class PlotProcess(object):  # TODO more configuration stuff that may be obtained
     def __init__(self, ):
         # keep this slot for multiprocessing related initialization if needed
@@ -47,12 +68,12 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
         self.event_socket = None
         self.poller = zmq.Poller()
         self.message_no = -1
-        self.event_waits_reply = False
+        self.socket_waits_reply = False
         self.event_no = 0
         self.app_name = 'Plot Process'
         self.uuid = str(uuid.uuid4())
         self.last_heartbeat_time = 0
-        self.heartbeat_waits_reply = False
+        self.last_reply_time = time.time()
 
     def startup(self):
         pass
@@ -70,15 +91,19 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
     def update_plot_event(self, event):
         pass
 
+    def update_plot_spike(self, spike):
+        pass
+
     def send_heartbeat(self):
         d = {'application': self.app_name, 'uuid': self.uuid, 'type': 'heartbeat'}
         j_msg = json.dumps(d)
+        print("sending heartbeat")
         self.event_socket.send(j_msg.encode('utf-8'))
         self.last_heartbeat_time = time.time()
-        self.heartbeat_waits_reply = True
+        self.socket_waits_reply = True
 
     def send_event(self, event_list=None, event_type=3, sample_num=0, event_id=2, event_channel=1):
-        if not self.event_waits_reply:
+        if not self.socket_waits_reply:
             self.event_no += 1
             if event_list:
                 for e in event_list:
@@ -90,8 +115,11 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
                 d = {'application': self.app_name, 'uuid': self.uuid, 'type': 'event', 'event': de}
                 j_msg = json.dumps(d)
                 print(j_msg)
-                self.event_socket.send(j_msg.encode('utf-8'), 0)
-            self.event_waits_reply = True
+                if self.socket_waits_reply:
+                    print("Can't send event")
+                else:
+                    self.event_socket.send(j_msg.encode('utf-8'), 0)
+            self.socket_waits_reply = True
         else:
             print("can't send event, still waiting for previous reply")
 
@@ -113,14 +141,26 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
 
         # send every two seconds a "heartbeat" so that Open Ephys knows we're alive
 
-        if (time.time() - self.last_heartbeat_time) > 2.:
-            self.send_heartbeat()
 
         # TODO: merely for testing
         if np.random.random() < 0.005:
             self.send_event(event_type=3, sample_num=0, event_id=self.event_no, event_channel=1)
 
         while True:
+            if (time.time() - self.last_heartbeat_time) > 2.:
+                if self.socket_waits_reply:
+                    print("heartbeat haven't got reply, retrying...")
+                    self.last_heartbeat_time += 1.
+                    if (time.time() - self.last_reply_time) > 10.:
+                        # reconnecting the socket as per the "lazy pirate" pattern (see the ZeroMQ guide)
+                        print("looks like we lost the server, trying to reconnect")
+                        self.event_socket.close()
+                        self.event_socket = self.context.socket(zmq.REQ)
+                        self.event_socket.connect("tcp://localhost:5557")
+                        self.socket_waits_reply = False
+                else:
+                    self.send_heartbeat()
+
             socks = dict(self.poller.poll(1))
             if not socks:
                 # print("poll exits")
@@ -170,13 +210,16 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
                         else:
                             event = OpenEphysEvent(header['content'])
                         self.update_plot_event(event)
+                    elif header['type'] == 'spike':
+                        spike = OpenEphysSpikeEvent(header['spike'], message[2])
+                        self.update_plot_spike(spike)
+
                     elif header['type'] == 'param':
                         c = header['content']
                         self.__dict__.update(c)
                         print(c)
                     else:
                         raise ValueError("message type unknown")
-
                 else:
                     print("got not data")
 
@@ -185,10 +228,9 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
                 message = self.event_socket.recv()
                 print("event reply received")
                 print(message)
-                if self.event_waits_reply:
-                    self.event_waits_reply = False
-                elif self.heartbeat_waits_reply:
-                    self.heartbeat_waits_reply = False
+                if self.socket_waits_reply:
+                    self.socket_waits_reply = False
+
                 else:
                     print("???? getting a reply before a send?")
         # print "finishing callback"
