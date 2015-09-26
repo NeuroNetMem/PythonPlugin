@@ -92,7 +92,7 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
         pass
 
     def update_plot_spike(self, spike):
-        pass
+        print(spike)
 
     def send_heartbeat(self):
         d = {'application': self.app_name, 'uuid': self.uuid, 'type': 'heartbeat'}
@@ -141,7 +141,6 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
 
         # send every two seconds a "heartbeat" so that Open Ephys knows we're alive
 
-
         # TODO: merely for testing
         if np.random.random() < 0.005:
             self.send_event(event_type=3, sample_num=0, event_id=self.event_no, event_channel=1)
@@ -154,10 +153,13 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
                     if (time.time() - self.last_reply_time) > 10.:
                         # reconnecting the socket as per the "lazy pirate" pattern (see the ZeroMQ guide)
                         print("looks like we lost the server, trying to reconnect")
+                        self.poller.unregister(self.event_socket)
                         self.event_socket.close()
                         self.event_socket = self.context.socket(zmq.REQ)
                         self.event_socket.connect("tcp://localhost:5557")
+                        self.poller.register(self.event_socket)
                         self.socket_waits_reply = False
+                        self.last_reply_time = time.time()
                 else:
                     self.send_heartbeat()
 
@@ -224,7 +226,7 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
                     print("got not data")
 
                     break
-            elif self.event_socket in socks:
+            elif self.event_socket in socks and self.socket_waits_reply:
                 message = self.event_socket.recv()
                 print("event reply received")
                 print(message)
