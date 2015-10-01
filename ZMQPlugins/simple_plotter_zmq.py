@@ -30,7 +30,7 @@ class SimplePlotter(PlotProcess):
         self.frame_max = 0
         self.sampling_rate = sampling_rate
         self.app_name = "Simple Plotter"
-        # matplotlib members, initialized to None, they will be filled in the child process
+        # matplotlib members, initialized to None, they will be filled in startup
         self.ax = None
         self.hl = None
         self.figure = None
@@ -48,6 +48,7 @@ class SimplePlotter(PlotProcess):
         axylim = plt.axes([0.1, 0.05, 0.65, 0.03], axisbg=axcolor)
         sylim = Slider(axylim, 'Ylim', 1, 600, valinit=ylim0)
 
+        # noinspection PyUnusedLocal
         def update(val):
             yl = sylim.val
             self.ax.set_ylim(-yl, yl)

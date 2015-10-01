@@ -21,6 +21,7 @@ class OpenEphysEvent(object):
         self.data = b''
         self.__dict__.update(_d)
         self.timestamp = None
+        # noinspection PyTypeChecker
         self.type = OpenEphysEvent.event_types[self.type]
         if _data:
             self.data = _data
@@ -74,6 +75,7 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
         self.uuid = str(uuid.uuid4())
         self.last_heartbeat_time = 0
         self.last_reply_time = time.time()
+        self.isTesting = True
 
     def startup(self):
         pass
@@ -91,6 +93,7 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
     def update_plot_event(self, event):
         pass
 
+    # noinspection PyMethodMayBeStatic
     def update_plot_spike(self, spike):
         print(spike)
 
@@ -120,6 +123,7 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
                 else:
                     self.event_socket.send(j_msg.encode('utf-8'), 0)
             self.socket_waits_reply = True
+            self.last_reply_time = time.time()
         else:
             print("can't send event, still waiting for previous reply")
 
@@ -141,9 +145,9 @@ class PlotProcess(object):  # TODO more configuration stuff that may be obtained
 
         # send every two seconds a "heartbeat" so that Open Ephys knows we're alive
 
-        # TODO: merely for testing
-        if np.random.random() < 0.005:
-            self.send_event(event_type=3, sample_num=0, event_id=self.event_no, event_channel=1)
+        if self.isTesting:
+            if np.random.random() < 0.005:
+                self.send_event(event_type=3, sample_num=0, event_id=self.event_no, event_channel=1)
 
         while True:
             if (time.time() - self.last_heartbeat_time) > 2.:
