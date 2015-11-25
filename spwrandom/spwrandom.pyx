@@ -45,6 +45,12 @@ class SPWFinder(object):
         self.random_stim_rate_max = 5
         self.prob_threshold = 0.
 
+        self.swing_thresh_min = 10.
+        self.swing_thresh_max = 20000.
+        self.swing_thresh_start = 1000.
+        self.swing_thresh = self.swing_thresh_start
+
+
         print ("finished SPWrandom constructor")
 
     def startup(self, sampling_rate):
@@ -68,7 +74,9 @@ class SPWFinder(object):
     def param_config(self):
         chan_labels = range(32)
         return (("toggle", "enabled", True),
-                ("float_range", "random_stim_rate", self.random_stim_rate_min, self.random_stim_rate_max, self.random_stim_rate))
+                ("float_range", "random_stim_rate", self.random_stim_rate_min, self.random_stim_rate_max, self.random_stim_rate),
+                ("float_range", "swing_thresh", self.swing_thresh_min, self.swing_thresh_max, self.swing_thresh_start))
+
 
     def spw_condition(self, n_arr):
         return np.random.random() < self.prob_threshold and self.swing_state == self.NOT_SWINGING
@@ -104,7 +112,8 @@ class SPWFinder(object):
         # setting up frame dependent parameters
         frame_time = 1000. * self.n_samples / self.samplingRate  # in milliseconds
         self.prob_threshold = frame_time * self.random_stim_rate / 1000.
-
+        self.refractory_count_down_thresh = int(self.refractory_time / frame_time)
+        self.swing_count_down_thresh = int(self.swing_down_time / frame_time)
 
 
         # the swing detector state machine
@@ -138,6 +147,7 @@ class SPWFinder(object):
         # states:
         # READY, REFRACTORY, ARMED, FIRING
 
+
         if self.enabled:
             # ENABLED machine, has READY, REFRACTORY, FIRING states
             if self.state == self.READY:
@@ -156,7 +166,6 @@ class SPWFinder(object):
             else:
                 # checking for a leftover ARMED state
                 self.state = self.READY
-
 
         return events
 
