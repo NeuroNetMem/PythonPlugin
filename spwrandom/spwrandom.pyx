@@ -2,7 +2,6 @@ import numpy as np
 cimport numpy as np
 from cython cimport view
 import serial
-import scipy.signal
 
 
 isDebug = False
@@ -10,10 +9,7 @@ isDebug = False
 class SPWFinder(object):
     def __init__(self):
         self.enabled = True
-        self.jitter = False
-        self.jitter_count_down_thresh = 0
-        self.jitter_count_down = 0
-        self.jitter_time = 200. # in ms
+
         self.refractory_count_down_thresh = 0
         self.refractory_count_down = 0
         self.refractory_time = 100. # time that the plugin will not react to trigger after one pulse
@@ -21,26 +17,7 @@ class SPWFinder(object):
         self.chan_out = 0
         self.n_samples = 0
         self.chan_ripples = 1
-        self.band_lo_min = 50.
-        self.band_lo_max = 200.
-        self.band_lo_start = 100.
-        self.band_lo = self.band_lo_start
 
-        self.band_hi_min = 100.
-        self.band_hi_max = 500.
-        self.band_hi_start = 300.
-        self.band_hi = self.band_hi_start
-
-        self.thresh_min = 5.
-        self.thresh_max = 200.
-        self.thresh_start = 30.
-        self.threshold = self.thresh_start
-
-
-        self.swing_thresh_min = 10.
-        self.swing_thresh_max = 20000.
-        self.swing_thresh_start = 1000.
-        self.swing_thresh = self.swing_thresh_start
 
         self.SWINGING = 1
         self.NOT_SWINGING = 0
@@ -63,31 +40,27 @@ class SPWFinder(object):
         self.REFRACTORY=3
         self.FIRING = 4
         self.state = self.READY
+        self.random_stim_rate = 1 # in Hertz
+        self.random_stim_rate_min = 0.1
+        self.random_stim_rate_max = 5
+        self.prob_threshold = 0.
 
-        print ("finished SPWfinder constructor")
+        print ("finished SPWrandom constructor")
 
     def startup(self, sampling_rate):
         self.samplingRate = sampling_rate
         print (self.samplingRate)
 
-        self.filter_b, self.filter_a = scipy.signal.butter(3,
-                                                     (self.band_lo/(self.samplingRate/2), self.band_hi/(self.samplingRate/2)),
-                                                     'pass')
-        print(self.filter_a)
-        print(self.filter_b)
-        print(self.band_lo)
-        print(self.band_hi)
-        print(self.band_lo/(self.samplingRate/2))
-        print(self.band_hi/(self.samplingRate/2))
+        print('starting random stimulation at rate ', self.random_stim_rate)
+
         self.enabled = 1
-        self.jitter = 0
         try:
             self.arduino = serial.Serial('/dev/tty.usbmodem1411', 57600)
         except (OSError, serial.serialutil.SerialException):
             print("Can't open Arduino")
 
     def plugin_name(self):
-        return "SPWFinder"
+        return "SPWRandom"
 
     def is_ready(self):
         return 1
@@ -95,13 +68,10 @@ class SPWFinder(object):
     def param_config(self):
         chan_labels = range(32)
         return (("toggle", "enabled", True),
-                ("toggle", "jitter", False),
-                ("int_set", "chan_in", chan_labels),
-                ("float_range", "threshold", self.thresh_min, self.thresh_max, self.thresh_start),
-                ("float_range", "swing_thresh", self.swing_thresh_min, self.swing_thresh_max, self.swing_thresh_start))
+                ("float_range", "random_stim_rate", self.random_stim_rate_min, self.random_stim_rate_max, self.random_stim_rate))
 
     def spw_condition(self, n_arr):
-        return (np.mean(n_arr[self.chan_out+1,:]) > self.threshold) and self.swing_state == self.NOT_SWINGING
+        return np.random.random() < self.prob_threshold and self.swing_state == self.NOT_SWINGING
 
     def stimulate(self):
         try:
@@ -132,20 +102,9 @@ class SPWFinder(object):
             return events
 
         # setting up frame dependent parameters
-        frame_time = 1000. * self.n_samples / self.samplingRate
-        self.jitter_count_down_thresh = int(self.jitter_time / frame_time)
-        self.refractory_count_down_thresh = int(self.refractory_time / frame_time)
-        self.swing_count_down_thresh = int(self.swing_down_time / frame_time)
+        frame_time = 1000. * self.n_samples / self.samplingRate  # in milliseconds
+        self.prob_threshold = frame_time * self.random_stim_rate / 1000.
 
-        signal_to_filter = np.hstack((self.lfp_buffer, n_arr[chan_in,:]))
-        signal_to_filter = signal_to_filter - signal_to_filter[-1]
-        filtered_signal = scipy.signal.lfilter(self.filter_b, self.filter_a, signal_to_filter)
-        n_arr[self.chan_out,:] = filtered_signal[self.lfp_buffer.size:]
-        self.lfp_buffer = np.append(self.lfp_buffer, n_arr[chan_in,:])
-        if self.lfp_buffer.size > self.lfp_buffer_max_count:
-            self.lfp_buffer = self.lfp_buffer[-self.lfp_buffer_max_count:]
-        n_arr[self.chan_out+1,:] = np.fabs(n_arr[self.chan_out,:])
-        n_arr[self.chan_out+2,:] = 5. *np.mean(n_arr[self.chan_out+1,:]) * np.ones((1,self.n_samples))
 
 
         # the swing detector state machine
@@ -179,11 +138,7 @@ class SPWFinder(object):
         # states:
         # READY, REFRACTORY, ARMED, FIRING
 
-        if not self.enabled:
-            # DISABLED machine, has only READY state
-            if self.spw_condition(n_arr):
-                self.new_event(events, 3)
-        elif not self.jitter:
+        if self.enabled:
             # ENABLED machine, has READY, REFRACTORY, FIRING states
             if self.state == self.READY:
                 if self.spw_condition(n_arr):
@@ -201,30 +156,7 @@ class SPWFinder(object):
             else:
                 # checking for a leftover ARMED state
                 self.state = self.READY
-        else:
-            # JITTERED machine, has READY, ARMED, FIRING and REFRACTORY states
-            if self.state == self.READY:
-                if self.spw_condition(n_arr):
-                    self.jitter_count_down = self.jitter_count_down_thresh
-                    self.state = self.ARMED
-                    self.new_event(events, 1, 1)
-            elif self.state == self.ARMED:
-                if self.jitter_count_down == self.jitter_count_down_thresh:
-                    self.new_event(events, 5, 1)
-                self.jitter_count_down -= 1
-                if self.jitter_count_down == 0:
-                    self.stimulate()
-                    self.new_event(events, 2)
-                    self.state = self.FIRING
-                    self.new_event(events, 1)
-            elif self.state == self.FIRING:
-                self.refractory_count_down = self.refractory_count_down_thresh-1
-                self.state = self.REFRACTORY
-                self.new_event(events, 5)
-            else:
-                self.refractory_count_down -= 1
-                if self.refractory_count_down == 0:
-                    self.state = self.READY
+
 
         return events
 
