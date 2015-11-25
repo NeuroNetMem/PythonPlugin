@@ -10,13 +10,13 @@ isDebug = False
 class SPWFinder(object):
     def __init__(self):
         self.enabled = True
-        self.jitter = False
-        self.jitter_count_down_thresh = 0
-        self.jitter_count_down = 0
-        self.jitter_time = 200. # in ms
         self.refractory_count_down_thresh = 0
         self.refractory_count_down = 0
         self.refractory_time = 100. # time that the plugin will not react to trigger after one pulse
+        self.double_count_down_thresh = 0
+        self.double_count_down = 0
+        self.double_time = 200.
+        self.double_rate = 1. / 3.
         self.chan_in = 1
         self.chan_out = 0
         self.n_samples = 0
@@ -62,6 +62,8 @@ class SPWFinder(object):
         self.ARMED=2
         self.REFRACTORY=3
         self.FIRING = 4
+        self.TRIGGERED2 = 5
+        self.FIRING2 = 6
         self.state = self.READY
 
         print ("finished SPWfinder constructor")
@@ -80,7 +82,6 @@ class SPWFinder(object):
         print(self.band_lo/(self.samplingRate/2))
         print(self.band_hi/(self.samplingRate/2))
         self.enabled = 1
-        self.jitter = 0
         try:
             self.arduino = serial.Serial('/dev/tty.usbmodem1411', 57600)
         except (OSError, serial.serialutil.SerialException):
@@ -95,7 +96,6 @@ class SPWFinder(object):
     def param_config(self):
         chan_labels = range(32)
         return (("toggle", "enabled", True),
-                ("toggle", "jitter", False),
                 ("int_set", "chan_in", chan_labels),
                 ("float_range", "threshold", self.thresh_min, self.thresh_max, self.thresh_start),
                 ("float_range", "swing_thresh", self.swing_thresh_min, self.swing_thresh_max, self.swing_thresh_start))
@@ -133,8 +133,8 @@ class SPWFinder(object):
 
         # setting up frame dependent parameters
         frame_time = 1000. * self.n_samples / self.samplingRate
-        self.jitter_count_down_thresh = int(self.jitter_time / frame_time)
         self.refractory_count_down_thresh = int(self.refractory_time / frame_time)
+        self.double_count_down_thresh = int(self.double_time / frame_time)
         self.swing_count_down_thresh = int(self.swing_down_time / frame_time)
 
         signal_to_filter = np.hstack((self.lfp_buffer, n_arr[chan_in,:]))
@@ -183,7 +183,7 @@ class SPWFinder(object):
             # DISABLED machine, has only READY state
             if self.spw_condition(n_arr):
                 self.new_event(events, 3)
-        elif not self.jitter:
+        else:
             # ENABLED machine, has READY, REFRACTORY, FIRING states
             if self.state == self.READY:
                 if self.spw_condition(n_arr):
@@ -191,40 +191,32 @@ class SPWFinder(object):
                     self.new_event(events, 1)
                     self.state = self.FIRING
             elif self.state == self.FIRING:
+                if np.random.random() < self.double_rate:
+                    self.double_count_down = self.double_count_down_thresh-1
+                    print('double')
+                    self.state = self.TRIGGERED2
+                else:
+                    self.refractory_count_down = self.refractory_count_down_thresh-1
+                    self.state = self.REFRACTORY
+                self.new_event(events, 5)
+            elif self.state == self.TRIGGERED2:
+                self.double_count_down -= 1
+                if self.double_count_down <= 0:
+                    self.stimulate()
+                    self.new_event(events, 1)
+                    self.state = self.FIRING2
+            elif self.state == self.FIRING2:
                 self.refractory_count_down = self.refractory_count_down_thresh-1
                 self.state = self.REFRACTORY
                 self.new_event(events, 5)
             elif self.state == self.REFRACTORY:
                 self.refractory_count_down -= 1
-                if self.refractory_count_down == 0:
+                if self.refractory_count_down <= 0:
                     self.state = self.READY
             else:
                 # checking for a leftover ARMED state
                 self.state = self.READY
-        else:
-            # JITTERED machine, has READY, ARMED, FIRING and REFRACTORY states
-            if self.state == self.READY:
-                if self.spw_condition(n_arr):
-                    self.jitter_count_down = self.jitter_count_down_thresh
-                    self.state = self.ARMED
-                    self.new_event(events, 1, 1)
-            elif self.state == self.ARMED:
-                if self.jitter_count_down == self.jitter_count_down_thresh:
-                    self.new_event(events, 5, 1)
-                self.jitter_count_down -= 1
-                if self.jitter_count_down == 0:
-                    self.stimulate()
-                    self.new_event(events, 2)
-                    self.state = self.FIRING
-                    self.new_event(events, 1)
-            elif self.state == self.FIRING:
-                self.refractory_count_down = self.refractory_count_down_thresh-1
-                self.state = self.REFRACTORY
-                self.new_event(events, 5)
-            else:
-                self.refractory_count_down -= 1
-                if self.refractory_count_down == 0:
-                    self.state = self.READY
+
 
         return events
 
