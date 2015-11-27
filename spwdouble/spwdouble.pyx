@@ -10,6 +10,10 @@ isDebug = False
 class SPWFinder(object):
     def __init__(self):
         self.enabled = True
+
+        self.jitter_count_down_thresh = 0
+        self.jitter_count_down = 0
+        self.jitter_time = 200. # in ms
         self.refractory_count_down_thresh = 0
         self.refractory_count_down = 0
         self.refractory_time = 100. # time that the plugin will not react to trigger after one pulse
@@ -83,7 +87,7 @@ class SPWFinder(object):
         print(self.band_hi/(self.samplingRate/2))
         self.enabled = 1
         try:
-            self.arduino = serial.Serial('/dev/tty.usbmodem1411', 57600)
+            self.arduino = serial.Serial('/dev/ttyACM0', 57600)
         except (OSError, serial.serialutil.SerialException):
             print("Can't open Arduino")
 
@@ -105,7 +109,7 @@ class SPWFinder(object):
 
     def stimulate(self):
         try:
-            self.arduino.write('1'* 64)
+            self.arduino.write(b'1'* 64)
         except AttributeError:
             print("Can't send pulse")
         self.pulseNo += 1
@@ -187,9 +191,18 @@ class SPWFinder(object):
             # ENABLED machine, has READY, REFRACTORY, FIRING states
             if self.state == self.READY:
                 if self.spw_condition(n_arr):
+                    self.jitter_count_down = self.jitter_count_down_thresh
+                    self.state = self.ARMED
+                    self.new_event(events, 1, 1)
+            elif self.state == self.ARMED:
+                if self.jitter_count_down == self.jitter_count_down_thresh:
+                    self.new_event(events, 5, 1)
+                self.jitter_count_down -= 1
+                if self.jitter_count_down == 0:
                     self.stimulate()
-                    self.new_event(events, 1)
+                    self.new_event(events, 2)
                     self.state = self.FIRING
+                    self.new_event(events, 1)
             elif self.state == self.FIRING:
                 if np.random.random() < self.double_rate:
                     self.double_count_down = self.double_count_down_thresh-1

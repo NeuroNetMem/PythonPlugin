@@ -61,7 +61,7 @@ class SPWFinder(object):
 
         self.enabled = 1
         try:
-            self.arduino = serial.Serial('/dev/tty.usbmodem1411', 57600)
+            self.arduino = serial.Serial('/dev/ttyACM0', 57600)
         except (OSError, serial.serialutil.SerialException):
             print("Can't open Arduino")
 

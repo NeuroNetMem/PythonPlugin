@@ -82,7 +82,7 @@ class SPWFinder(object):
         self.enabled = 1
         self.jitter = 0
         try:
-            self.arduino = serial.Serial('/dev/tty.usbmodem1411', 57600)
+            self.arduino = serial.Serial('/dev/ttyACM0', 57600)
         except (OSError, serial.serialutil.SerialException):
             print("Can't open Arduino")
 
@@ -105,7 +105,7 @@ class SPWFinder(object):
 
     def stimulate(self):
         try:
-            self.arduino.write('1'* 64)
+            self.arduino.write(b'1'* 64)
         except AttributeError:
             print("Can't send pulse")
         self.pulseNo += 1
