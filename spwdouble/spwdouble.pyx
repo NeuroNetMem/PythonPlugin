@@ -140,6 +140,8 @@ class SPWFinder(object):
         self.refractory_count_down_thresh = int(self.refractory_time / frame_time)
         self.double_count_down_thresh = int(self.double_time / frame_time)
         self.swing_count_down_thresh = int(self.swing_down_time / frame_time)
+        self.jitter_count_down_thresh = int(self.jitter_time / frame_time)
+
 
         signal_to_filter = np.hstack((self.lfp_buffer, n_arr[chan_in,:]))
         signal_to_filter = signal_to_filter - signal_to_filter[-1]
