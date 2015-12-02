@@ -164,7 +164,7 @@ class SPWFinder(object):
                 print("SWINGING")
         else:
             self.swing_count_down -= 1
-            if self.swing_count_down == 0:
+            if self.swing_count_down <= 0:
                 self.swing_state = self.NOT_SWINGING
                 print("NOT_SWINGING")
 
@@ -186,9 +186,11 @@ class SPWFinder(object):
         # READY, REFRACTORY, ARMED, FIRING
 
         if not self.enabled:
+            self.state = self.READY
             # DISABLED machine, has only READY state
             if self.spw_condition(n_arr):
                 self.new_event(events, 3)
+
         else:
             # ENABLED machine, has READY, REFRACTORY, FIRING states
             if self.state == self.READY:
@@ -200,7 +202,7 @@ class SPWFinder(object):
                 if self.jitter_count_down == self.jitter_count_down_thresh:
                     self.new_event(events, 5, 1)
                 self.jitter_count_down -= 1
-                if self.jitter_count_down == 0:
+                if self.jitter_count_down <= 0:
                     self.stimulate()
                     self.new_event(events, 2)
                     self.state = self.FIRING
