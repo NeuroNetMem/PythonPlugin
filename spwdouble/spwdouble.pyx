@@ -3,7 +3,7 @@ cimport numpy as np
 from cython cimport view
 import serial
 import scipy.signal
-
+import logging
 
 isDebug = False
 
@@ -69,7 +69,7 @@ class SPWFinder(object):
         self.TRIGGERED2 = 5
         self.FIRING2 = 6
         self.state = self.READY
-
+        logging.basicConfig(filename='spwdouble.log', format='%(asctime)s %(message)s', level=logging.DEBUG)
         print ("finished SPWfinder constructor")
 
     def startup(self, sampling_rate):
@@ -114,6 +114,7 @@ class SPWFinder(object):
             print("Can't send pulse")
         self.pulseNo += 1
         print("generating pulse ", self.pulseNo)
+        logging.debug('sending pulse')
 
     def new_event(self, events, code, channel=0, timestamp=None):
         if not timestamp:
@@ -161,12 +162,12 @@ class SPWFinder(object):
                 self.swing_state = self.SWINGING
                 self.swing_count_down = self.swing_count_down_thresh
                 self.new_event(events, 6)
-                print("SWINGING")
+                logging.debug("SWINGING")
         else:
             self.swing_count_down -= 1
             if self.swing_count_down <= 0:
                 self.swing_state = self.NOT_SWINGING
-                print("NOT_SWINGING")
+                logging.debug("NOT_SWINGING")
 
 
         if isDebug:
@@ -184,6 +185,7 @@ class SPWFinder(object):
         # ENABLED vs. DISABLED vs. JITTERED
         # states:
         # READY, REFRACTORY, ARMED, FIRING
+        # now w/ logging
 
         if not self.enabled:
             self.state = self.READY
@@ -195,8 +197,10 @@ class SPWFinder(object):
             # ENABLED machine, has READY, REFRACTORY, FIRING states
             if self.state == self.READY:
                 if self.spw_condition(n_arr):
+                    logging.debug('got spw')
                     self.jitter_count_down = self.jitter_count_down_thresh
                     self.state = self.ARMED
+                    logging.debug('ARMED')
                     self.new_event(events, 1, 1)
             elif self.state == self.ARMED:
                 if self.jitter_count_down == self.jitter_count_down_thresh:
@@ -206,15 +210,18 @@ class SPWFinder(object):
                     self.stimulate()
                     self.new_event(events, 2)
                     self.state = self.FIRING
+                    logging.debug('FIRING')
                     self.new_event(events, 1)
             elif self.state == self.FIRING:
                 if np.random.random() < self.double_rate:
                     self.double_count_down = self.double_count_down_thresh-1
                     print('double')
                     self.state = self.TRIGGERED2
+                    logging.debug('TRIGGERED2')
                 else:
                     self.refractory_count_down = self.refractory_count_down_thresh-1
                     self.state = self.REFRACTORY
+                    logging.debug('REFRACTORY')
                 self.new_event(events, 5)
             elif self.state == self.TRIGGERED2:
                 self.double_count_down -= 1
@@ -222,17 +229,21 @@ class SPWFinder(object):
                     self.stimulate()
                     self.new_event(events, 1)
                     self.state = self.FIRING2
+                    logging.debug('FIRING2')
             elif self.state == self.FIRING2:
                 self.refractory_count_down = self.refractory_count_down_thresh-1
                 self.state = self.REFRACTORY
+                logging.debug('REFRACTORY')
                 self.new_event(events, 5)
             elif self.state == self.REFRACTORY:
                 self.refractory_count_down -= 1
                 if self.refractory_count_down <= 0:
                     self.state = self.READY
+                    logging.debug('READY')
             else:
                 # checking for a leftover ARMED state
                 self.state = self.READY
+                logging.debug('READY')
 
 
         return events

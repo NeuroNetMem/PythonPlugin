@@ -15,7 +15,7 @@ spwfinder: spwfinder/spwfinder.so
 
 %.so: %.o
 	gcc -g -O2 -shared -o $@ $< -L`python3-config --prefix`/lib   `python3-config --ldflags | sed 's/-Wl,-stack_size,1000000//'`
-	install_name_tool -change libpython3.4m.dylib `python3-config --prefix`/lib/libpython3.4m.dylib $@
+	install_name_tool -change libpython3.5m.dylib `python3-config --prefix`/lib/libpython3.5m.dylib $@
 
 
 %.o: %.c
