@@ -7,28 +7,29 @@ import scipy.signal
 
 isDebug = False
 
-class SPWFinder(object):
+class SWOFinder(object):
     def __init__(self):
         self.enabled = True
-        self.jitter = False
-        self.jitter_count_down_thresh = 0
-        self.jitter_count_down = 0
-        self.jitter_time = 200. # in ms
         self.refractory_count_down_thresh = 0
         self.refractory_count_down = 0
         self.refractory_time = 100. # time that the plugin will not react to trigger after one pulse
+
+        self.jitter_count_down_thresh = 0
+        self.jitter_count_down = 0
+        self.jitter_time = 200. # in ms
+
         self.chan_in = 1
         self.chan_out = 0
         self.n_samples = 0
-        self.chan_ripples = 1
-        self.band_lo_min = 50.
-        self.band_lo_max = 200.
-        self.band_lo_start = 100.
+        self.chan_swo = 1
+        self.band_lo_min = 0.1
+        self.band_lo_max = 2.
+        self.band_lo_start = 0.1
         self.band_lo = self.band_lo_start
 
-        self.band_hi_min = 100.
-        self.band_hi_max = 500.
-        self.band_hi_start = 300.
+        self.band_hi_min = 1.
+        self.band_hi_max = 10.
+        self.band_hi_start = 2. # TODO to be set in the interface
         self.band_hi = self.band_hi_start
 
         self.thresh_min = 5.
@@ -42,13 +43,6 @@ class SPWFinder(object):
         self.swing_thresh_start = 1000.
         self.swing_thresh = self.swing_thresh_start
 
-        self.SWINGING = 1
-        self.NOT_SWINGING = 0
-        self.swing_state = self.NOT_SWINGING
-        self.swing_count_down_thresh = 0
-        self.swing_count_down = 0
-        self.swing_down_time = 2000. # time that it will be prevetned from firing after a swing event
-
         self.pulseNo = 0
         self.triggered = 0
         self.samplingRate = 0.
@@ -56,8 +50,8 @@ class SPWFinder(object):
         self.filter_a = []
         self.filter_b = []
         self.arduino = None
-        self.lfp_buffer = np.zeros((500,))
-        self.lfp_buffer_max_count = 500
+        self.lfp_buffer_max_count = 500000
+        self.lfp_buffer = np.zeros((self.lfp_buffer_max_count,))
         self.READY=1
         self.ARMED=2
         self.REFRACTORY=3
@@ -68,19 +62,21 @@ class SPWFinder(object):
 
     def startup(self, sampling_rate):
         self.samplingRate = sampling_rate
-        print (self.samplingRate)
+        print ('SR: ', self.samplingRate)
 
-        self.filter_b, self.filter_a = scipy.signal.butter(3,
-                                                     (self.band_lo/(self.samplingRate/2), self.band_hi/(self.samplingRate/2)),
-                                                     'pass')
+        try:
+            self.filter_b, self.filter_a = scipy.signal.butter(3,
+                                                     (self.band_hi/(self.samplingRate/2.)),
+                                                     'lowpass')
+        except Exception as e:
+            print(e)
         print(self.filter_a)
         print(self.filter_b)
-        print(self.band_lo)
+        #print(self.band_lo)
         print(self.band_hi)
-        print(self.band_lo/(self.samplingRate/2))
-        print(self.band_hi/(self.samplingRate/2))
+        #print(self.band_lo/(self.samplingRate/2.))
+        print(self.band_hi/(self.samplingRate/2.))
         self.enabled = 1
-        self.jitter = 0
         try:
             self.arduino = serial.Serial('/dev/ttyACM0', 57600)
         except (OSError, serial.serialutil.SerialException):
@@ -95,13 +91,9 @@ class SPWFinder(object):
     def param_config(self):
         chan_labels = range(32)
         return (("toggle", "enabled", True),
-                ("toggle", "jitter", False),
                 ("int_set", "chan_in", chan_labels),
                 ("float_range", "threshold", self.thresh_min, self.thresh_max, self.thresh_start),
-                ("float_range", "swing_thresh", self.swing_thresh_min, self.swing_thresh_max, self.swing_thresh_start))
-
-    def spw_condition(self, n_arr):
-        return (np.mean(n_arr[self.chan_out+1,:]) > self.threshold) and self.swing_state == self.NOT_SWINGING
+                )
 
     def stimulate(self):
         try:
@@ -116,6 +108,9 @@ class SPWFinder(object):
             timestamp = self.n_samples
         events.append({'type': 3, 'sampleNum': timestamp, 'eventId': code, 'eventChannel': channel})
 
+    def peak_condition(self, d):
+        return False # TODO
+
     def bufferfunction(self, n_arr):
         #print("plugin start")
         if isDebug:
@@ -124,7 +119,7 @@ class SPWFinder(object):
         cdef int chan_in
         cdef int chan_out
         chan_in = self.chan_in - 1
-        self.chan_out = self.chan_ripples
+        self.chan_out = chan_in
 
         self.n_samples = int(n_arr.shape[1])
 
@@ -133,34 +128,20 @@ class SPWFinder(object):
 
         # setting up frame dependent parameters
         frame_time = 1000. * self.n_samples / self.samplingRate
-        self.jitter_count_down_thresh = int(self.jitter_time / frame_time)
         self.refractory_count_down_thresh = int(self.refractory_time / frame_time)
-        self.swing_count_down_thresh = int(self.swing_down_time / frame_time)
+        self.jitter_count_down_thresh = int(self.jitter_time / frame_time)
+
 
         signal_to_filter = np.hstack((self.lfp_buffer, n_arr[chan_in,:]))
-        signal_to_filter = signal_to_filter - signal_to_filter[-1]
-        filtered_signal = scipy.signal.lfilter(self.filter_b, self.filter_a, signal_to_filter)
+        #signal_to_filter = signal_to_filter - signal_to_filter[-1]
+        print('signal to filter, size = ', signal_to_filter.size)
+        print('min: ', np.min(signal_to_filter), ' max: ', np.max(signal_to_filter))
+        filtered_signal =  scipy.signal.filtfilt(self.filter_b, self.filter_a, signal_to_filter)
         n_arr[self.chan_out,:] = filtered_signal[self.lfp_buffer.size:]
-        self.lfp_buffer = np.append(self.lfp_buffer, n_arr[chan_in,:])
+        print('min: ', np.min(n_arr[self.chan_out,:]), ' max: ', np.max(n_arr[self.chan_out,:]))
+        self.lfp_buffer = signal_to_filter
         if self.lfp_buffer.size > self.lfp_buffer_max_count:
             self.lfp_buffer = self.lfp_buffer[-self.lfp_buffer_max_count:]
-        n_arr[self.chan_out+1,:] = np.fabs(n_arr[self.chan_out,:])
-        n_arr[self.chan_out+2,:] = 5. *np.mean(n_arr[self.chan_out+1,:]) * np.ones((1,self.n_samples))
-
-
-        # the swing detector state machine
-        max_swing = np.max(np.fabs(n_arr[chan_in,:]))
-        if self.swing_state == self.NOT_SWINGING:
-            if max_swing > self.swing_thresh:
-                self.swing_state = self.SWINGING
-                self.swing_count_down = self.swing_count_down_thresh
-                self.new_event(events, 6)
-                print("SWINGING")
-        else:
-            self.swing_count_down -= 1
-            if self.swing_count_down == 0:
-                self.swing_state = self.NOT_SWINGING
-                print("NOT_SWINGING")
 
 
         if isDebug:
@@ -179,34 +160,19 @@ class SPWFinder(object):
         # states:
         # READY, REFRACTORY, ARMED, FIRING
 
-        if not self.enabled:
-            # DISABLED machine, has only READY state
-            if self.spw_condition(n_arr):
-                self.new_event(events, 3)
-        elif not self.jitter:
+        if self.enabled:
             # ENABLED machine, has READY, REFRACTORY, FIRING states
+             # JITTERED machine, has READY, ARMED, FIRING and REFRACTORY states
             if self.state == self.READY:
-                if self.spw_condition(n_arr):
-                    self.stimulate()
-                    self.new_event(events, 1)
-                    self.state = self.FIRING
-            elif self.state == self.FIRING:
-                self.refractory_count_down = self.refractory_count_down_thresh-1
-                self.state = self.REFRACTORY
-                self.new_event(events, 5)
-            elif self.state == self.REFRACTORY:
-                self.refractory_count_down -= 1
-                if self.refractory_count_down == 0:
-                    self.state = self.READY
-            else:
-                # checking for a leftover ARMED state
-                self.state = self.READY
-        else:
-            # JITTERED machine, has READY, ARMED, FIRING and REFRACTORY states
-            if self.state == self.READY:
-                if self.spw_condition(n_arr):
-                    self.jitter_count_down = self.jitter_count_down_thresh
-                    self.state = self.ARMED
+                if self.peak_condition(n_arr):
+                    if self.jitter_count_down_thresh > 0:
+                        self.jitter_count_down = self.jitter_count_down_thresh
+                        self.state = self.ARMED
+                    else:
+                        self.stimulate()
+                        self.new_event(events, 2)
+                        self.state = self.FIRING
+                        self.new_event(events, 1)
                     self.new_event(events, 1, 1)
             elif self.state == self.ARMED:
                 if self.jitter_count_down == self.jitter_count_down_thresh:
@@ -226,9 +192,11 @@ class SPWFinder(object):
                 if self.refractory_count_down == 0:
                     self.state = self.READY
 
+
+
         return events
 
 
-pluginOp = SPWFinder()
+pluginOp = SWOFinder()
 
 include "../plugin.pyx"

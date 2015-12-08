@@ -187,63 +187,61 @@ class SPWFinder(object):
         # READY, REFRACTORY, ARMED, FIRING
         # now w/ logging
 
-        if not self.enabled:
-            self.state = self.READY
-            # DISABLED machine, has only READY state
-            if self.spw_condition(n_arr):
-                self.new_event(events, 3)
 
-        else:
-            # ENABLED machine, has READY, REFRACTORY, FIRING states
-            if self.state == self.READY:
-                if self.spw_condition(n_arr):
+        # finite state machine
+        if self.state == self.READY:
+            if self.spw_condition(n_arr):
+                if self.enabled:
                     logging.debug('got spw')
                     self.jitter_count_down = self.jitter_count_down_thresh
                     self.state = self.ARMED
                     logging.debug('ARMED')
                     self.new_event(events, 1, 1)
-            elif self.state == self.ARMED:
-                if self.jitter_count_down == self.jitter_count_down_thresh:
-                    self.new_event(events, 5, 1)
-                self.jitter_count_down -= 1
-                if self.jitter_count_down <= 0:
-                    self.stimulate()
-                    self.new_event(events, 2)
-                    self.state = self.FIRING
-                    logging.debug('FIRING')
-                    self.new_event(events, 1)
-            elif self.state == self.FIRING:
-                if np.random.random() < self.double_rate:
-                    self.double_count_down = self.double_count_down_thresh-1
-                    print('double')
-                    self.state = self.TRIGGERED2
-                    logging.debug('TRIGGERED2')
                 else:
-                    self.refractory_count_down = self.refractory_count_down_thresh-1
-                    self.state = self.REFRACTORY
-                    logging.debug('REFRACTORY')
-                self.new_event(events, 5)
-            elif self.state == self.TRIGGERED2:
-                self.double_count_down -= 1
-                if self.double_count_down <= 0:
-                    self.stimulate()
-                    self.new_event(events, 1)
-                    self.state = self.FIRING2
-                    logging.debug('FIRING2')
-            elif self.state == self.FIRING2:
+                    self.new_event(events, 3)
+        elif self.state == self.ARMED:
+            logging.debug('in ARMED with countdown %d', self.jitter_count_down)
+            if self.jitter_count_down == self.jitter_count_down_thresh:
+                self.new_event(events, 5, 1)
+            self.jitter_count_down -= 1
+            if self.jitter_count_down <= 0:
+                self.stimulate()
+                self.new_event(events, 2)
+                self.state = self.FIRING
+                logging.debug('FIRING')
+                self.new_event(events, 1)
+        elif self.state == self.FIRING:
+            if np.random.random() < self.double_rate:
+                self.double_count_down = self.double_count_down_thresh-1
+                print('double')
+                self.state = self.TRIGGERED2
+                logging.debug('TRIGGERED2')
+            else:
                 self.refractory_count_down = self.refractory_count_down_thresh-1
                 self.state = self.REFRACTORY
                 logging.debug('REFRACTORY')
-                self.new_event(events, 5)
-            elif self.state == self.REFRACTORY:
-                self.refractory_count_down -= 1
-                if self.refractory_count_down <= 0:
-                    self.state = self.READY
-                    logging.debug('READY')
-            else:
-                # checking for a leftover ARMED state
+            self.new_event(events, 5)
+        elif self.state == self.TRIGGERED2:
+            self.double_count_down -= 1
+            if self.double_count_down <= 0:
+                self.stimulate()
+                self.new_event(events, 1)
+                self.state = self.FIRING2
+                logging.debug('FIRING2')
+        elif self.state == self.FIRING2:
+            self.refractory_count_down = self.refractory_count_down_thresh-1
+            self.state = self.REFRACTORY
+            logging.debug('REFRACTORY')
+            self.new_event(events, 5)
+        elif self.state == self.REFRACTORY:
+            self.refractory_count_down -= 1
+            if self.refractory_count_down <= 0:
                 self.state = self.READY
                 logging.debug('READY')
+        else:
+            # checking for a leftover ARMED state
+            self.state = self.READY
+            logging.debug('READY')
 
 
         return events
