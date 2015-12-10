@@ -195,27 +195,35 @@ class SWOFinder(object):
                     print('ARMED')
                     self.new_event(events, 1, 1)
                 else:
-                    self.stimulate()
-                    self.new_event(events, 2)
+                    if self.enabled:
+                        self.stimulate()
+                        self.new_event(events, 2)
+                        self.new_event(events, 1)
+                    else:
+                        self.new_event(events, 1, 3)
                     self.state = self.FIRING
                     print('FIRING')
-                    self.new_event(events, 1)
 
         elif self.state == self.ARMED:
             if self.jitter_count_down == self.jitter_count_down_thresh:
                 self.new_event(events, 5, 1)
             self.jitter_count_down -= self.n_samples
             if self.jitter_count_down <= 0:
-                self.stimulate()
-                self.new_event(events, 2)
+                if self.enabled:
+                    self.stimulate()
+                    self.new_event(events, 2)
+                    self.new_event(events, 1)
+                else:
+                    self.new_event(events, 1, 3)
                 self.state = self.FIRING
                 print('FIRING')
-                self.new_event(events, 1)
+
         elif self.state == self.FIRING:
             self.refractory_count_down = self.refractory_count_down_thresh-1
             self.state = self.REFRACTORY
             print('REFRACTORY')
             self.new_event(events, 5)
+            self.new_event(events, 5, 3)
         elif self.state == self.REFRACTORY:
             self.refractory_count_down -= self.n_samples
             print('REFRACTORY countdown is ', self.refractory_count_down)
