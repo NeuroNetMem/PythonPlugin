@@ -16,7 +16,7 @@ class SWOFinder(object):
 
         self.jitter_count_down_thresh = 0
         self.jitter_count_down = 0
-        self.jitter_time = 200. # in ms
+        #self.jitter_time = 0. # in ms
 
         self.chan_in = 1
         self.chan_out = 0
@@ -32,16 +32,21 @@ class SWOFinder(object):
         self.band_hi_start = 2. # TODO to be set in the interface
         self.band_hi = self.band_hi_start
 
-        self.thresh_min = 5.
-        self.thresh_max = 200.
-        self.thresh_start = 30.
-        self.threshold = self.thresh_start
+        # self.thresh_min = 5.
+        # self.thresh_max = 200.
+        # self.thresh_start = 30.
+        # self.threshold = self.thresh_start
+        #
+        #
+        # self.swing_thresh_min = 10.
+        # self.swing_thresh_max = 20000.
+        # self.swing_thresh_start = 1000.
+        # self.swing_thresh = self.swing_thresh_start
 
-
-        self.swing_thresh_min = 10.
-        self.swing_thresh_max = 20000.
-        self.swing_thresh_start = 1000.
-        self.swing_thresh = self.swing_thresh_start
+        self.jitter_time_min = 0.
+        self.jitter_time_max = 2000.
+        self.jitter_time_start = 0.
+        self.jitter_time = self.jitter_time_start
 
         self.pulseNo = 0
         self.triggered = 0
@@ -52,6 +57,12 @@ class SWOFinder(object):
         self.arduino = None
         self.lfp_buffer_max_count = 500000
         self.lfp_buffer = np.zeros((self.lfp_buffer_max_count,))
+        self.previous_val = np.nan
+        self.cur_val = np.nan
+        self.ASCENDING = False
+        self.DESCENDING = True
+        self.PEAK = False
+        self.TROUGH = False
         self.READY=1
         self.ARMED=2
         self.REFRACTORY=3
@@ -92,7 +103,8 @@ class SWOFinder(object):
         chan_labels = range(32)
         return (("toggle", "enabled", True),
                 ("int_set", "chan_in", chan_labels),
-                ("float_range", "threshold", self.thresh_min, self.thresh_max, self.thresh_start),
+                ("float_range", "jitter_time", self.jitter_time_min,
+                 self.jitter_time_max, self.jitter_time_start),
                 )
 
     def stimulate(self):
@@ -107,9 +119,6 @@ class SWOFinder(object):
         if not timestamp:
             timestamp = self.n_samples
         events.append({'type': 3, 'sampleNum': timestamp, 'eventId': code, 'eventChannel': channel})
-
-    def peak_condition(self, d):
-        return False # TODO
 
     def bufferfunction(self, n_arr):
         #print("plugin start")
@@ -126,19 +135,20 @@ class SWOFinder(object):
         if self.n_samples == 0:
             return events
 
-        # setting up frame dependent parameters
-        frame_time = 1000. * self.n_samples / self.samplingRate
-        self.refractory_count_down_thresh = int(self.refractory_time / frame_time)
-        self.jitter_count_down_thresh = int(self.jitter_time / frame_time)
+        # setting up count down thresholds in units of samples
+        self.refractory_count_down_thresh =  self.refractory_time * self.samplingRate / 1000.
+        self.jitter_count_down_thresh = self.jitter_time * self.samplingRate / 1000.
+
 
 
         signal_to_filter = np.hstack((self.lfp_buffer, n_arr[chan_in,:]))
         #signal_to_filter = signal_to_filter - signal_to_filter[-1]
-        print('signal to filter, size = ', signal_to_filter.size)
-        print('min: ', np.min(signal_to_filter), ' max: ', np.max(signal_to_filter))
+        # print('signal to filter, size = ', signal_to_filter.size)
+        # print('min: ', np.min(signal_to_filter), ' max: ', np.max(signal_to_filter))
         filtered_signal =  scipy.signal.filtfilt(self.filter_b, self.filter_a, signal_to_filter)
         n_arr[self.chan_out,:] = filtered_signal[self.lfp_buffer.size:]
-        print('min: ', np.min(n_arr[self.chan_out,:]), ' max: ', np.max(n_arr[self.chan_out,:]))
+        self.cur_val = np.mean(n_arr[self.chan_out,:])
+        # print('min: ', np.min(n_arr[self.chan_out,:]), ' max: ', np.max(n_arr[self.chan_out,:]))
         self.lfp_buffer = signal_to_filter
         if self.lfp_buffer.size > self.lfp_buffer_max_count:
             self.lfp_buffer = self.lfp_buffer[-self.lfp_buffer_max_count:]
@@ -160,37 +170,58 @@ class SWOFinder(object):
         # states:
         # READY, REFRACTORY, ARMED, FIRING
 
-        if self.enabled:
-            # ENABLED machine, has READY, REFRACTORY, FIRING states
-             # JITTERED machine, has READY, ARMED, FIRING and REFRACTORY states
-            if self.state == self.READY:
-                if self.peak_condition(n_arr):
-                    if self.jitter_count_down_thresh > 0:
-                        self.jitter_count_down = self.jitter_count_down_thresh
-                        self.state = self.ARMED
-                    else:
-                        self.stimulate()
-                        self.new_event(events, 2)
-                        self.state = self.FIRING
-                        self.new_event(events, 1)
+        self.PEAK = False
+        self.TROUGH = False
+        if self.ASCENDING:
+            if self.cur_val < self.previous_val:
+                print('PEAK')
+                self.PEAK = True
+                self.ASCENDING = False
+                self.DESCENDING = True
+        elif self.DESCENDING:
+            if self.cur_val > self.previous_val:
+                print('TROUGH')
+                self.TROUGH = True
+                self.ASCENDING = True
+                self.DESCENDING = False
+
+        self.previous_val = self.cur_val
+
+        if self.state == self.READY:
+            if self.PEAK:
+                if self.jitter_count_down_thresh > 0:
+                    self.jitter_count_down = self.jitter_count_down_thresh
+                    self.state = self.ARMED
+                    print('ARMED')
                     self.new_event(events, 1, 1)
-            elif self.state == self.ARMED:
-                if self.jitter_count_down == self.jitter_count_down_thresh:
-                    self.new_event(events, 5, 1)
-                self.jitter_count_down -= 1
-                if self.jitter_count_down == 0:
+                else:
                     self.stimulate()
                     self.new_event(events, 2)
                     self.state = self.FIRING
+                    print('FIRING')
                     self.new_event(events, 1)
-            elif self.state == self.FIRING:
-                self.refractory_count_down = self.refractory_count_down_thresh-1
-                self.state = self.REFRACTORY
-                self.new_event(events, 5)
-            else:
-                self.refractory_count_down -= 1
-                if self.refractory_count_down == 0:
-                    self.state = self.READY
+
+        elif self.state == self.ARMED:
+            if self.jitter_count_down == self.jitter_count_down_thresh:
+                self.new_event(events, 5, 1)
+            self.jitter_count_down -= self.n_samples
+            if self.jitter_count_down <= 0:
+                self.stimulate()
+                self.new_event(events, 2)
+                self.state = self.FIRING
+                print('FIRING')
+                self.new_event(events, 1)
+        elif self.state == self.FIRING:
+            self.refractory_count_down = self.refractory_count_down_thresh-1
+            self.state = self.REFRACTORY
+            print('REFRACTORY')
+            self.new_event(events, 5)
+        elif self.state == self.REFRACTORY:
+            self.refractory_count_down -= self.n_samples
+            print('REFRACTORY countdown is ', self.refractory_count_down)
+            if self.refractory_count_down <= 0:
+                self.state = self.READY
+                print('READY')
 
 
 
