@@ -35,7 +35,8 @@ class SPWFinder(object):
         self.thresh_max = 200.
         self.thresh_start = 30.
         self.threshold = self.thresh_start
-
+        self.averaging_time = 20. # in ms
+        self.samples_for_average = 0
 
         self.swing_thresh_min = 10.
         self.swing_thresh_max = 20000.
@@ -56,8 +57,9 @@ class SPWFinder(object):
         self.filter_a = []
         self.filter_b = []
         self.arduino = None
-        self.lfp_buffer = np.zeros((500,))
-        self.lfp_buffer_max_count = 500
+        self.lfp_buffer_max_count = 1000
+        self.lfp_buffer = np.zeros((self.lfp_buffer_max_count,))
+        self.spw_power = 0.
         self.READY=1
         self.ARMED=2
         self.REFRACTORY=3
@@ -101,7 +103,7 @@ class SPWFinder(object):
                 ("float_range", "swing_thresh", self.swing_thresh_min, self.swing_thresh_max, self.swing_thresh_start))
 
     def spw_condition(self, n_arr):
-        return (np.mean(n_arr[self.chan_out+1,:]) > self.threshold) and self.swing_state == self.NOT_SWINGING
+        return (self.spw_power > self.threshold) and self.swing_state == self.NOT_SWINGING
 
     def stimulate(self):
         try:
@@ -131,11 +133,11 @@ class SPWFinder(object):
         if self.n_samples == 0:
             return events
 
-        # setting up frame dependent parameters
-        frame_time = 1000. * self.n_samples / self.samplingRate
-        self.jitter_count_down_thresh = int(self.jitter_time / frame_time)
-        self.refractory_count_down_thresh = int(self.refractory_time / frame_time)
-        self.swing_count_down_thresh = int(self.swing_down_time / frame_time)
+        # setting up count down thresholds in units of samples
+        self.refractory_count_down_thresh =  self.refractory_time * self.samplingRate / 1000.
+        self.swing_count_down_thresh = self.swing_down_time * self.samplingRate / 1000.
+        self.jitter_count_down_thresh = self.jitter_time * self.samplingRate / 1000.
+        self.samples_for_average = self.averaging_time * self.samplingRate / 1000.
 
         signal_to_filter = np.hstack((self.lfp_buffer, n_arr[chan_in,:]))
         signal_to_filter = signal_to_filter - signal_to_filter[-1]
@@ -145,7 +147,8 @@ class SPWFinder(object):
         if self.lfp_buffer.size > self.lfp_buffer_max_count:
             self.lfp_buffer = self.lfp_buffer[-self.lfp_buffer_max_count:]
         n_arr[self.chan_out+1,:] = np.fabs(n_arr[self.chan_out,:])
-        n_arr[self.chan_out+2,:] = 5. *np.mean(n_arr[self.chan_out+1,:]) * np.ones((1,self.n_samples))
+        self.spw_power = np.mean(np.fabs(filtered_signal[-self.samples_for_average:]))
+        n_arr[self.chan_out+2,:] = 5. *self.spw_power * np.ones((1,self.n_samples))
 
 
         # the swing detector state machine
@@ -157,8 +160,8 @@ class SPWFinder(object):
                 self.new_event(events, 6)
                 print("SWINGING")
         else:
-            self.swing_count_down -= 1
-            if self.swing_count_down == 0:
+            self.swing_count_down -= self.n_samples
+            if self.swing_count_down <= 0:
                 self.swing_state = self.NOT_SWINGING
                 print("NOT_SWINGING")
 
@@ -195,8 +198,8 @@ class SPWFinder(object):
                 self.state = self.REFRACTORY
                 self.new_event(events, 5)
             elif self.state == self.REFRACTORY:
-                self.refractory_count_down -= 1
-                if self.refractory_count_down == 0:
+                self.refractory_count_down -= self.n_samples
+                if self.refractory_count_down <= 0:
                     self.state = self.READY
             else:
                 # checking for a leftover ARMED state
@@ -209,9 +212,9 @@ class SPWFinder(object):
                     self.state = self.ARMED
                     self.new_event(events, 1, 1)
             elif self.state == self.ARMED:
-                if self.jitter_count_down == self.jitter_count_down_thresh:
+                if self.jitter_count_down <= self.jitter_count_down_thresh:
                     self.new_event(events, 5, 1)
-                self.jitter_count_down -= 1
+                self.jitter_count_down -= self.n_samples
                 if self.jitter_count_down == 0:
                     self.stimulate()
                     self.new_event(events, 2)
@@ -222,8 +225,8 @@ class SPWFinder(object):
                 self.state = self.REFRACTORY
                 self.new_event(events, 5)
             else:
-                self.refractory_count_down -= 1
-                if self.refractory_count_down == 0:
+                self.refractory_count_down -= self.n_samples
+                if self.refractory_count_down <= 0:
                     self.state = self.READY
 
         return events
