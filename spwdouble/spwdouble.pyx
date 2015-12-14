@@ -62,8 +62,8 @@ class SPWFinder(object):
         self.filter_a = []
         self.filter_b = []
         self.arduino = None
-        self.lfp_buffer = np.zeros((500,))
-        self.lfp_buffer_max_count = 500
+        self.lfp_buffer_max_count = 1000
+        self.lfp_buffer = np.zeros((self.lfp_buffer_max_count,))
         self.READY=1
         self.ARMED=2
         self.REFRACTORY=3
@@ -153,7 +153,7 @@ class SPWFinder(object):
         if self.lfp_buffer.size > self.lfp_buffer_max_count:
             self.lfp_buffer = self.lfp_buffer[-self.lfp_buffer_max_count:]
         n_arr[self.chan_out+1,:] = np.fabs(n_arr[self.chan_out,:])
-        n_arr[self.chan_out+2,:] = 5. *np.mean(filtered_signal[-self.samples_for_average]) * np.ones((1,self.n_samples))
+        n_arr[self.chan_out+2,:] = 5. *np.mean(filtered_signal[-self.samples_for_average:]) * np.ones((1,self.n_samples))
 
 
         # the swing detector state machine
