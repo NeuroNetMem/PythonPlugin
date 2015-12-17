@@ -22,7 +22,10 @@ class SPWFinder(object):
         self.double_time = 200.
         self.double_rate = 1. / 3.
 
-        self.averaging_time = 20. # in ms
+        self.averaging_time_min = 10.
+        self.averaging_time_max = 50.
+        self.averaging_time_start = 20.
+        self.averaging_time = self.averaging_time_start # in ms
         self.chan_in = 1
         self.chan_out = 0
         self.n_samples = 0
@@ -104,7 +107,9 @@ class SPWFinder(object):
         return (("toggle", "enabled", True),
                 ("int_set", "chan_in", chan_labels),
                 ("float_range", "threshold", self.thresh_min, self.thresh_max, self.thresh_start),
-                ("float_range", "swing_thresh", self.swing_thresh_min, self.swing_thresh_max, self.swing_thresh_start))
+                ("float_range", "swing_thresh", self.swing_thresh_min, self.swing_thresh_max, self.swing_thresh_start),
+                ("float_range", "averaging_time", self.averaging_time_min, self.averaging_time_max, self.averaging_time_start))
+
 
     def spw_condition(self, n_arr):
         return (np.mean(n_arr[self.chan_out+1,:]) > self.threshold) and self.swing_state == self.NOT_SWINGING
