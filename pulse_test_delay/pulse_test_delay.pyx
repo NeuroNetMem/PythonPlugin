@@ -56,7 +56,7 @@ class Pulse_test_delay(object):
                 #print ('triggered')
                 events.append({'type': 3, 'sampleNum': 10, 'eventId': 1})
                 self.triggered = 1
-                self.arduino.write('1')
+                self.arduino.write(b'1')
                 #n_arr[chan_in-2,:] = 1 * np.ones((1,n_samples))
         elif self.triggered:
             self.triggered = 0

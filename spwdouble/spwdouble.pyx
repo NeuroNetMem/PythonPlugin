@@ -116,7 +116,7 @@ class SPWFinder(object):
 
     def stimulate(self):
         try:
-            self.arduino.write(b'1'* 64)
+            self.arduino.write(b'1')
         except AttributeError:
             print("Can't send pulse")
         self.pulseNo += 1
