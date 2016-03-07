@@ -13,6 +13,9 @@ class SWOFinder(object):
         self.refractory_count_down_thresh = 0
         self.refractory_count_down = 0
         self.refractory_time = 100. # time that the plugin will not react to trigger after one pulse
+        self.refractory_time_min = 100.
+        self.refractory_time_max = 6000.
+        self.refractory_time_start = 2000.
 
         self.jitter_count_down_thresh = 0
         self.jitter_count_down = 0
@@ -105,6 +108,8 @@ class SWOFinder(object):
                 ("int_set", "chan_in", chan_labels),
                 ("float_range", "jitter_time", self.jitter_time_min,
                  self.jitter_time_max, self.jitter_time_start),
+                ("float_range", "refractory_time", self.refractory_time_min,
+                 self.refractory_time_max, self.refractory_time_start)
                 )
 
     def stimulate(self):
