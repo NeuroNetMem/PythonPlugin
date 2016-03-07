@@ -72,7 +72,7 @@ class SPWFinder(object):
         return 1
 
     def param_config(self):
-        chan_labels = range(32)
+        chan_labels = range(1,33)
         return (("toggle", "enabled", True),
                 ("float_range", "random_stim_rate", self.random_stim_rate_min, self.random_stim_rate_max, self.random_stim_rate),
                 ("float_range", "swing_thresh", self.swing_thresh_min, self.swing_thresh_max, self.swing_thresh_start))

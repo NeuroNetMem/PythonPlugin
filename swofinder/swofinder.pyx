@@ -100,7 +100,7 @@ class SWOFinder(object):
         return 1
 
     def param_config(self):
-        chan_labels = range(32)
+        chan_labels = range(1, 33)
         return (("toggle", "enabled", True),
                 ("int_set", "chan_in", chan_labels),
                 ("float_range", "jitter_time", self.jitter_time_min,
