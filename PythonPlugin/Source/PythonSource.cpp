@@ -30,7 +30,6 @@
   ==============================================================================
 */
 
-#include "../../JuceLibraryCode/JuceHeader.h"
 #include "PythonSource.h"
 
 PythonSource::PythonSource()

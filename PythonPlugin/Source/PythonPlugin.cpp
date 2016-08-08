@@ -35,7 +35,6 @@
 
 
 
-#include "../../JuceLibraryCode/JuceHeader.h"
 #include "PythonPlugin.h"
 #include "PythonEditor.h"
 

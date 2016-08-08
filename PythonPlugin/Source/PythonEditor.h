@@ -30,11 +30,10 @@
   ==============================================================================
 */
 
-#ifndef __PYTHONEDITOR_H_5E135C2C__
-#define __PYTHONEDITOR_H_5E135C2C__
+#ifndef __PYTHONEDITOR_H
+#define __PYTHONEDITOR_H
 
-#include "../../JuceLibraryCode/JuceHeader.h"
-#include "../Editors/GenericEditor.h"
+#include <EditorHeaders.h>
 
 class PythonPlugin;
 class PythonParameterButtonInterface;
@@ -144,4 +143,4 @@ private:
 
 
 
-#endif  // __PYTHONEDITOR_H_5E135C2C__
+#endif  // __PYTHONEDITOR_H

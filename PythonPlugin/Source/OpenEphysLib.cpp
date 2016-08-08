@@ -26,7 +26,6 @@
  */
 
 #include <PluginInfo.h>
-#include "Python.h"
 #include <string>
 #ifdef WIN32
 #include <Windows.h>
@@ -35,6 +34,7 @@
 #define EXPORT
 #endif
 
+#include "PythonFilter.h"
 using namespace Plugin;
 //Number of plugins defined on the library. Can be of different types (Processors, RecordEngines, etc...)
 #define NUM_PLUGINS 1
@@ -56,9 +56,9 @@ extern "C" EXPORT int getPluginInfo(int index, Plugin::PluginInfo* info)
         case 0:
             info->type = Plugin::ProcessorPlugin; //Type of plugin. See "Source/Processors/PluginManager/OpenEphysPlugin.h" for complete info about the different type structures
             //For processor
-            info->processor.name = "Example Processor"; //Processor name shown in the GUI
+            info->processor.name = "Python Filter"; //Processor name shown in the GUI
             info->processor.type = Plugin::FilterProcessor; //Type of processor. Can be FilterProcessor, SourceProcessor, SinkProcessor or UtilityProcessor. Specifies where on the processor list will appear
-            info->processor.creator = &(Plugin::createProcessor<ExampleProcessor>); //Class factory pointer. Replace "ExampleProcessor" with the name of your class.
+            info->processor.creator = &(Plugin::createProcessor<PythonFilter>); //Class factory pointer. Replace "ExampleProcessor" with the name of your class.
             break;
             /**
              Examples for other plugin types

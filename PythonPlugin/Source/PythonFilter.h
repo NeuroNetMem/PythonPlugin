@@ -30,10 +30,9 @@
   ==============================================================================
 */
 
-#ifndef __PYTHONFILTER_H_71926ECE__
-#define __PYTHONFILTER_H_71926ECE__
+#ifndef __PYTHONFILTER_H
+#define __PYTHONFILTER_H
 
-#include "../../JuceLibraryCode/JuceHeader.h"
 #include "PythonPlugin.h"
 //==============================================================================
 /*
@@ -68,4 +67,4 @@ public:
 
 
 
-#endif  // __PYTHONFILTER_H_71926ECE__
+#endif  // __PYTHONFILTER_H

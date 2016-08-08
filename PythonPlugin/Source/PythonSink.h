@@ -30,10 +30,9 @@
   ==============================================================================
 */
 
-#ifndef __PYTHONSINK_H_4D2E4E29__
-#define __PYTHONSINK_H_4D2E4E29__
+#ifndef __PYTHONSINK_H
+#define __PYTHONSINK_H
 
-#include "../../JuceLibraryCode/JuceHeader.h"
 #include "PythonPlugin.h"
 
 

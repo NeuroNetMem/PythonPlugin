@@ -30,8 +30,8 @@
   ==============================================================================
 */
 
-#ifndef __PYTHONPLUGIN_H_2DB70FC9__
-#define __PYTHONPLUGIN_H_2DB70FC9__
+#ifndef __PYTHONPLUGIN_H
+#define __PYTHONPLUGIN_H
 
 #include <Python.h>
 
@@ -73,8 +73,7 @@ typedef DL_IMPORT(float) (*getfloatparamfunc_t)(char*);
 #include <Windows.h>
 #endif
 
-#include "../../JuceLibraryCode/JuceHeader.h"
-#include "../GenericProcessor/GenericProcessor.h"
+#include <ProcessorHeaders.h>
 
 
 
@@ -187,4 +186,4 @@ private:
 
 
 
-#endif  // __PYTHONPLUGIN_H_2DB70FC9__
+#endif  // __PYTHONPLUGIN_H

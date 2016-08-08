@@ -30,8 +30,8 @@
   ==============================================================================
 */
 
-#ifndef __PYTHONEVENT_H_4B3D9292__
-#define __PYTHONEVENT_H_4B3D9292__
+#ifndef __PYTHONEVENT_H
+#define __PYTHONEVENT_H
 
 struct PythonEvent;
 
@@ -47,4 +47,4 @@ struct PythonEvent {
 
 
 
-#endif  // __PYTHONEVENT_H_4B3D9292__
+#endif  // __PYTHONEVENT_H

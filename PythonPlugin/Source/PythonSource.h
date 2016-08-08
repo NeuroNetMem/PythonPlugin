@@ -30,10 +30,9 @@
   ==============================================================================
 */
 
-#ifndef __PYTHONSOURCE_H_4A56EB1__
-#define __PYTHONSOURCE_H_4A56EB1__
+#ifndef __PYTHONSOURCE_H
+#define __PYTHONSOURCE_H
 
-#include "../../JuceLibraryCode/JuceHeader.h"
 #include "PythonPlugin.h"
 
 class PythonSource    : public PythonPlugin
@@ -63,4 +62,4 @@ public:
 
 };
 
-#endif  // __PYTHONSOURCE_H_4A56EB1__
+#endif  // __PYTHONSOURCE_H

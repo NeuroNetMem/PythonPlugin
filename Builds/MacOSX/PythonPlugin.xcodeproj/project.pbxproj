@@ -11,8 +11,6 @@
 		F7956D3C1D58BBA100C2EF56 /* Plugin_Release.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = F7956D391D58BBA100C2EF56 /* Plugin_Release.xcconfig */; };
 		F7956D3D1D58BBA100C2EF56 /* Plugin.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = F7956D3A1D58BBA100C2EF56 /* Plugin.xcconfig */; };
 		F7956D431D58C04C00C2EF56 /* OpenEphysLib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F7956D421D58C04C00C2EF56 /* OpenEphysLib.cpp */; };
-		F7F7D1651D58C55E00DCF6CF /* pyprocessor1.c in Sources */ = {isa = PBXBuildFile; fileRef = F7F7D1541D58C55E00DCF6CF /* pyprocessor1.c */; };
-		F7F7D1661D58C55E00DCF6CF /* pyprocessor1.pyx in Resources */ = {isa = PBXBuildFile; fileRef = F7F7D1561D58C55E00DCF6CF /* pyprocessor1.pyx */; };
 		F7F7D1671D58C55E00DCF6CF /* PythonEditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F7F7D1571D58C55E00DCF6CF /* PythonEditor.cpp */; };
 		F7F7D16A1D58C55E00DCF6CF /* PythonPlugin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F7F7D15F1D58C55E00DCF6CF /* PythonPlugin.cpp */; };
 		F7F7D16B1D58C55E00DCF6CF /* PythonSink.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F7F7D1611D58C55E00DCF6CF /* PythonSink.cpp */; };
@@ -22,26 +20,23 @@
 
 /* Begin PBXFileReference section */
 		F7956D281D579E1900C2EF56 /* PythonPlugin.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PythonPlugin.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
-		F7956D2B1D579E1900C2EF56 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; name = Info.plist; path = ../../PythonPlugin/Info.plist; sourceTree = "<group>"; };
+		F7956D2B1D579E1900C2EF56 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = /Users/fpbatta/src/PythonPlugin/Builds/MacOSX/PythonPlugin/Info.plist; sourceTree = "<absolute>"; };
 		F7956D381D58BBA100C2EF56 /* Plugin_Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Plugin_Debug.xcconfig; sourceTree = "<group>"; };
 		F7956D391D58BBA100C2EF56 /* Plugin_Release.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Plugin_Release.xcconfig; sourceTree = "<group>"; };
 		F7956D3A1D58BBA100C2EF56 /* Plugin.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Plugin.xcconfig; sourceTree = "<group>"; };
 		F7956D421D58C04C00C2EF56 /* OpenEphysLib.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OpenEphysLib.cpp; path = /Users/fpbatta/src/PythonPlugin/PythonPlugin/Source/OpenEphysLib.cpp; sourceTree = "<absolute>"; };
-		F7F7D1541D58C55E00DCF6CF /* pyprocessor1.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = pyprocessor1.c; path = ../../../PythonPlugin/Source/pyprocessor1.c; sourceTree = "<group>"; };
-		F7F7D1551D58C55E00DCF6CF /* pyprocessor1.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = pyprocessor1.h; path = ../../../PythonPlugin/Source/pyprocessor1.h; sourceTree = "<group>"; };
-		F7F7D1561D58C55E00DCF6CF /* pyprocessor1.pyx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = pyprocessor1.pyx; path = ../../../PythonPlugin/Source/pyprocessor1.pyx; sourceTree = "<group>"; };
-		F7F7D1571D58C55E00DCF6CF /* PythonEditor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PythonEditor.cpp; path = ../../PythonPlugin/Source/PythonEditor.cpp; sourceTree = "<group>"; };
-		F7F7D1581D58C55E00DCF6CF /* PythonEditor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PythonEditor.h; path = ../../PythonPlugin/Source/PythonEditor.h; sourceTree = "<group>"; };
-		F7F7D1591D58C55E00DCF6CF /* PythonEvent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PythonEvent.h; path = ../../PythonPlugin/Source/PythonEvent.h; sourceTree = "<group>"; };
-		F7F7D15D1D58C55E00DCF6CF /* PythonFilter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PythonFilter.h; path = ../../PythonPlugin/Source/PythonFilter.h; sourceTree = "<group>"; };
-		F7F7D15E1D58C55E00DCF6CF /* PythonParamConfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PythonParamConfig.h; path = ../../PythonPlugin/Source/PythonParamConfig.h; sourceTree = "<group>"; };
-		F7F7D15F1D58C55E00DCF6CF /* PythonPlugin.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PythonPlugin.cpp; path = ../../PythonPlugin/Source/PythonPlugin.cpp; sourceTree = "<group>"; };
-		F7F7D1601D58C55E00DCF6CF /* PythonPlugin.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PythonPlugin.h; path = ../../PythonPlugin/Source/PythonPlugin.h; sourceTree = "<group>"; };
-		F7F7D1611D58C55E00DCF6CF /* PythonSink.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PythonSink.cpp; path = ../../PythonPlugin/Source/PythonSink.cpp; sourceTree = "<group>"; };
-		F7F7D1621D58C55E00DCF6CF /* PythonSink.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PythonSink.h; path = ../../PythonPlugin/Source/PythonSink.h; sourceTree = "<group>"; };
-		F7F7D1631D58C55E00DCF6CF /* PythonSource.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PythonSource.cpp; path = ../../PythonPlugin/Source/PythonSource.cpp; sourceTree = "<group>"; };
-		F7F7D1641D58C55E00DCF6CF /* PythonSource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PythonSource.h; path = ../../PythonPlugin/Source/PythonSource.h; sourceTree = "<group>"; };
-		F7F7D16D1D58C5D000DCF6CF /* PythonFilter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PythonFilter.cpp; path = ../../PythonPlugin/Source/PythonFilter.cpp; sourceTree = "<group>"; };
+		F7F7D1571D58C55E00DCF6CF /* PythonEditor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PythonEditor.cpp; path = /Users/fpbatta/src/PythonPlugin/PythonPlugin/Source/PythonEditor.cpp; sourceTree = "<absolute>"; };
+		F7F7D1581D58C55E00DCF6CF /* PythonEditor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PythonEditor.h; path = /Users/fpbatta/src/PythonPlugin/PythonPlugin/Source/PythonEditor.h; sourceTree = "<absolute>"; };
+		F7F7D1591D58C55E00DCF6CF /* PythonEvent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PythonEvent.h; path = ../../PythonPlugin/Source/PythonEvent.h; sourceTree = SOURCE_ROOT; };
+		F7F7D15D1D58C55E00DCF6CF /* PythonFilter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PythonFilter.h; path = ../../PythonPlugin/Source/PythonFilter.h; sourceTree = SOURCE_ROOT; };
+		F7F7D15E1D58C55E00DCF6CF /* PythonParamConfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PythonParamConfig.h; path = ../../PythonPlugin/Source/PythonParamConfig.h; sourceTree = SOURCE_ROOT; };
+		F7F7D15F1D58C55E00DCF6CF /* PythonPlugin.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PythonPlugin.cpp; path = ../../PythonPlugin/Source/PythonPlugin.cpp; sourceTree = SOURCE_ROOT; };
+		F7F7D1601D58C55E00DCF6CF /* PythonPlugin.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PythonPlugin.h; path = ../../PythonPlugin/Source/PythonPlugin.h; sourceTree = SOURCE_ROOT; };
+		F7F7D1611D58C55E00DCF6CF /* PythonSink.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PythonSink.cpp; path = ../../PythonPlugin/Source/PythonSink.cpp; sourceTree = SOURCE_ROOT; };
+		F7F7D1621D58C55E00DCF6CF /* PythonSink.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PythonSink.h; path = ../../PythonPlugin/Source/PythonSink.h; sourceTree = SOURCE_ROOT; };
+		F7F7D1631D58C55E00DCF6CF /* PythonSource.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PythonSource.cpp; path = ../../PythonPlugin/Source/PythonSource.cpp; sourceTree = SOURCE_ROOT; };
+		F7F7D1641D58C55E00DCF6CF /* PythonSource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PythonSource.h; path = ../../PythonPlugin/Source/PythonSource.h; sourceTree = SOURCE_ROOT; };
+		F7F7D16D1D58C5D000DCF6CF /* PythonFilter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PythonFilter.cpp; path = ../../../PythonPlugin/Source/PythonFilter.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -75,9 +70,6 @@
 		F7956D2A1D579E1900C2EF56 /* PythonPlugin */ = {
 			isa = PBXGroup;
 			children = (
-				F7F7D1541D58C55E00DCF6CF /* pyprocessor1.c */,
-				F7F7D1551D58C55E00DCF6CF /* pyprocessor1.h */,
-				F7F7D1561D58C55E00DCF6CF /* pyprocessor1.pyx */,
 				F7F7D1571D58C55E00DCF6CF /* PythonEditor.cpp */,
 				F7F7D1581D58C55E00DCF6CF /* PythonEditor.h */,
 				F7F7D1591D58C55E00DCF6CF /* PythonEvent.h */,
@@ -162,7 +154,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				F7956D3B1D58BBA100C2EF56 /* Plugin_Debug.xcconfig in Resources */,
-				F7F7D1661D58C55E00DCF6CF /* pyprocessor1.pyx in Resources */,
 				F7956D3D1D58BBA100C2EF56 /* Plugin.xcconfig in Resources */,
 				F7956D3C1D58BBA100C2EF56 /* Plugin_Release.xcconfig in Resources */,
 			);
@@ -180,7 +171,6 @@
 				F7F7D16A1D58C55E00DCF6CF /* PythonPlugin.cpp in Sources */,
 				F7956D431D58C04C00C2EF56 /* OpenEphysLib.cpp in Sources */,
 				F7F7D16C1D58C55E00DCF6CF /* PythonSource.cpp in Sources */,
-				F7F7D1651D58C55E00DCF6CF /* pyprocessor1.c in Sources */,
 				F7F7D1671D58C55E00DCF6CF /* PythonEditor.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -192,6 +182,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = F7956D381D58BBA100C2EF56 /* Plugin_Debug.xcconfig */;
 			buildSettings = {
+				LIBRARY_SEARCH_PATHS = /usr/local/anaconda/lib;
 			};
 			name = Debug;
 		};
@@ -199,6 +190,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = F7956D391D58BBA100C2EF56 /* Plugin_Release.xcconfig */;
 			buildSettings = {
+				LIBRARY_SEARCH_PATHS = /usr/local/anaconda/lib;
 			};
 			name = Release;
 		};
@@ -242,7 +234,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = "$(HOME)/src/plugin-GUI/Source/Plugins/Headers";
+				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = PythonPlugin/Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications/open-ephys.app/Contents/PlugIns";
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
@@ -302,7 +294,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = "$(HOME)/src/plugin-GUI/Source/Plugins/Headers";
+				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = PythonPlugin/Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications/open-ephys.app/Contents/PlugIns";
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
