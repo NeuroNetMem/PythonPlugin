@@ -108,6 +108,7 @@
 				F7956D241D579E1900C2EF56 /* Sources */,
 				F7956D251D579E1900C2EF56 /* Frameworks */,
 				F7956D261D579E1900C2EF56 /* Resources */,
+				F7F7D16F1D58E44D00DCF6CF /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -161,6 +162,22 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		F7F7D16F1D58E44D00DCF6CF /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "cp -R ~/src/PythonPlugin/build/Debug/open-ephys.app/Contents/PlugIns/PythonPlugin.bundle ~/src/plugin-GUI/Builds/MacOSX/build/Debug/open-ephys.app/Contents/PlugIns";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		F7956D241D579E1900C2EF56 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -182,7 +199,14 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = F7956D381D58BBA100C2EF56 /* Plugin_Debug.xcconfig */;
 			buildSettings = {
+				LD_RUNPATH_SEARCH_PATHS = /usr/local/anaconda/lib;
 				LIBRARY_SEARCH_PATHS = /usr/local/anaconda/lib;
+				OTHER_LDFLAGS = (
+					"-lpython3.5m",
+					"$(inherited)",
+					"-undefined",
+					dynamic_lookup,
+				);
 			};
 			name = Debug;
 		};
@@ -190,12 +214,20 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = F7956D391D58BBA100C2EF56 /* Plugin_Release.xcconfig */;
 			buildSettings = {
+				LD_RUNPATH_SEARCH_PATHS = /usr/local/anaconda/lib;
 				LIBRARY_SEARCH_PATHS = /usr/local/anaconda/lib;
+				OTHER_LDFLAGS = (
+					"-lpython3.5m",
+					"$(inherited)",
+					"-undefined",
+					dynamic_lookup,
+				);
 			};
 			name = Release;
 		};
 		F7956D2D1D579E1900C2EF56 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = F7956D381D58BBA100C2EF56 /* Plugin_Debug.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -255,6 +287,7 @@
 		};
 		F7956D2E1D579E1900C2EF56 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = F7956D391D58BBA100C2EF56 /* Plugin_Release.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;

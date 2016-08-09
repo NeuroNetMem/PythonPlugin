@@ -1,11 +1,15 @@
 /*
  ------------------------------------------------------------------
  
- This file is part of the Open Ephys GUI
- Copyright (C) 2015 Open Ephys
+ Python Plugin
+ Copyright (C) 2016 FP Battaglia
+ 
+ based on
+ Open Ephys GUI
+ Copyright (C) 2013, 2015 Open Ephys
  
  ------------------------------------------------------------------
- 
+v 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or

@@ -1,11 +1,15 @@
 /*
  ------------------------------------------------------------------
  
- This file is part of the Open Ephys GUI
- Copyright (C) 2015 Open Ephys
+ Python Plugin
+ Copyright (C) 2016 FP Battaglia
+ 
+ based on
+ Open Ephys GUI
+ Copyright (C) 2013, 2015 Open Ephys
  
  ------------------------------------------------------------------
- 
+v 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
@@ -40,8 +44,9 @@
 
 #include <dlfcn.h>
 #include <stdlib.h>
+#include <string.h>
 
-#undef PYTHON_DEBUG
+#define PYTHON_DEBUG
 
 #ifdef PYTHON_DEBUG
 #if defined(__linux__)
@@ -63,15 +68,18 @@ PythonPlugin::PythonPlugin(const String &processorName)
     //parameters.add(Parameter("thresh", 0.0, 500.0, 200.0, 0));
     filePath = "";
     plugin = 0;
-#if defined(__linux__)
 #define QUOTE(name) #name
 #define STR(macro) QUOTE(macro)
 #define PYTHON_HOME_NAME STR(PYTHON_HOME)
-    setenv("PYTHONHOME", PYTHON_HOME_NAME, 1);
+    char * old_python_home = getenv("PYTHONHOME");
+    if (old_python_home == NULL)
+        setenv("PYTHONHOME", PYTHON_HOME_NAME, 1);
+
+    // setenv("PYTHONHOME", "/usr/local/anaconda", 1); // FIXME hardcoded PYTHONHOME!
+    
 #ifdef PYTHON_DEBUG
     std::cout << "PYTHONHOME: " << getenv("PYTHONHOME") << std::endl;
 #endif
-#endif    
     
 #ifdef PYTHON_DEBUG
 #if defined(__linux__)

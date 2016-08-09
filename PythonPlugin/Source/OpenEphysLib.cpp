@@ -6,7 +6,7 @@
  
  based on
  Open Ephys GUI
- Copyright (C) 2013 Open Ephys
+ Copyright (C) 2013, 2015 Open Ephys
  
  ------------------------------------------------------------------
  
