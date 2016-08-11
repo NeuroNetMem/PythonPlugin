@@ -46,7 +46,9 @@ v
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef DEBUG
 #define PYTHON_DEBUG
+#endif
 
 #ifdef PYTHON_DEBUG
 #if defined(__linux__)

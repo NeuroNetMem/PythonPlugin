@@ -1,9 +1,7 @@
-
-CONDA_HOME := ~/anaconda
-PYTHON_HOME = $(CONDA_HOME)
-PYTHON_INCDIR = /usr/local/anaconda/include/python3.5m
-PYTHON_LIBDIR = /usr/local/anaconda/lib
-PYTHON_RTLIBDIR = $(PYTHON_LIBDIR)C
+PYTHON_HOME := $(CONDA_HOME)
+PYTHON_INCDIR := $(CONDA_HOME)/include/python3.5m
+PYTHON_LIBDIR := $(CONDA_HOME)/lib
+PYTHON_RTLIBDIR := $(PYTHON_LIBDIR)
 
 LIBNAME := $(notdir $(CURDIR))
 OBJDIR := $(OBJDIR)/$(LIBNAME)
