@@ -73,8 +73,12 @@ PythonPlugin::PythonPlugin(const String &processorName)
 #define PYTHON_HOME_NAME STR(PYTHON_HOME)
     char * old_python_home = getenv("PYTHONHOME");
     if (old_python_home == NULL)
-        setenv("PYTHONHOME", PYTHON_HOME_NAME, 1);
-
+				{
+#ifdef PYTHON_DEBUG
+					std::cout << "setting PYTHONHOME" << std::endl;
+#endif
+        	setenv("PYTHONHOME", PYTHON_HOME_NAME, 1);
+				}
     // setenv("PYTHONHOME", "/usr/local/anaconda", 1); // FIXME hardcoded PYTHONHOME!
     
 #ifdef PYTHON_DEBUG

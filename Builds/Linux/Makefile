@@ -1,5 +1,9 @@
 
-CONDA_HOME := /usr/local/anaconda
+CONDA_HOME := ~/anaconda
+PYTHON_HOME = $(CONDA_HOME)
+PYTHON_INCDIR = /usr/local/anaconda/include/python3.5m
+PYTHON_LIBDIR = /usr/local/anaconda/lib
+PYTHON_RTLIBDIR = $(PYTHON_LIBDIR)C
 
 LIBNAME := $(notdir $(CURDIR))
 OBJDIR := $(OBJDIR)/$(LIBNAME)
@@ -15,10 +19,9 @@ OBJ := $(addprefix $(OBJDIR)/,$(notdir $(SRC:.cpp=.o)))
 
 
 #Extra macros and libraries needed by the plugin
-#CXXFLAGS := $(CXXFLAGS) -D "PYTHON_HOME=$(CONDA_HOME)" -I $(CONDA_HOME)/include/python3.5m
-CXXFLAGS := $(CXXFLAGS) -D "PYTHON_HOME=/usr/local" -I $(CONDA_HOME)/include/python3.5m
-LDFLAGS := $(LDFLAGS) -lpython3.5m -L$(CONDA_HOME)/lib -Wl,-rpath=$(CONDA_HOME)/lib
-
+#CXXFLAGS := $(CXXFLAGS) -D "PYTHON_HOME=$(PYTHON_HOME)" -I $(PYTHON_INCDIR)
+CXXFLAGS := $(CXXFLAGS) -D "PYTHON_HOME=$(PYTHON_HOME)" -I $(PYTHON_INCDIR)
+LDFLAGS := $(LDFLAGS) -lpython3.5m -L$(PYTHON_LIBDIR) -Wl,-rpath=$(PYTHON_RTLIBDIR)
 
 
 BLDCMD := $(CXX) -shared -o $(OUTDIR)/$(TARGET) $(OBJ) $(LDFLAGS) $(RESOURCES) $(TARGET_ARCH)
