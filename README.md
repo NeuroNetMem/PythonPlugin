@@ -30,6 +30,7 @@ The rest of the procedure is system dependent
 ####Linux 
 - With Anaconda: edit `build-linux.sh` and change `CONDA_HOME` to the Anaconda installation directory (default `/usr/local/anaconda`), if needed. 
 - With a different Python distribution: Edit `Builds/Linux/Makefile` and change the include and lib directories as needed. 
+- `cd PythonPlugin`
 - run `./build-linux.sh`. The Plugin should be copied to the neighboring plugin-GUI source tree. 
 
 ####MacOSX
@@ -53,6 +54,3 @@ sudo ln -s /my/install/anaconda /usr/local/anaconda
 
 
 
-then 
-$ cd PythonPlugin
-$ ./build-linux.sh
