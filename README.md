@@ -40,7 +40,7 @@ The rest of the procedure is system dependent
 
 
 ### Binary installation 
-A binary installation (Linux only for the time being) is provided in XXX. This assumes that you have a suitable Anaconda Python distribution (see above) and that that resides in /usr/local/anaconda. If that is not the case, a symlink should be enough 
+A binary installation (Linux only for the time being) is provided [here](https://github.com/fpbattaglia/PythonPlugin-linux-binaries). This assumes that you have a suitable Anaconda Python distribution (see above) and that that resides in /usr/local/anaconda. If that is not the case, a symlink should be enough 
 ```bash 
 sudo ln -s /my/install/anaconda /usr/local/anaconda
 ```
