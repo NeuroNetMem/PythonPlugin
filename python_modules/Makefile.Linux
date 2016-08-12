@@ -1,0 +1,20 @@
+SOURCE_DIR := $(shell pwd )
+
+
+%.so: %.o
+	gcc -g -O2 -shared -o $@ $< `python3-config --ldflags` -L$(SOURCE_DIR)/../python-libs/
+
+
+%.o: %.c
+	gcc -g -O2 -fpic -DWITH_THREAD=1 -c $< -o $@ `python3-config --includes` -I`python -c "import numpy; print(numpy.get_include())"` -L$(SOURCE_DIR)/../python-libs/ -Wl,-rpath=$(SOURCE_DIR)/../python-libs
+
+
+%.c: %.pyx plugin.pyx
+	cython -3 $<
+	
+
+clean:
+	for dir in $(SUBDIRS) ; do \
+	rm $$dir/$$dir.c \
+	$$dir/$$dir.h \
+	$$dir/$$dir.so; done

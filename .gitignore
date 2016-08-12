@@ -22,3 +22,8 @@ xcuserdata/
 *.xccheckout
 *.xcscmblueprint
 **/*.o
+python_modules/**/*.c
+python_modules/**/*.h
+python_modules/**/*.cpp
+python_modules/**/*.pyc
+python_modules/**/.ipynb_checkpoints
