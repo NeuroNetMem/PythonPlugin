@@ -42,7 +42,7 @@ PythonFilter::PythonFilter()
     : PythonPlugin("Python Filter") //, threshold(200.0), state(true)
 
 {
-
+    setProcessorType (PROCESSOR_TYPE_FILTER);
 }
 
 PythonFilter::~PythonFilter()

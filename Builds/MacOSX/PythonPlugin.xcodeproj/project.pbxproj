@@ -7,9 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		F7956D3B1D58BBA100C2EF56 /* Plugin_Debug.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = F7956D381D58BBA100C2EF56 /* Plugin_Debug.xcconfig */; };
-		F7956D3C1D58BBA100C2EF56 /* Plugin_Release.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = F7956D391D58BBA100C2EF56 /* Plugin_Release.xcconfig */; };
-		F7956D3D1D58BBA100C2EF56 /* Plugin.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = F7956D3A1D58BBA100C2EF56 /* Plugin.xcconfig */; };
 		F7956D431D58C04C00C2EF56 /* OpenEphysLib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F7956D421D58C04C00C2EF56 /* OpenEphysLib.cpp */; };
 		F7F7D1671D58C55E00DCF6CF /* PythonEditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F7F7D1571D58C55E00DCF6CF /* PythonEditor.cpp */; };
 		F7F7D16A1D58C55E00DCF6CF /* PythonPlugin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F7F7D15F1D58C55E00DCF6CF /* PythonPlugin.cpp */; };
@@ -125,7 +122,7 @@
 		F7956D1E1D579DDF00C2EF56 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0730;
+				LastUpgradeCheck = 0920;
 				TargetAttributes = {
 					F7956D271D579E1900C2EF56 = {
 						CreatedOnToolsVersion = 7.3.1;
@@ -154,9 +151,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F7956D3B1D58BBA100C2EF56 /* Plugin_Debug.xcconfig in Resources */,
-				F7956D3D1D58BBA100C2EF56 /* Plugin.xcconfig in Resources */,
-				F7956D3C1D58BBA100C2EF56 /* Plugin_Release.xcconfig in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -199,6 +193,21 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = F7956D381D58BBA100C2EF56 /* Plugin_Debug.xcconfig */;
 			buildSettings = {
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(OPENEPHYS_SOURCE_DIR)/Source/Plugins/Headers/**",
+					"$(OPENEPHYS_SOURCE_DIR)/JuceLibraryCode",
+					"$(OPENEPHYS_SOURCE_DIR)/JuceLibraryCode/modules/**",
+					"$(PYTHON_DIR)/include/python3.5m",
+					"$(inherited)",
+				);
 				LD_RUNPATH_SEARCH_PATHS = /usr/local/anaconda/lib;
 				LIBRARY_SEARCH_PATHS = /usr/local/anaconda/lib;
 				OTHER_LDFLAGS = (
@@ -214,6 +223,21 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = F7956D391D58BBA100C2EF56 /* Plugin_Release.xcconfig */;
 			buildSettings = {
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(OPENEPHYS_SOURCE_DIR)/Source/Plugins/Headers/**",
+					"$(OPENEPHYS_SOURCE_DIR)/JuceLibraryCode",
+					"$(OPENEPHYS_SOURCE_DIR)/JuceLibraryCode/modules/**",
+					"$(PYTHON_DIR)/include/python3.5m",
+					"$(inherited)",
+				);
 				LD_RUNPATH_SEARCH_PATHS = /usr/local/anaconda/lib;
 				LIBRARY_SEARCH_PATHS = /usr/local/anaconda/lib;
 				OTHER_LDFLAGS = (
@@ -229,7 +253,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = F7956D381D58BBA100C2EF56 /* Plugin_Debug.xcconfig */;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
+				ALWAYS_SEARCH_USER_PATHS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
 				CLANG_CXX_LIBRARY = "libc++";
@@ -289,7 +313,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = F7956D391D58BBA100C2EF56 /* Plugin_Release.xcconfig */;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
+				ALWAYS_SEARCH_USER_PATHS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
 				CLANG_CXX_LIBRARY = "libc++";

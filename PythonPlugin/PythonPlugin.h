@@ -117,7 +117,7 @@ public:
         number of continous samples in the current buffer (which may differ from the
         size of the buffer).
          */
-    virtual void process(AudioSampleBuffer& buffer, MidiBuffer& events);
+    virtual void process(AudioSampleBuffer& buffer /* , MidiBuffer& events */);
 
     /** Any variables used by the "process" function _must_ be modified only through
         this method while data acquisition is active. If they are modified in any
@@ -132,7 +132,7 @@ public:
     }
 
     void updateSettings();
-
+    void createEventChannels(); 
     void setFile(String fullpath);
     String getFile();
     bool isReady();
@@ -183,7 +183,10 @@ private:
     getfloatparamfunc_t getFloatParamFunction;
     PyThreadState *GUIThreadState = 0;
     PyThreadState *processThreadState = 0;
+    const EventChannel* ttlChannel{ nullptr };
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PythonPlugin);
+    bool wasTriggered = 0;
+    uint16 lastChan = 0;
 
 };
 

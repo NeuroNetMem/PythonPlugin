@@ -57,14 +57,14 @@ extern "C" EXPORT int getPluginInfo(int index, Plugin::PluginInfo* info)
     {
             //one case per plugin. This example is for a processor which connects directly to the signal chain
         case 0:
-            info->type = Plugin::ProcessorPlugin; //Type of plugin. See "Source/Processors/PluginManager/OpenEphysPlugin.h" for complete info about the different type structures
+            info->type = Plugin::PLUGIN_TYPE_PROCESSOR; //Type of plugin. See "Source/Processors/PluginManager/OpenEphysPlugin.h" for complete info about the different type structures
             //For processor
             info->processor.name = "Python Filter"; //Processor name shown in the GUI
             info->processor.type = Plugin::FilterProcessor; //Type of processor. Can be FilterProcessor, SourceProcessor, SinkProcessor or UtilityProcessor. Specifies where on the processor list will appear
             info->processor.creator = &(Plugin::createProcessor<PythonFilter>); //Class factory pointer. Replace "ExampleProcessor" with the name of your class.
             break;
         case 1:
-            info->type = Plugin::ProcessorPlugin; //Type of plugin. See "Source/Processors/PluginManager/OpenEphysPlugin.h" for complete info about the different type structures
+            info->type = Plugin::PLUGIN_TYPE_PROCESSOR; //Type of plugin. See "Source/Processors/PluginManager/OpenEphysPlugin.h" for complete info about the different type structures
             //For processor
             info->processor.name = "Python Source"; //Processor name shown in the GUI
             info->processor.type = Plugin::SourceProcessor; //Type of processor. Can be FilterProcessor, SourceProcessor, SinkProcessor or UtilityProcessor. Specifies where on the processor list will appear
@@ -72,7 +72,7 @@ extern "C" EXPORT int getPluginInfo(int index, Plugin::PluginInfo* info)
 
             break;
         case 2:
-            info->type = Plugin::ProcessorPlugin; //Type of plugin. See "Source/Processors/PluginManager/OpenEphysPlugin.h" for complete info about the different type structures
+            info->type = Plugin::PLUGIN_TYPE_PROCESSOR; //Type of plugin. See "Source/Processors/PluginManager/OpenEphysPlugin.h" for complete info about the different type structures
             //For processor
             info->processor.name = "Python Sink"; //Processor name shown in the GUI
             info->processor.type = Plugin::SinkProcessor; //Type of processor. Can be FilterProcessor, SourceProcessor, SinkProcessor or UtilityProcessor. Specifies where on the processor list will appear
