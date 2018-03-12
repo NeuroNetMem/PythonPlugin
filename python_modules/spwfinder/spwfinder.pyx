@@ -139,10 +139,10 @@ class SPWFinder(object):
             return events
 
         # setting up count down thresholds in units of samples
-        self.refractory_count_down_thresh =  self.refractory_time * self.samplingRate / 1000.
-        self.swing_count_down_thresh = self.swing_down_time * self.samplingRate / 1000.
-        self.jitter_count_down_thresh = self.jitter_time * self.samplingRate / 1000.
-        self.samples_for_average = self.averaging_time * self.samplingRate / 1000.
+        self.refractory_count_down_thresh =  int(self.refractory_time * self.samplingRate / 1000.)
+        self.swing_count_down_thresh = int(self.swing_down_time * self.samplingRate / 1000.)
+        self.jitter_count_down_thresh = int(self.jitter_time * self.samplingRate / 1000.)
+        self.samples_for_average = int(self.averaging_time * self.samplingRate / 1000.)
 
         signal_to_filter = np.hstack((self.lfp_buffer, n_arr[chan_in,:]))
         signal_to_filter = signal_to_filter - signal_to_filter[-1]
