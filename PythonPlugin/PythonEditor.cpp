@@ -67,7 +67,7 @@ PythonEditor::PythonEditor(GenericProcessor* parentNode, bool useDefaultParamete
 
 PythonEditor::~PythonEditor()
 {
-    for(int i; i < parameterInterfaces.size(); i++)
+    for(int i = 0; i < parameterInterfaces.size(); i++)
     {
         removeChildComponent(parameterInterfaces[i]);
     }
@@ -76,7 +76,7 @@ PythonEditor::~PythonEditor()
 
 void PythonEditor::setFile(String file)
 {
-
+    std::cout<<"\n"<<file<<"\n";
     File fileToRead(file);
     lastFilePath = fileToRead.getParentDirectory();
     pythonPlugin->setFile(fileToRead.getFullPathName());
