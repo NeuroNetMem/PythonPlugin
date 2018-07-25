@@ -47,7 +47,7 @@ v
 #include <string.h>
 
 #ifdef DEBUG
-#define PYTHON_DEBUG
+#define PYTHON_DEBUG TRUE
 #endif
 
 #ifdef PYTHON_DEBUG
@@ -168,12 +168,12 @@ bool PythonPlugin::isReady()
     PyEval_RestoreThread(GUIThreadState);
     if (plugin == 0 )
     {
-        // sendActionMessage("No plugin selected in Python Plugin."); // FIXME how to send error message?
+        CoreServices::sendStatusMessage ("No plugin selected in Python Plugin.");
         ret = false;
     }
     else if (pluginIsReady && !(*pluginIsReady)())
     {
-        // sendActionMessage("Plugin is not ready"); // FIXME how to send error message?
+        CoreServices::sendStatusMessage ("Plugin is not ready");
         ret = false;
     }
     else
@@ -224,7 +224,7 @@ void PythonPlugin::resetConnections()
 
 void PythonPlugin::process(AudioSampleBuffer& buffer)
 {
-    checkForEvents();
+    checkForEvents(true);
 #ifdef PYTHON_DEBUG
 #if defined(__linux__)
     pid_t tid;

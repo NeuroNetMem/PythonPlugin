@@ -37,7 +37,7 @@
 #ifndef __PYTHONPLUGIN_H
 #define __PYTHONPLUGIN_H
 
-#include <Python.h>
+#include </Users/ClaytonBarnes/anaconda3/env/include/python3.5m/Python.h>
 
 #if PY_MAJOR_VERSION>=3
 #define DL_IMPORT PyAPI_FUNC
@@ -57,12 +57,14 @@
 
 //extern "C" typedef  void (*initfunc_t)(void);
 
-#if PY_MAJOR_VERSION>=3
+//#if PY_MAJOR_VERSION>=3
 typedef PyObject * (*initfunc_t)(void);
-#else
-typedef PyMODINIT_FUNC (*initfunc_t)(void);
-#endif
-typedef DL_IMPORT(void) (*startupfunc_t)(float); // passes the sampling rate 
+//#else
+//typedef PyMODINIT_FUNC (*initfunc_t)(void);
+//#endif
+typedef DL_IMPORT(void) (*startupfunc_t)(float); // passes the sampling rate
+//typedef DL_IMPORT(void) (*eventfunc_t)(int, int, int, double, int, const void*);// CJB added
+//typedef DL_IMPORT(void) (*spikefunc_t)(int, float[18]);// CJB added
 typedef DL_IMPORT(void) (*pluginfunc_t)(float *, int, int, int, PythonEvent *);
 typedef DL_IMPORT(int) (*isreadyfunc_t)(void);
 typedef DL_IMPORT(int) (*getparamnumfunc_t)(void);
