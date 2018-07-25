@@ -77,6 +77,7 @@ PythonEditor::~PythonEditor()
 void PythonEditor::setFile(String file)
 {
     std::cout<<"\n"<<file<<"\n";
+
     File fileToRead(file);
     lastFilePath = fileToRead.getParentDirectory();
     pythonPlugin->setFile(fileToRead.getFullPathName());

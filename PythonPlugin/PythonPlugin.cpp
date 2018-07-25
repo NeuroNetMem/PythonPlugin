@@ -47,7 +47,7 @@ v
 #include <string.h>
 
 #ifdef DEBUG
-#define PYTHON_DEBUG
+#define PYTHON_DEBUG TRUE
 #endif
 
 #ifdef PYTHON_DEBUG
@@ -168,12 +168,12 @@ bool PythonPlugin::isReady()
     PyEval_RestoreThread(GUIThreadState);
     if (plugin == 0 )
     {
-        // sendActionMessage("No plugin selected in Python Plugin."); // FIXME how to send error message?
+        CoreServices::sendStatusMessage ("No plugin selected in Python Plugin.");
         ret = false;
     }
     else if (pluginIsReady && !(*pluginIsReady)())
     {
-        // sendActionMessage("Plugin is not ready"); // FIXME how to send error message?
+        CoreServices::sendStatusMessage ("Plugin is not ready");
         ret = false;
     }
     else
@@ -224,7 +224,7 @@ void PythonPlugin::resetConnections()
 
 void PythonPlugin::process(AudioSampleBuffer& buffer)
 {
-    checkForEvents();
+    checkForEvents(true);
 #ifdef PYTHON_DEBUG
 #if defined(__linux__)
     pid_t tid;
@@ -239,7 +239,7 @@ void PythonPlugin::process(AudioSampleBuffer& buffer)
     
     if(!processThreadState)
     {
-        
+
         //DEBUG
         PyThreadState *nowState;
         nowState = PyGILState_GetThisThreadState();
@@ -262,6 +262,7 @@ void PythonPlugin::process(AudioSampleBuffer& buffer)
     PyEval_RestoreThread(processThreadState);
     
     PythonEvent *pyEvents = (PythonEvent *)calloc(1, sizeof(PythonEvent));
+    
     pyEvents->type = 0; // this marks an empty event
 #ifdef PYTHON_DEBUG
     // std::cout << "in process, trying to acquire lock" << std::endl;
@@ -333,6 +334,250 @@ void PythonPlugin::process(AudioSampleBuffer& buffer)
 #endif
 }
 
+// CJB added
+void PythonPlugin::handleEvent(const EventChannel* eventInfo, const MidiMessage& event, int sampleNum){
+    /** For reference
+    in event info
+     uint16 getCurrentNodeID() const;
+     //Gets the index of this channel in the processor which currently owns this copy of the info object
+     uint16 getCurrentNodeChannelIdx() const;
+     // Gets the type of the processor which currently owns this copy of the info object
+     String getCurrentNodeType() const;
+     // Gets the name of the processor which currently owns this copy of the info object
+     String getCurrentNodeName() const;
+     
+     # struct PythonEvent:
+     # unsigned char type
+     # int sampleNum
+     # unsigned char eventId
+     # unsigned char eventChannel
+     # unsigned char numBytes
+     # unsigned char *eventData
+     # PythonEvent *nextEvent
+     **/
+    
+    /**
+     
+     enum EventChannelTypes
+     {
+     //Numeration kept to maintain compatibility with old code
+     TTL = 3,
+     TEXT = 5,
+     //generic binary types. These will be treated by the majority of record engines as simple binary blobs,
+     //while having strict typing helps creating stabler plugins
+     INT8_ARRAY = 10,
+     UINT8_ARRAY,
+     INT16_ARRAY,
+     UINT16_ARRAY,
+     INT32_ARRAY,
+     UINT32_ARRAY,
+     INT64_ARRAY,
+     UINT64_ARRAY,
+     FLOAT_ARRAY,
+     DOUBLE_ARRAY,
+     //For error checking
+     INVALID,
+     //Alias for checking binary types
+     BINARY_BASE_VALUE = 10
+     };
+
+     **/
+    
+    /**
+     
+     #ifdef PYTHON_DEBUG
+     #if defined(__linux__)
+     pid_t tid;
+     tid = syscall(SYS_gettid);
+     #else
+     uint64_t tid;
+     pthread_threadid_np(NULL, &tid);
+     #endif
+     std::cout << "in setfloatparam pthread_threadid_np()=" << tid << std::endl;
+     #endif
+     PyEval_RestoreThread(GUIThreadState);
+     (*setFloatParamFunction)(name.getCharPointer().getAddress(), value);
+     GUIThreadState = PyEval_SaveThread();
+     **/
+    
+    /**
+     
+     Event packet structure:
+     EventType - 1byte
+     SubType - 1byte
+     Source processor ID - 2bytes
+     Source Subprocessor index - 2 bytes
+     Source Event index - 2 bytes
+     Timestamp - 8 bytes
+     Event Virtual Channel - 2 bytes
+     data - variable
+     
+     
+     EventChannel::EventChannelTypes getEventType() const;
+     const EventChannel* getChannelInfo() const;
+     uint16 getChannel() const;
+     const void* getRawDataPointer() const;
+    
+    static EventChannel::EventChannelTypes getEventType(const MidiMessage& msg);
+     
+     **/
+    int eventType;
+    int sourceID;
+    int subProcessorIdx;
+    double timestamp;
+    int sourceIndex;
+    const void* ptr;
+    
+    if (eventInfo->getChannelType() == EventChannel::TTL)
+    {
+        
+        TTLEventPtr ttl = TTLEvent::deserializeFromMessage(event, eventInfo);
+        
+        eventType = int(ttl->getEventType());
+        sourceID = int(ttl->getSourceID());
+        subProcessorIdx = int(ttl->getSubProcessorIdx());
+        timestamp = double(ttl->getTimestamp());
+        sourceIndex = int(ttl->getSourceIndex());
+        ptr = ttl->getRawDataPointer();
+        sendEventPlugin(eventType, sourceID, subProcessorIdx, timestamp, sourceIndex, ptr);
+    }
+    else if (eventInfo->getChannelType() == EventChannel::TEXT)
+    {
+        
+        TextEventPtr txt = TextEvent::deserializeFromMessage(event, eventInfo);
+        eventType = int(txt->getEventType());
+        sourceID = int(txt->getSourceID());
+        subProcessorIdx = int(txt->getSubProcessorIdx());
+        timestamp = double(txt->getTimestamp());
+        sourceIndex = int(txt->getSourceIndex());
+        ptr = txt->getRawDataPointer();
+        sendEventPlugin(eventType, sourceID, subProcessorIdx, timestamp, sourceIndex, ptr);
+    }
+    else if (eventInfo->getChannelType() == EventChannel::TEXT)
+    {
+        
+        BinaryEventPtr bi = BinaryEvent::deserializeFromMessage(event, eventInfo);
+        eventType = int(bi->getEventType());
+        sourceID = int(bi->getSourceID());
+        subProcessorIdx = int(bi->getSubProcessorIdx());
+        timestamp = double(bi->getTimestamp());
+        sourceIndex = int(bi->getSourceIndex());
+        ptr = bi->getRawDataPointer();
+        sendEventPlugin(eventType, sourceID, subProcessorIdx, timestamp, sourceIndex, ptr);
+    }
+}
+
+void PythonPlugin::sendEventPlugin(int eventType, int sourceID, int subProcessorIdx, double timestamp, int sourceIndex, const void* ptr){
+#ifdef PYTHON_DEBUG
+#if defined(__linux__)
+    pid_t tid;
+    tid = syscall(SYS_gettid);
+#else
+    uint64_t tid;
+    pthread_threadid_np(NULL, &tid);
+#endif
+    std::cout << "in sendEventPlugin pthread_threadid_np()=" << tid << std::endl;
+#endif
+    
+    PyEval_RestoreThread(GUIThreadState);
+    (*eventFunction)(eventType, sourceID, subProcessorIdx,timestamp,sourceIndex, ptr);
+    GUIThreadState = PyEval_SaveThread();
+}
+
+void PythonPlugin::handleSpike(const SpikeChannel* spikeInfo, const MidiMessage& event, int samplePosition){
+    /**
+     const SpikeChannel* getChannelInfo() const;
+     
+     const float* getDataPointer() const;
+     
+     const float* getDataPointer(int channel) const;
+     
+     float getThreshold(int chan) const;
+     
+     uint16 getSortedID() const;
+     
+     
+     
+     
+     
+     **/
+
+    SpikeEventPtr newSpike = SpikeEvent::deserializeFromMessage(event, spikeInfo);
+    const float* dataPtr = newSpike->getDataPointer();
+    float spikeBuf[18];
+    for(int i = 0 ;i < 18;i++){
+        spikeBuf[i] = dataPtr[i];
+    }
+    uint16 sortedID = newSpike->getSortedID();
+    
+#ifdef PYTHON_DEBUG
+#if defined(__linux__)
+    pid_t tid;
+    tid = syscall(SYS_gettid);
+#else
+    uint64_t tid;
+    pthread_threadid_np(NULL, &tid);
+#endif
+     std::cout << "in handleSpike pthread_threadid_np()=" << tid << std::endl;
+#endif
+    
+    
+    if(!processThreadState)
+    {
+        
+        //DEBUG
+        PyThreadState *nowState;
+        nowState = PyGILState_GetThisThreadState();
+#ifdef PYTHON_DEBUG
+        std::cout << "currentState: " << nowState << std::endl;
+        std::cout << "initialiting ThreadState" << std::endl;
+#endif
+        if(nowState) //UGLY HACK!!!
+        {
+            processThreadState = nowState;
+        }
+        else
+        {
+            processThreadState =  PyThreadState_New(GUIThreadState->interp);
+        }
+        if(!processThreadState)
+            std::cout << "ThreadState is Null!" << std::endl;
+    }
+    
+    PyEval_RestoreThread(processThreadState);
+    
+    PythonEvent *pyEvents = (PythonEvent *)calloc(1, sizeof(PythonEvent));
+    
+    pyEvents->type = 0; // this marks an empty event
+#ifdef PYTHON_DEBUG
+    // std::cout << "in process, trying to acquire lock" << std::endl;
+#endif
+    
+    // PyEval_InitThreads();
+    //
+    //    std::cout << "in process, threadstate: " << PyGILState_GetThisThreadState() << std::endl;
+    //    PyGILState_STATE gstate;
+    //    gstate = PyGILState_Ensure();
+    //    std::cout << "in process, lock acquired" << std::endl;
+    (*spikeFunction)(sortedID, spikeBuf);
+    processThreadState = PyEval_SaveThread();
+    /**
+#ifdef PYTHON_DEBUG
+#if defined(__linux__)
+    pid_t tid;
+    tid = syscall(SYS_gettid);
+#else
+    uint64_t tid;
+    pthread_threadid_np(NULL, &tid);
+#endif
+    std::cout << "in handleSpike pthread_threadid_np()=" << tid << std::endl;
+#endif
+    
+    PyEval_RestoreThread(GUIThreadState);
+    (*spikeFunction)(sortedID, spikeBuf);
+    GUIThreadState = PyEval_SaveThread();
+**/
+}
 
 /* The complete API that the Cython plugin has to expose is
  void pluginStartup(void): a function to initialize the plugin data structures prior to start ACQ
@@ -358,7 +603,7 @@ void PythonPlugin::setFile(String fullpath)
     
 
     filePath = fullpath;
-
+    std::cout<<"\n"<<fullpath<<"\n";
     const char* path = filePath.getCharPointer();
     plugin = dlopen(path, RTLD_LAZY);
     if (!plugin)
@@ -373,6 +618,8 @@ void PythonPlugin::setFile(String fullpath)
     String initPlugin = filePath.fromLastOccurrenceOf(String("/"), false, true);
     
     initPlugin = initPlugin.upToFirstOccurrenceOf(String("."), false, true);
+
+    std::cout<<"\n"<<PY_MAJOR_VERSION<<"\n";
     
 #if PY_MAJOR_VERSION>=3
     String initPluginName = String("PyInit_");
@@ -423,6 +670,32 @@ void PythonPlugin::setFile(String fullpath)
         return;
     }
     pluginStartupFunction = (startupfunc_t)cfunc;
+    
+    // CJB added
+    cfunc = dlsym(plugin,"eventFunction");
+    if (!cfunc)
+    {
+        std::cout << "Can't find eventFunction function in plugin "
+        << '"' << path << "\"" << std::endl
+        << dlerror()
+        << std::endl;
+        plugin = 0;
+        return;
+    }
+    eventFunction = (eventfunc_t)cfunc;
+    
+    cfunc = dlsym(plugin,"spikeFunction");
+    if (!cfunc)
+    {
+        std::cout << "Can't find spikeFunction function in plugin "
+        << '"' << path << "\"" << std::endl
+        << dlerror()
+        << std::endl;
+        plugin = 0;
+        return;
+    }
+    spikeFunction = (spikefunc_t)cfunc;
+    //
     
     cfunc = dlsym(plugin,"getParamNum");
     if (!cfunc)
