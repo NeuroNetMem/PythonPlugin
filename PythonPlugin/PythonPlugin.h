@@ -37,8 +37,8 @@
 #ifndef __PYTHONPLUGIN_H
 #define __PYTHONPLUGIN_H
 
-//#include </System/Library/Frameworks/Python.framework/Headers/Python.h>
-#include </Users/ClaytonBarnes/anaconda3/env/include/python3.5m/Python.h>
+#include <Python.h>
+
 #if PY_MAJOR_VERSION>=3
 #define DL_IMPORT PyAPI_FUNC
 #endif
@@ -55,17 +55,15 @@
 #include "PythonParamConfig.h"
 #include "PythonEvent.h"
 
-//extern "C" typedef void (*initfunc_t)(void);
+//extern "C" typedef  void (*initfunc_t)(void);
 
-//#if PY_MAJOR_VERSION>=3
+#if PY_MAJOR_VERSION>=3
 typedef PyObject * (*initfunc_t)(void);
-//#else
-//typedef PyMODINIT_FUNC (*initfunc_t)(void);
-//#endif
+#else
+typedef PyMODINIT_FUNC (*initfunc_t)(void);
+#endif
 typedef DL_IMPORT(void) (*startupfunc_t)(float); // passes the sampling rate 
 typedef DL_IMPORT(void) (*pluginfunc_t)(float *, int, int, int, PythonEvent *);
-typedef DL_IMPORT(void) (*eventfunc_t)(int, int, int, double, int, const void*);// CJB added
-typedef DL_IMPORT(void) (*spikefunc_t)(int, float[18]);// CJB added
 typedef DL_IMPORT(int) (*isreadyfunc_t)(void);
 typedef DL_IMPORT(int) (*getparamnumfunc_t)(void);
 typedef DL_IMPORT(void) (*getparamconfigfunc_t)(struct ParamConfig*);
@@ -132,9 +130,7 @@ public:
     {
         return true;
     }
-    
-    void handleEvent (const EventChannel* eventInfo, const MidiMessage& event, int sampleNum);
-    void handleSpike(const SpikeChannel* channelInfo, const MidiMessage& event, int samplePosition);
+
     void updateSettings();
     void createEventChannels(); 
     void setFile(String fullpath);
@@ -163,7 +159,7 @@ public:
     
     void resetConnections();
 private:
-    void sendEventPlugin(int eventType, int sourceID, int subProcessorIdx, double timestamp, int sourceIndex, const void*); //CJB added
+
     String filePath;
     void *plugin;
     // private members and methods go here
@@ -177,8 +173,6 @@ private:
     Component **paramsControl;
     // function pointers to the python plugin
     pluginfunc_t pluginFunction;
-    eventfunc_t eventFunction;
-    spikefunc_t spikeFunction;
     isreadyfunc_t pluginIsReady;
     startupfunc_t pluginStartupFunction;
     getparamnumfunc_t getParamNumFunction;
