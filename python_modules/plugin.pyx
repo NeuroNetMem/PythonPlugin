@@ -138,7 +138,16 @@ cdef public void pluginFunction(float *data_buffer, int nChans, int nSamples, in
             add_event(e_c, e_py)
             last_e_c = e_c
         last_e_c.nextEvent = NULL
-        
+
+# noinspection PyPep8Naming
+cdef public void eventFunction(int eventType, int sourceID, int subProcessorIdx, double timestamp, int sourceIndex) with gil:
+    pluginOp.handleEvents(eventType,sourceID,subProcessorIdx,timestamp,sourceIndex)
+
+# noinspection PyPep8Naming
+cdef public void spikeFunction(int sortedID, float[18] spikeSample) with gil:
+    n_arr = np.asarray(<np.float32_t[:1, :18]> spikeSample)
+    pluginOp.handleSpike(sortedID,n_arr)
+
 cdef void add_event(PythonEvent *e_c, object e_py) with gil:
     e_c.type = <unsigned char>e_py['type']
     e_c.sampleNum = <int>e_py['sampleNum']
@@ -151,6 +160,7 @@ cdef void add_event(PythonEvent *e_c, object e_py) with gil:
     if 'eventData' in e_py:
         e_c.eventData = <unsigned char *>e_py['eventData']
         # TODO to be tested if this works with a numpy input
+
 
 cdef public int pluginisready() with gil:
     return pluginOp.is_ready()

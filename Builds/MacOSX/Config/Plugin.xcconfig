@@ -1,4 +1,4 @@
-PYTHON_DIR = /usr/local/anaconda
+PYTHON_DIR = /Users/ClaytonBarnes/anaconda3/
 OPENEPHYS_SOURCE_DIR = ../../../plugin-GUI
 
 ALWAYS_SEARCH_USER_PATHS = NO
