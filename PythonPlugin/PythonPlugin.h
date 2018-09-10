@@ -34,11 +34,20 @@
   ==============================================================================
 */
 
+
+
 #ifndef __PYTHONPLUGIN_H
 #define __PYTHONPLUGIN_H
 
-#include </Users/ClaytonBarnes/anaconda3/include/python3.6m/Python.h>
-//#include </opt/local/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7/Python.h>
+
+/**
+ change __PYTHONPATH if using different version of python or python installed in different location relative to open ephys
+ for example, if anaconda is in a different dirrectory, should do
+ #define __PYTHONPATH <../../directory_name/anaconda3/include/python3.6m/Python.h>
+
+ **/
+#define __PYTHONPATH <../../anaconda3/include/python3.6m/Python.h>
+#include __PYTHONPATH
 
 #if PY_MAJOR_VERSION>=3
 #define DL_IMPORT PyAPI_FUNC

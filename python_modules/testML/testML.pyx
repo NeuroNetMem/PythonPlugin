@@ -2,6 +2,7 @@ import sys
 import numpy as np
 cimport numpy as np
 from cython cimport view
+import matplotlib.pyplot as plt
 
 from sklearn.decomposition import IncrementalPCA
 
@@ -17,8 +18,10 @@ class testML(object):
         self.thresh_start = 0
         self.threshold = self.thresh_start
         self.arduino = None
-        self.ipca = IncrementalPCA(n_components=2, batch_size=1)
-
+        self.ipca = IncrementalPCA(n_components=2, batch_size=18)
+        self.spikeSampleBuffer = np.zeros([18,18]) #spike, samples
+        self.spikeSampleBufferCounter = 0
+        #self.hl = plt.scatter(0,0)
 
         self.triggered = 0
 
@@ -26,8 +29,10 @@ class testML(object):
     def startup(self, sr):
         self.samplingRate = sr
         print (self.samplingRate)
-        print ("Arduino: ", self.arduino)
         self.enabled = 1
+        #plt.draw()
+        print("backend:")
+        print(plt.get_backend())
 
     def plugin_name(self):
         return "testML"
@@ -69,11 +74,20 @@ class testML(object):
 
     def handleEvents(eventType,sourceID,subProcessorIdx,timestamp,sourceIndex):
         print("hi from handle event")
-	 
+
     def handleSpike(self,sortedID, n_arr):
-        self.ipca.partial_fit(n_arr.reshape(1,-1))
-        X_ipca = self.transform(n_arr.reshape(1,-1))
-        print(X_ipca)
+        print(self.spikeSampleBufferCounter)
+        self.spikeSampleBuffer[self.spikeSampleBufferCounter,:] = n_arr
+        self.spikeSampleBufferCounter = self.spikeSampleBufferCounter + 1
+        if(self.spikeSampleBufferCounter > 17):
+                data = self.ipca.fit_transform(self.spikeSampleBuffer[:,:])               
+                self.spikeSampleBuffer = np.zeros([18,18]) #spike, samples
+                self.spikeSampleBufferCounter = 0
+#                update_line(self.hl,data)
+
+#def update_line(hl, data):
+#    hl.set_offsets(data)
+#    plt.draw()
 
 pluginOp = testML()
 
