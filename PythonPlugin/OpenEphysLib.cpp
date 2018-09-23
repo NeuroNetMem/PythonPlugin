@@ -25,8 +25,6 @@
  
  */
 
-#define __IGNORE_PYTHON_PLUGIN TRUE // comment this out if wanting to use python plugin
-#ifndef __IGNORE_PYTHON_PLUGIN
 // contents of OpenEphysLib.cpp
 
 #include <PluginInfo.h>
@@ -98,6 +96,6 @@ BOOL WINAPI DllMain(IN HINSTANCE hDllHandle,
     return TRUE;
 }
 
-#endif
+
 
 #endif // __IGNORE_PYTHON_PLUGIN

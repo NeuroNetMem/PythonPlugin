@@ -46,8 +46,10 @@
  #define __PYTHONPATH <../../directory_name/anaconda3/include/python3.6m/Python.h>
 
  **/
-#define __PYTHONPATH <../../anaconda3/include/python3.6m/Python.h>
-#include __PYTHONPATH
+//#define __PYTHONPATH <../../anaconda3/include/python3.6m/Python.h>
+//#include __PYTHONPATH
+
+#include <Python.h>
 
 #if PY_MAJOR_VERSION>=3
 #define DL_IMPORT PyAPI_FUNC
