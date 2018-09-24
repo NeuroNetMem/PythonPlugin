@@ -25,6 +25,8 @@
  
  */
 
+// contents of OpenEphysLib.cpp
+
 #include <PluginInfo.h>
 #include <string>
 #ifdef WIN32
@@ -94,4 +96,6 @@ BOOL WINAPI DllMain(IN HINSTANCE hDllHandle,
     return TRUE;
 }
 
-#endif
+
+
+#endif // __IGNORE_PYTHON_PLUGIN

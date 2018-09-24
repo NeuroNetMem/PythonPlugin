@@ -1,4 +1,4 @@
-PYTHON_DIR = /usr/local/anaconda
+PYTHON_DIR = /Users/ClaytonBarnes/anaconda3/
 OPENEPHYS_SOURCE_DIR = ../../../plugin-GUI
 
 ALWAYS_SEARCH_USER_PATHS = NO
@@ -40,9 +40,9 @@ GCC_WARN_UNDECLARED_SELECTOR = YES
 GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE
 GCC_WARN_UNUSED_FUNCTION = YES
 GCC_WARN_UNUSED_VARIABLE = YES
-HEADER_SEARCH_PATHS = $(OPENEPHYS_SOURCE_DIR)/Source/Plugins/Headers $(PYTHON_DIR)/include/python3.5m $(inherited)
+HEADER_SEARCH_PATHS = $(OPENEPHYS_SOURCE_DIR)/Source/Plugins/Headers $(PYTHON_DIR)/include/python3.6m $(inherited)
 LIBRARY_SEARCH_PATHS = $(PYTHON_DIR)/lib
-OTHER_LDFLAGS = -lpython3.5m $(inherited) -undefined dynamic_lookup
+OTHER_LDFLAGS = -lpython3.6m $(inherited) -undefined dynamic_lookup
 LD_RUNPATH_SEARCH_PATHS = $(PYTHON_DIR)/lib
 INSTALL_PATH = $(HOME)/Applications/open-ephys.app/Contents/PlugIns
 MACOSX_DEPLOYMENT_TARGET = 10.9
