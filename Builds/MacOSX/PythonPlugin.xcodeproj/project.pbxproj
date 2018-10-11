@@ -102,6 +102,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = F7956D2C1D579E1900C2EF56 /* Build configuration list for PBXNativeTarget "PythonPlugin" */;
 			buildPhases = (
+				F76C0DB8216FD73B000197D9 /* ShellScript */,
 				F7956D241D579E1900C2EF56 /* Sources */,
 				F7956D251D579E1900C2EF56 /* Frameworks */,
 				F7956D261D579E1900C2EF56 /* Resources */,
@@ -157,6 +158,23 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		F76C0DB8216FD73B000197D9 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\n";
+		};
 		F7F7D16F1D58E44D00DCF6CF /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -168,7 +186,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cp -R ~/PythonPlugin/build/Debug/open-ephys.app/Contents/PlugIns/PythonPlugin.bundle ~/plugin-GUI/Builds/MacOSX/build/Debug/open-ephys.app/Contents/PlugIns";
+			shellScript = "cp -R ${PROJECT_DIR}/../../build/Debug/open-ephys.app/Contents/PlugIns/PythonPlugin.bundle ${PROJECT_DIR}/../../../plugin-GUI/Builds/MacOSX/build/Debug/open-ephys.app/Contents/PlugIns\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -213,21 +231,7 @@
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
-				HEADER_SEARCH_PATHS = (
-					"$(OPENEPHYS_SOURCE_DIR)/Source/Plugins/Headers/**",
-					"$(OPENEPHYS_SOURCE_DIR)/JuceLibraryCode",
-					"$(OPENEPHYS_SOURCE_DIR)/JuceLibraryCode/modules/**",
-					"$(inherited)",
-					$HOME/anaconda3/include/python3.6m,
-				);
-				LD_RUNPATH_SEARCH_PATHS = /Users/ClaytonBarnes/anaconda3;
-				LIBRARY_SEARCH_PATHS = /Users/ClaytonBarnes/anaconda3;
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					"-undefined",
-					dynamic_lookup,
-					"-L/$HOME/anaconda3/lib/python3.6/config-3.6m-darwin",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "";
 			};
 			name = Debug;
 		};
@@ -244,21 +248,7 @@
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
-				HEADER_SEARCH_PATHS = (
-					"$(OPENEPHYS_SOURCE_DIR)/Source/Plugins/Headers/**",
-					"$(OPENEPHYS_SOURCE_DIR)/JuceLibraryCode",
-					"$(OPENEPHYS_SOURCE_DIR)/JuceLibraryCode/modules/**",
-					"$(inherited)",
-					$HOME/anaconda3/include/python3.6m,
-				);
-				LD_RUNPATH_SEARCH_PATHS = /Users/ClaytonBarnes/anaconda3;
-				LIBRARY_SEARCH_PATHS = /Users/ClaytonBarnes/anaconda3;
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					"-undefined",
-					dynamic_lookup,
-					"-L/$HOME/anaconda3/lib/python3.6/config-3.6m-darwin",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "";
 			};
 			name = Release;
 		};
@@ -313,7 +303,6 @@
 				);
 				INFOPLIST_FILE = PythonPlugin/Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications/open-ephys.app/Contents/PlugIns";
-				LD_RUNPATH_SEARCH_PATHS = "-L/Users/ClaytonBarnes/anaconda3/lib/python3.6/config-3.6m-darwin";
 				LIBRARY_SEARCH_PATHS = /Users/ClaytonBarnes/anaconda3/lib/;
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_ENABLE_DEBUG_INFO = YES;
@@ -390,7 +379,6 @@
 				);
 				INFOPLIST_FILE = PythonPlugin/Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications/open-ephys.app/Contents/PlugIns";
-				LD_RUNPATH_SEARCH_PATHS = "-L/Users/ClaytonBarnes/anaconda3/lib/python3.6/config-3.6m-darwin";
 				LIBRARY_SEARCH_PATHS = /Users/ClaytonBarnes/anaconda3/lib/;
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_ENABLE_DEBUG_INFO = NO;
