@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		F7804A9121707A2E00401274 /* get_depends.sh in Resources */ = {isa = PBXBuildFile; fileRef = F7804A9021707A2E00401274 /* get_depends.sh */; };
 		F7956D431D58C04C00C2EF56 /* OpenEphysLib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F7956D421D58C04C00C2EF56 /* OpenEphysLib.cpp */; };
 		F7F7D1671D58C55E00DCF6CF /* PythonEditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F7F7D1571D58C55E00DCF6CF /* PythonEditor.cpp */; };
 		F7F7D16A1D58C55E00DCF6CF /* PythonPlugin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F7F7D15F1D58C55E00DCF6CF /* PythonPlugin.cpp */; };
@@ -18,6 +19,7 @@
 /* Begin PBXFileReference section */
 		3CB430A8215819B600F21E3C /* en */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; name = en; path = en.lproj/PythonPlugin.bundle; sourceTree = "<group>"; };
 		3CB430AA21581E6E00F21E3C /* PythonPlugin.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PythonPlugin.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
+		F7804A9021707A2E00401274 /* get_depends.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = get_depends.sh; sourceTree = "<group>"; };
 		F7956D381D58BBA100C2EF56 /* Plugin_Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Plugin_Debug.xcconfig; sourceTree = "<group>"; };
 		F7956D391D58BBA100C2EF56 /* Plugin_Release.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Plugin_Release.xcconfig; sourceTree = "<group>"; };
 		F7956D3A1D58BBA100C2EF56 /* Plugin.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Plugin.xcconfig; sourceTree = "<group>"; };
@@ -88,6 +90,7 @@
 		F7956D311D58BB2600C2EF56 /* Config */ = {
 			isa = PBXGroup;
 			children = (
+				F7804A9021707A2E00401274 /* get_depends.sh */,
 				F7956D381D58BBA100C2EF56 /* Plugin_Debug.xcconfig */,
 				F7956D391D58BBA100C2EF56 /* Plugin_Release.xcconfig */,
 				F7956D3A1D58BBA100C2EF56 /* Plugin.xcconfig */,
@@ -152,6 +155,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F7804A9121707A2E00401274 /* get_depends.sh in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -173,7 +177,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\n";
+			shellScript = "${PROJECT_DIR}/Config/get_depends.sh\n";
 		};
 		F7F7D16F1D58E44D00DCF6CF /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
