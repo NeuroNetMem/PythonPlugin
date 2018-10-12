@@ -303,11 +303,10 @@
 					"$(OPENEPHYS_SOURCE_DIR)/JuceLibraryCode/modules/**",
 					"(OPENEPHYS_SOURCE_DIR)/JuceLibraryCode",
 					"$(OPENEPHYS_SOURCE_DIR)/Source/Plugins/Headers/**",
-					$HOME/anaconda3/include/python3.6m,
 				);
 				INFOPLIST_FILE = PythonPlugin/Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications/open-ephys.app/Contents/PlugIns";
-				LIBRARY_SEARCH_PATHS = /Users/ClaytonBarnes/anaconda3/lib/;
+				LIBRARY_SEARCH_PATHS = "";
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -379,11 +378,10 @@
 					"$(OPENEPHYS_SOURCE_DIR)/JuceLibraryCode/modules/**",
 					"(OPENEPHYS_SOURCE_DIR)/JuceLibraryCode",
 					"$(OPENEPHYS_SOURCE_DIR)/Source/Plugins/Headers/**",
-					$HOME/anaconda3/include/python3.6m,
 				);
 				INFOPLIST_FILE = PythonPlugin/Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications/open-ephys.app/Contents/PlugIns";
-				LIBRARY_SEARCH_PATHS = /Users/ClaytonBarnes/anaconda3/lib/;
+				LIBRARY_SEARCH_PATHS = "";
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				OTHER_LDFLAGS = (
