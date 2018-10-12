@@ -530,10 +530,10 @@ void PythonPlugin::handleSpike(const SpikeChannel* spikeInfo, const MidiMessage&
     PyGILState_STATE gstate;
     gstate = PyGILState_Ensure();
     
-    /* Perform Python actions here.
+    Perform Python actions here.
     result = CallSomeFunction();
-    /* evaluate result or handle exception
-    /* Release the thread. No Python API allowed beyond this point.
+    evaluate result or handle exception
+    Release the thread. No Python API allowed beyond this point.
     PyGILState_Release(gstate);
     */
     //PyGILState_STATE gstate;

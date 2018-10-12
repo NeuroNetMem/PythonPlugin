@@ -325,7 +325,7 @@ void PythonParameterComboBoxInterface::comboBoxChanged(ComboBox* comboBox)
 
 void PythonParameterComboBoxInterface::setEntryFromValue(int value)
 {
-    int id;
+    int id = 0;
     for (int i = 0; i < nEntries; i++)
     {
         if(entries[i]==value)

@@ -315,7 +315,6 @@
 					"-bundle",
 					"-undefined",
 					dynamic_lookup,
-					"-L/$HOME/anaconda3/lib/python3.6/config-3.6m-darwin",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = nl.battaglia.PythonPlugin;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -389,7 +388,6 @@
 					"-bundle",
 					"-undefined",
 					dynamic_lookup,
-					"-L/$HOME/anaconda3/lib/python3.6/config-3.6m-darwin",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = nl.battaglia.PythonPlugin;
 				PRODUCT_NAME = "$(TARGET_NAME)";
