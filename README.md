@@ -28,6 +28,13 @@ etc...
 The rest of the procedure is system dependent
 
 ####Linux 
+Under Ubuntu 16.04 and later:
+- with default python install: run 
+```
+sudo apt install python3-distutils
+sudo apt install python3-dev
+```
+
 - With Anaconda: edit `build-linux.sh` and change `CONDA_HOME` to the Anaconda installation directory (default `/usr/local/anaconda`), if needed. 
 - With a different Python distribution: Edit `Builds/Linux/Makefile` and change the include and lib directories as needed. 
 - `cd PythonPlugin`
