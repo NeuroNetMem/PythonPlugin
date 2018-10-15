@@ -1,10 +1,17 @@
 #!/bin/bash
-export CONDA_HOME=$(python -c "from distutils import sysconfig; \
+
+if hash python 2>/dev/null; then
+	PYTHON_COMMAND=python
+else
+	PYTHON_COMMAND=python3
+fi
+
+export CONDA_HOME=$(${PYTHON_COMMAND} -c "from distutils import sysconfig; \
 import re; \
 z = sysconfig.get_config_var('prefix'); \
 print(z)")
 
-export PYTHON_VERSION=$(python -c "from distutils import sysconfig; \
+export PYTHON_VERSION=$(${PYTHON_COMMAND} -c "from distutils import sysconfig; \
 import re; \
 z = sysconfig.get_config_var('BLDLIBRARY'); \
 m = re.search(r'-l(.*)', z); \
