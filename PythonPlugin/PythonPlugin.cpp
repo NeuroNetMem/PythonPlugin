@@ -123,6 +123,8 @@ PythonPlugin::PythonPlugin(const String &processorName)
 
 PythonPlugin::~PythonPlugin()
 {
+    // Problem when removing plugin from signal chain
+    //Py_Finalize();
 	dlclose(plugin);
 }
 
