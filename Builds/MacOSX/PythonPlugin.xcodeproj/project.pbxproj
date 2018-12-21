@@ -3,10 +3,11 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 46;
+	objectVersion = 48;
 	objects = {
 
 /* Begin PBXBuildFile section */
+		F7804A9121707A2E00401274 /* get_depends.sh in Resources */ = {isa = PBXBuildFile; fileRef = F7804A9021707A2E00401274 /* get_depends.sh */; };
 		F7956D431D58C04C00C2EF56 /* OpenEphysLib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F7956D421D58C04C00C2EF56 /* OpenEphysLib.cpp */; };
 		F7F7D1671D58C55E00DCF6CF /* PythonEditor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F7F7D1571D58C55E00DCF6CF /* PythonEditor.cpp */; };
 		F7F7D16A1D58C55E00DCF6CF /* PythonPlugin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F7F7D15F1D58C55E00DCF6CF /* PythonPlugin.cpp */; };
@@ -16,8 +17,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		F7956D281D579E1900C2EF56 /* PythonPlugin.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PythonPlugin.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
-		F7956D2B1D579E1900C2EF56 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = /Users/fpbatta/src/PythonPlugin/Builds/MacOSX/PythonPlugin/Info.plist; sourceTree = "<absolute>"; };
+		3CB430A8215819B600F21E3C /* en */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; name = en; path = en.lproj/PythonPlugin.bundle; sourceTree = "<group>"; };
+		3CB430AA21581E6E00F21E3C /* PythonPlugin.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PythonPlugin.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
+		F7804A9021707A2E00401274 /* get_depends.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = get_depends.sh; sourceTree = "<group>"; };
 		F7956D381D58BBA100C2EF56 /* Plugin_Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Plugin_Debug.xcconfig; sourceTree = "<group>"; };
 		F7956D391D58BBA100C2EF56 /* Plugin_Release.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Plugin_Release.xcconfig; sourceTree = "<group>"; };
 		F7956D3A1D58BBA100C2EF56 /* Plugin.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Plugin.xcconfig; sourceTree = "<group>"; };
@@ -59,7 +61,8 @@
 		F7956D291D579E1900C2EF56 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				F7956D281D579E1900C2EF56 /* PythonPlugin.bundle */,
+				3CB430A9215819B600F21E3C /* PythonPlugin.bundle */,
+				3CB430AA21581E6E00F21E3C /* PythonPlugin.bundle */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -80,7 +83,6 @@
 				F7F7D1631D58C55E00DCF6CF /* PythonSource.cpp */,
 				F7F7D1641D58C55E00DCF6CF /* PythonSource.h */,
 				F7956D421D58C04C00C2EF56 /* OpenEphysLib.cpp */,
-				F7956D2B1D579E1900C2EF56 /* Info.plist */,
 			);
 			path = PythonPlugin;
 			sourceTree = "<group>";
@@ -88,6 +90,7 @@
 		F7956D311D58BB2600C2EF56 /* Config */ = {
 			isa = PBXGroup;
 			children = (
+				F7804A9021707A2E00401274 /* get_depends.sh */,
 				F7956D381D58BBA100C2EF56 /* Plugin_Debug.xcconfig */,
 				F7956D391D58BBA100C2EF56 /* Plugin_Release.xcconfig */,
 				F7956D3A1D58BBA100C2EF56 /* Plugin.xcconfig */,
@@ -102,6 +105,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = F7956D2C1D579E1900C2EF56 /* Build configuration list for PBXNativeTarget "PythonPlugin" */;
 			buildPhases = (
+				F76C0DB8216FD73B000197D9 /* ShellScript */,
 				F7956D241D579E1900C2EF56 /* Sources */,
 				F7956D251D579E1900C2EF56 /* Frameworks */,
 				F7956D261D579E1900C2EF56 /* Resources */,
@@ -113,7 +117,7 @@
 			);
 			name = PythonPlugin;
 			productName = PythonPlugin;
-			productReference = F7956D281D579E1900C2EF56 /* PythonPlugin.bundle */;
+			productReference = 3CB430AA21581E6E00F21E3C /* PythonPlugin.bundle */;
 			productType = "com.apple.product-type.bundle";
 		};
 /* End PBXNativeTarget section */
@@ -130,7 +134,7 @@
 				};
 			};
 			buildConfigurationList = F7956D211D579DDF00C2EF56 /* Build configuration list for PBXProject "PythonPlugin" */;
-			compatibilityVersion = "Xcode 3.2";
+			compatibilityVersion = "Xcode 8.0";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -151,12 +155,30 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F7804A9121707A2E00401274 /* get_depends.sh in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		F76C0DB8216FD73B000197D9 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "${PROJECT_DIR}/Config/get_depends.sh\n";
+		};
 		F7F7D16F1D58E44D00DCF6CF /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -168,7 +190,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cp -R ~/src/PythonPlugin/build/Debug/open-ephys.app/Contents/PlugIns/PythonPlugin.bundle ~/src/plugin-GUI/Builds/MacOSX/build/Debug/open-ephys.app/Contents/PlugIns";
+			shellScript = "cp -R ${PROJECT_DIR}/../../build/Debug/open-ephys.app/Contents/PlugIns/PythonPlugin.bundle ${PROJECT_DIR}/../../../plugin-GUI/Builds/MacOSX/build/Debug/open-ephys.app/Contents/PlugIns\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -188,11 +210,23 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXVariantGroup section */
+		3CB430A9215819B600F21E3C /* PythonPlugin.bundle */ = {
+			isa = PBXVariantGroup;
+			children = (
+				3CB430A8215819B600F21E3C /* en */,
+			);
+			name = PythonPlugin.bundle;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXVariantGroup section */
+
 /* Begin XCBuildConfiguration section */
 		F7956D221D579DDF00C2EF56 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = F7956D381D58BBA100C2EF56 /* Plugin_Debug.xcconfig */;
 			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_INFINITE_RECURSION = YES;
@@ -201,21 +235,7 @@
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
-				HEADER_SEARCH_PATHS = (
-					"$(OPENEPHYS_SOURCE_DIR)/Source/Plugins/Headers/**",
-					"$(OPENEPHYS_SOURCE_DIR)/JuceLibraryCode",
-					"$(OPENEPHYS_SOURCE_DIR)/JuceLibraryCode/modules/**",
-					"$(PYTHON_DIR)/include/python3.5m",
-					"$(inherited)",
-				);
-				LD_RUNPATH_SEARCH_PATHS = /usr/local/anaconda/lib;
-				LIBRARY_SEARCH_PATHS = /usr/local/anaconda/lib;
-				OTHER_LDFLAGS = (
-					"-lpython3.5m",
-					"$(inherited)",
-					"-undefined",
-					dynamic_lookup,
-				);
+				LD_RUNPATH_SEARCH_PATHS = "";
 			};
 			name = Debug;
 		};
@@ -223,6 +243,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = F7956D391D58BBA100C2EF56 /* Plugin_Release.xcconfig */;
 			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_INFINITE_RECURSION = YES;
@@ -231,21 +252,7 @@
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
-				HEADER_SEARCH_PATHS = (
-					"$(OPENEPHYS_SOURCE_DIR)/Source/Plugins/Headers/**",
-					"$(OPENEPHYS_SOURCE_DIR)/JuceLibraryCode",
-					"$(OPENEPHYS_SOURCE_DIR)/JuceLibraryCode/modules/**",
-					"$(PYTHON_DIR)/include/python3.5m",
-					"$(inherited)",
-				);
-				LD_RUNPATH_SEARCH_PATHS = /usr/local/anaconda/lib;
-				LIBRARY_SEARCH_PATHS = /usr/local/anaconda/lib;
-				OTHER_LDFLAGS = (
-					"-lpython3.5m",
-					"$(inherited)",
-					"-undefined",
-					dynamic_lookup,
-				);
+				LD_RUNPATH_SEARCH_PATHS = "";
 			};
 			name = Release;
 		};
@@ -253,7 +260,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = F7956D381D58BBA100C2EF56 /* Plugin_Debug.xcconfig */;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = YES;
+				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
 				CLANG_CXX_LIBRARY = "libc++";
@@ -271,6 +278,7 @@
 				CODE_SIGN_IDENTITY = "";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -290,12 +298,24 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = "$(inherited)";
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(OPENEPHYS_SOURCE_DIR)/JuceLibraryCode/modules/**",
+					"(OPENEPHYS_SOURCE_DIR)/JuceLibraryCode",
+					"$(OPENEPHYS_SOURCE_DIR)/Source/Plugins/Headers/**",
+				);
 				INFOPLIST_FILE = PythonPlugin/Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications/open-ephys.app/Contents/PlugIns";
-				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				LIBRARY_SEARCH_PATHS = "";
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-bundle",
+					"-undefined",
+					dynamic_lookup,
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = nl.battaglia.PythonPlugin;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -313,7 +333,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = F7956D391D58BBA100C2EF56 /* Plugin_Release.xcconfig */;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = YES;
+				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
 				CLANG_CXX_LIBRARY = "libc++";
@@ -332,6 +352,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
+				"DEAD_CODE_STRIPPING[arch=*]" = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -351,11 +372,23 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = "$(inherited)";
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(OPENEPHYS_SOURCE_DIR)/JuceLibraryCode/modules/**",
+					"(OPENEPHYS_SOURCE_DIR)/JuceLibraryCode",
+					"$(OPENEPHYS_SOURCE_DIR)/Source/Plugins/Headers/**",
+				);
 				INFOPLIST_FILE = PythonPlugin/Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications/open-ephys.app/Contents/PlugIns";
-				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				LIBRARY_SEARCH_PATHS = "";
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_ENABLE_DEBUG_INFO = NO;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-bundle",
+					"-undefined",
+					dynamic_lookup,
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = nl.battaglia.PythonPlugin;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;

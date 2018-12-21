@@ -67,7 +67,7 @@ PythonEditor::PythonEditor(GenericProcessor* parentNode, bool useDefaultParamete
 
 PythonEditor::~PythonEditor()
 {
-    for(int i; i < parameterInterfaces.size(); i++)
+    for(int i= 0; i < parameterInterfaces.size(); i++)
     {
         removeChildComponent(parameterInterfaces[i]);
     }
@@ -325,7 +325,7 @@ void PythonParameterComboBoxInterface::comboBoxChanged(ComboBox* comboBox)
 
 void PythonParameterComboBoxInterface::setEntryFromValue(int value)
 {
-    int id;
+    int id = 0;
     for (int i = 0; i < nEntries; i++)
     {
         if(entries[i]==value)
