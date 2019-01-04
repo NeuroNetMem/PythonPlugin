@@ -39,16 +39,6 @@
 #ifndef __PYTHONPLUGIN_H
 #define __PYTHONPLUGIN_H
 
-
-/**
- change __PYTHONPATH if using different version of python or python installed in different location relative to open ephys
- for example, if anaconda is in a different dirrectory, should do
- #define __PYTHONPATH <../../directory_name/anaconda3/include/python3.6m/Python.h>
-
- **/
-//#define __PYTHONPATH <../../anaconda3/include/python3.6m/Python.h>
-//#include __PYTHONPATH
-
 #include <Python.h>
 
 #if PY_MAJOR_VERSION>=3
@@ -79,7 +69,7 @@ typedef PyObject * (*initfunc_t)(void);
 //#endif
 typedef DL_IMPORT(void) (*startupfunc_t)(float); // passes the sampling rate
 typedef DL_IMPORT(void) (*eventfunc_t)(int, int, int, double, int);// CJB added
-typedef DL_IMPORT(void) (*spikefunc_t)(int, float[18]);// CJB added
+typedef DL_IMPORT(void) (*spikefunc_t)(int, int, float[18]);// CJB added
 typedef DL_IMPORT(void) (*pluginfunc_t)(float *, int, int, int, PythonEvent *);
 typedef DL_IMPORT(int) (*isreadyfunc_t)(void);
 typedef DL_IMPORT(int) (*getparamnumfunc_t)(void);

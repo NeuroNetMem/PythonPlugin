@@ -1,5 +1,5 @@
-PYTHON_DIR = /usr/local/anaconda/
-PYTHON_VERSION = python3.5m
+PYTHON_DIR = /Users/ClaytonBarnes/anaconda3
+PYTHON_VERSION = python3.6m
 
 OPENEPHYS_SOURCE_DIR = $(PROJECT_DIR)/../../../plugin-GUI
 

@@ -144,9 +144,9 @@ cdef public void eventFunction(int eventType, int sourceID, int subProcessorIdx,
     pluginOp.handleEvents(eventType,sourceID,subProcessorIdx,timestamp,sourceIndex)
 
 # noinspection PyPep8Naming
-cdef public void spikeFunction(int sortedID, float[18] spikeSample) with gil:
+cdef public void spikeFunction(int electrode, int sortedID, float[18] spikeSample) with gil:
     n_arr = np.asarray(<np.float32_t[:1, :18]> spikeSample)
-    pluginOp.handleSpike(sortedID,n_arr)
+    pluginOp.handleSpike(electrode,sortedID,n_arr)
 
 cdef void add_event(PythonEvent *e_c, object e_py) with gil:
     e_c.type = <unsigned char>e_py['type']

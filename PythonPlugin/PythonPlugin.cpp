@@ -35,11 +35,6 @@ v
 */
 
 #include "PythonPlugin.h"
-
-
-
-
-#include "PythonPlugin.h"
 #include "PythonEditor.h"
 
 #include <dlfcn.h>
@@ -47,7 +42,7 @@ v
 #include <string.h>
 
 #ifdef DEBUG
-#define PYTHON_DEBUG TRUE
+//#define PYTHON_DEBUG TRUE
 #endif
 
 #ifdef PYTHON_DEBUG
@@ -516,6 +511,8 @@ void PythonPlugin::handleSpike(const SpikeChannel* spikeInfo, const MidiMessage&
     }
     //juce::uint16
     int sortedID = int(newSpike->getSortedID());
+    const SpikeChannel* chan = newSpike->getChannelInfo();
+    int electrode = chan->getSourceIndex();
     
 #ifdef PYTHON_DEBUG
 #if defined(__linux__)
@@ -581,7 +578,7 @@ void PythonPlugin::handleSpike(const SpikeChannel* spikeInfo, const MidiMessage&
     //    gstate = PyGILState_Ensure();
     //    std::cout << "in process, lock acquired" << std::endl;
     
-    (*spikeFunction)(sortedID, spikeBuf);
+    (*spikeFunction)(electrode, sortedID, spikeBuf);
     processThreadState = PyEval_SaveThread();
 
     //PyGILState_Release(gstate);
