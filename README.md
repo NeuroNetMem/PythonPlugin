@@ -70,10 +70,11 @@ python generatePlugin.py YourPluginName
 ```
 ### Modifying Framework Code
 ### Compilation
-- In the module's directory (i.e. "YourPluginName/"), run setup.py.
+- In the module's directory (i.e. "YourPluginName/") run setup.py. 
 ```
 python setup.py build_ext --inplace
 ```
+- If you get a warning about the numpy version, you can safely ignore it.
 
 ### Load Python Module in Open Ephys
 - Drag PythonFilter into signal chain
