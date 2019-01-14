@@ -59,7 +59,7 @@ or even better make your virtual environment with all the packages that are need
 
 ## Usage
 
-### Create New Module Dirctory and Framework Code
+### Create New Module Directory and Framework Code
 - Navigate to python_modules directy from the command line.
 ```
 cd PythonPlugin/python_modules
