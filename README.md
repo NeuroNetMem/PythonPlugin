@@ -61,13 +61,19 @@ or even better make your virtual environment with all the packages that are need
 
 ### Create New Module Dirctory and Framework Code
 - Navigate to python_modules directy from the command line.
+
 `cd PythonPlugin/python_modules`
+
 - Run module creation code, where "YourPluginName" is the name you choose for the plugin.
+
 `python generatePlugin.py YourPluginName`
+
 ### Modifying Framework Code
 ### Compilation
 - In the module's directory (i.e. "YourPluginName/"), run setup.py.
+
 `python setup.py build_ext --inplace`
+
 ### Load Python Module in Open Ephys
 - Drag PythonFilter into signal chain
 - Click on the select file button
