@@ -78,9 +78,11 @@ python setup.py build_ext --inplace
 
 ### Load Python Module in Open Ephys
 - Drag PythonFilter into signal chain
+![alt text](https://github.com/MemDynLab/PythonPlugin/blob/event_reciever/images/examplePic1.png)
 - Click on the select file button
 - Navigate to the module's directory in the file selector
-- Double click on the .so file
+- Double click on the .so file (or select the file and click "open")
+![alt text](https://github.com/MemDynLab/PythonPlugin/blob/event_reciever/images/examplePic2.png)
 
 
 
