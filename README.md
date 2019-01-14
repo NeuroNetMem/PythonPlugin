@@ -27,7 +27,7 @@ etc...
 
 The rest of the procedure is system dependent
 
-####Linux 
+#### Linux 
 
 The script `build-linux.sh` should detect the version and location of the python installation automatically. It will use the one of the executable that is at the top of the PATH, so make sure that the shell you are running it from is properly configured
 
@@ -54,25 +54,25 @@ or even better make your virtual environment with all the packages that are need
 
 - run `./build-linux.sh`. The Plugin should be compiled and copied to the neighboring plugin-GUI source tree. 
 
-####MacOSX
+#### MacOSX
 - With Anaconda: a detection script runs at compilation. Because the compilation environment gets evaluated by XCode before any of the build phases are run, you may need to build the project *twice*, the second time should succeed. If any XCode guru has a solution for that, that would be welcome. 
 
-##Usage
+## Usage
 
-###Create New Module Dirctory and Framework Code
--Navigate to python_modules directy from the command line.
+### Create New Module Dirctory and Framework Code
+- Navigate to python_modules directy from the command line.
 `cd PythonPlugin/python_modules`
--Run module creation code, where "YourPluginName" is the name you choose for the plugin.
+- Run module creation code, where "YourPluginName" is the name you choose for the plugin.
 `python generatePlugin.py YourPluginName`
-###Modifying Framework Code
-###Compilation
--In the module's directory (i.e. "YourPluginName/"), run setup.py.
+### Modifying Framework Code
+### Compilation
+- In the module's directory (i.e. "YourPluginName/"), run setup.py.
 `python setup.py build_ext --inplace`
-###Load Python Module in Open Ephys
--Drag PythonFilter into signal chain
--Click on the select file button
--Navigate to the module's directory in the file selector
--Double click on the .so file
+### Load Python Module in Open Ephys
+- Drag PythonFilter into signal chain
+- Click on the select file button
+- Navigate to the module's directory in the file selector
+- Double click on the .so file
 
 
 
