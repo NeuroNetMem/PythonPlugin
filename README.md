@@ -68,7 +68,50 @@ cd PythonPlugin/python_modules
 ```
 python generatePlugin.py YourPluginName
 ```
-### Modifying Framework Code
+### Modifying Template Code
+- Place data to be held in RAM within the __init__(self) function. For example, if you want to hold an "electrodoes" variable accessible by other functions in the class, initialize it as follows:
+```
+def __init__(self):
+    """initialize object data"""
+    self.Enabled = 1
+    self.electrodes = 16
+```
+
+- The startup(self, sr) function is called after selecting the .so file. This allows for the sampling rate (sr) to be passed off to the python plugin. This is also a useful place to connect to an arduino (after importing the serial library), shown as follows:
+```
+def startup(self, sr):
+    self.samplingRate = sr
+    print (self.samplingRate)
+    self.arduino = serial.Serial('/dev/tty.usbmodem45561', 57600)
+    print ("Arduino: ", self.arduino)
+```
+
+- The params_config(self) functions allows for the python plugin to have various buttons and sliders. This allows for the module to be more dynamic. The following code shows how to create a toggle button:
+```
+def param_config(self):
+    """return button, sliders, etc to be present in the editor OE side"""
+    return [("toggle", "Enabled", True)]
+```
+
+- The bufferfunction(self,n_arr) function is where the voltage data comes in and events go out to the rest of the OE signal chain. The variable "n_arr" is a matrix of the voltage data, accessed as `n_arr[electode][sample]`. The function must return events, even if the events are empty. The following code shows how to send out an event if the minimum value in the buffer on electrode 12 is below a predefined threshold.
+```
+def bufferfunction(self, n_arr):
+    events = []
+    min = np.min(n_arr[12][:])
+    if min < self.thresh:
+        events.append({'type': 3, 'sampleNum': 10, 'eventId': 1})
+    return events
+```
+
+- The handleEvents(eventType,sourceID,subProcessorIdx,timestamp,sourceIndex) function passes on events (but not spike events) generated elsewhere in the OE signal chain to the python plugin. The following code shows how to save the timestamps of these events.
+```
+def handleEvents(eventType,sourceID,subProcessorIdx,timestamp,sourceIndex):
+    """handle events passed from OE"""
+    self.eventBuffer.append(timestamp)
+````
+
+- The handleSpike(self,electrode,sortedID,n_arr) function passes on spike events generated elsewhere in the OE signal chain to the python plugin. the n_arr is an 18 element long spike waveform. 
+
 ### Compilation
 - In the module's directory (i.e. "YourPluginName/") run setup.py. 
 ```
