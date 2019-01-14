@@ -117,7 +117,7 @@ def handleEvents(eventType,sourceID,subProcessorIdx,timestamp,sourceIndex):
 ```
 python setup.py build_ext --inplace
 ```
-- If you get a warning about the numpy version, you can safely ignore it.
+- If you get a warning about the NumPy version, you can safely ignore it.
 
 ### Load Python Module in Open Ephys
 - Drag PythonFilter into signal chain
