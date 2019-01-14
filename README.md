@@ -69,7 +69,7 @@ cd PythonPlugin/python_modules
 python generatePlugin.py YourPluginName
 ```
 ### Modifying Template Code
-- Place data to be held in RAM within the __init__(self) function. For example, if you want to hold an "electrodoes" variable accessible by other functions in the class, initialize it as follows:
+- Place data to be held in RAM within the __init__(self) function. For example, if you want to hold an "electrodes" variable accessible by other functions in the class, initialize it as follows:
 ```
 def __init__(self):
     """initialize object data"""
