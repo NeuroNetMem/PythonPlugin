@@ -120,7 +120,7 @@ python setup.py build_ext --inplace
 - If you get a warning about the NumPy version, you can safely ignore it.
 
 ### Load Python Module in Open Ephys
-- Drag PythonFilter into signal chain
+- Drag Python Filter into signal chain
 
 ![alt text](https://github.com/MemDynLab/PythonPlugin/blob/event_reciever/images/examplePic1.png)
 
