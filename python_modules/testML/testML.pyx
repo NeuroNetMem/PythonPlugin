@@ -16,6 +16,7 @@ class testML(object):
         self.chan_in = 0
         self.ipca = IncrementalPCA(n_components=2, batch_size=18)
         self.spikeSampleBuffer = np.zeros([18,18]) #spike, samples
+        self.thresh = -65
         self.spikeSampleBufferCounter = 0
         self.f = open('testPoints.csv','a+')
         self.bind_to = "5556"
@@ -52,20 +53,18 @@ class testML(object):
 
     def handleSpike(self, electrode, sortedID, n_arr):
         #print(self.spikeSampleBufferCounter)
-        if electrode == 1 and np.min(n_arr) < -70:
+        if electrode == 1 and np.min(n_arr) < self.thresh:
             #print(electrode)
             self.spikeSampleBuffer[self.spikeSampleBufferCounter,:] = n_arr
             self.spikeSampleBufferCounter = self.spikeSampleBufferCounter + 1
             if (self.spikeSampleBufferCounter > 17):
                     self.ipca.partial_fit(self.spikeSampleBuffer[:,:])
+                    print(self.ipca.get_covariance())
                     data = self.ipca.transform(self.spikeSampleBuffer[:,:])
-                    self.f.write(formatPCA(data))
-                    #print(formatPCA(data))               
+                    self.f.write(formatPCA(data))     
                     self.spikeSampleBuffer = np.zeros([18,18]) #spike, samples
                     self.spikeSampleBufferCounter = 0
-                    print("presend")
                     self.send("5556",data)
-                    print("post send")
 
     def send(self,bind_to,data):
         print("sending...")
