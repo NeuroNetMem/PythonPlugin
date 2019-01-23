@@ -27,7 +27,7 @@ etc...
 
 The rest of the procedure is system dependent
 
-####Linux 
+#### Linux 
 
 The script `build-linux.sh` should detect the version and location of the python installation automatically. It will use the one of the executable that is at the top of the PATH, so make sure that the shell you are running it from is properly configured
 
@@ -54,9 +54,78 @@ or even better make your virtual environment with all the packages that are need
 
 - run `./build-linux.sh`. The Plugin should be compiled and copied to the neighboring plugin-GUI source tree. 
 
-####MacOSX
+#### MacOSX
 - With Anaconda: a detection script runs at compilation. Because the compilation environment gets evaluated by XCode before any of the build phases are run, you may need to build the project *twice*, the second time should succeed. If any XCode guru has a solution for that, that would be welcome. 
 
+## Usage
+
+### Create New Module Directory and Framework Code
+- Navigate to python_modules directy from the command line.
+```
+cd PythonPlugin/python_modules
+```
+- Run module creation code, where "YourPluginName" is the name you choose for the plugin.
+```
+python generatePlugin.py YourPluginName
+```
+### Modifying Template Code
+- Place data to be held in RAM within the __init__(self) function. For example, if you want to hold an "electrodes" variable accessible by other functions in the class, initialize it as follows:
+```
+def __init__(self):
+    """initialize object data"""
+    self.Enabled = 1
+    self.electrodes = 16
+```
+
+- The startup(self, sr) function is called after selecting the .so file. This allows for the sampling rate (sr) to be passed off to the python plugin. This is also a useful place to connect to an arduino (after importing the serial library), shown as follows:
+```
+def startup(self, sr):
+    self.samplingRate = sr
+    print (self.samplingRate)
+    self.arduino = serial.Serial('/dev/tty.usbmodem45561', 57600)
+    print ("Arduino: ", self.arduino)
+```
+
+- The params_config(self) functions allows for the python plugin to have various buttons and sliders. This allows for the module to be more dynamic. The following code shows how to create a toggle button:
+```
+def param_config(self):
+    """return button, sliders, etc to be present in the editor OE side"""
+    return [("toggle", "Enabled", True)]
+```
+
+- The bufferfunction(self,n_arr) function is where the voltage data comes in and events go out to the rest of the OE signal chain. The variable "n_arr" is a matrix of the voltage data, accessed as `n_arr[electode][sample]`. The function must return events, even if the events are empty. The following code shows how to send out an event if the minimum value in the buffer on electrode 12 is below a predefined threshold.
+```
+def bufferfunction(self, n_arr):
+    events = []
+    min = np.min(n_arr[12][:])
+    if min < self.thresh:
+        events.append({'type': 3, 'sampleNum': 10, 'eventId': 1})
+    return events
+```
+
+- The handleEvents(eventType,sourceID,subProcessorIdx,timestamp,sourceIndex) function passes on events (but not spike events) generated elsewhere in the OE signal chain to the python plugin. The following code shows how to save the timestamps of these events.
+```
+def handleEvents(eventType,sourceID,subProcessorIdx,timestamp,sourceIndex):
+    """handle events passed from OE"""
+    self.eventBuffer.append(timestamp)
+````
+
+- The handleSpike(self,electrode,sortedID,n_arr) function passes on spike events generated elsewhere in the OE signal chain to the python plugin. the n_arr is an 18 element long spike waveform. 
+
+### Compilation
+- In the module's directory (i.e. "YourPluginName/") run setup.py. 
+```
+python setup.py build_ext --inplace
+```
+- If you get a warning about the NumPy version, you can safely ignore it.
+
+### Load Python Module in Open Ephys
+- Drag Python Filter into signal chain
+- Click on the select file button
+- Navigate to the module's directory in the file selector
+- Double click on the .so file (or select the file and click "open")
+
+![alt text](https://github.com/MemDynLab/PythonPlugin/blob/event_reciever/images/demonstration.gif)
 
 
 
