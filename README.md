@@ -11,11 +11,10 @@ At the moment, the plugin is compatible with the Linux and MacOSX versions of Op
 ### Compile from source code
 
 The Plugin is organized so that it can be compiled as much as possible outside of the main open-ephys source tree. Under Linux, a symlink to the Source/Plugins directory is however necessary. 
-A recent Python version is required 
+A recent Python version is required. 
 The Plugin needs to link to a recent enough version of Python. Development work was done with a recent [Anaconda Python](https://www.continuum.io/why-anaconda) distribution, supporting python 3.5 to 3.7. 
 
-
-To compile, extract in a folder just outside the Open Ephys plugin-GUI source tree
+To compile the , extract in a folder just outside the Open Ephys plugin-GUI source tree
 e.g. 
 
 ```
@@ -113,7 +112,22 @@ def handleEvents(eventType,sourceID,subProcessorIdx,timestamp,sourceIndex):
 - The handleSpike(self,electrode,sortedID,n_arr) function passes on spike events generated elsewhere in the OE signal chain to the python plugin. the n_arr is an 18 element long spike waveform. 
 
 ### Compilation
-- In the module's directory (i.e. "YourPluginName/") run setup.py. 
+Currently, only Cython version 0.28.2 is supported. Recently downloaded or upgraded versions of Anaconda will come with version 0.29.2, which will cause the application to crash upon loading python plugins. To avoid this, we recommend creating a virtual enviroment with the correct versions of python and cython by running:
+
+```
+conda create -n oeEnv python=3.6 cython=0.28.2
+```
+To activate the enviroment on Linux or Mac:
+```
+source activate oeEnv
+```
+To activate the enviroment on Windows:
+```
+activate oeEnv
+```
+For more information on virtual enviroments, please clike [here](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html)
+
+- To compile the python module with cython, run setup.py in the module's directory (i.e. "YourPluginName/"). 
 ```
 python setup.py build_ext --inplace
 ```
