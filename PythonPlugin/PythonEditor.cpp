@@ -34,9 +34,8 @@
   ==============================================================================
 */
 
-#include "PythonEditor.h"
-
 #include "PythonPlugin.h"
+#include "PythonEditor.h"
 
 #include <stdio.h>
 
@@ -67,7 +66,7 @@ PythonEditor::PythonEditor(GenericProcessor* parentNode, bool useDefaultParamete
 
 PythonEditor::~PythonEditor()
 {
-    for(int i= 0; i < parameterInterfaces.size(); i++)
+    for(int i=0; i < parameterInterfaces.size(); i++)
     {
         removeChildComponent(parameterInterfaces[i]);
     }
@@ -325,7 +324,7 @@ void PythonParameterComboBoxInterface::comboBoxChanged(ComboBox* comboBox)
 
 void PythonParameterComboBoxInterface::setEntryFromValue(int value)
 {
-    int id = 0;
+    int id;
     for (int i = 0; i < nEntries; i++)
     {
         if(entries[i]==value)
