@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros">
+    <PYTHONHOME_DEFAULT>$(USERPROFILE)\Anaconda3</PYTHONHOME_DEFAULT>
+    <PYTHONHOME Condition="'$(PYTHONHOME)' == ''">$(PYTHONHOME_DEFAULT)</PYTHONHOME>
+  </PropertyGroup>
+  <PropertyGroup />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(PYTHONHOME)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>PYTHONHOME_DEFAULT=R"?($(PYTHONHOME_DEFAULT))?";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(PYTHONHOME)\libs;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>python36.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>copy /Y "$(PYTHONHOME)\python37.dll" "$(GUIDir)"
+%(Command)</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <BuildMacro Include="PYTHONHOME">
+      <Value>$(PYTHONHOME)</Value>
+    </BuildMacro>
+  </ItemGroup>
+</Project>

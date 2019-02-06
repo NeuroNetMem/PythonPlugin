@@ -39,7 +39,17 @@
 #ifndef __PYTHONPLUGIN_H
 #define __PYTHONPLUGIN_H
 
+//Hack to get around python37_d.lib not exisiting on Windows (at least on my system)
+#if defined(_WIN32) && defined(_DEBUG)
+#define _DEBUG_TEMP _DEBUG
+#undef _DEBUG
 #include <Python.h>
+#define _DEBUG _DEBUG_TEMP
+#undef _DEBUG_TEMP
+#else
+#include <Python.h>
+#endif
+
 
 #if PY_MAJOR_VERSION>=3
 #define DL_IMPORT PyAPI_FUNC
@@ -69,7 +79,7 @@ typedef PyObject * (*initfunc_t)(void);
 //#endif
 typedef DL_IMPORT(void) (*startupfunc_t)(float); // passes the sampling rate
 typedef DL_IMPORT(void) (*eventfunc_t)(int, int, int, double, int);// CJB added
-typedef DL_IMPORT(void) (*spikefunc_t)(int, int, float[18]);// CJB added
+typedef DL_IMPORT(void) (*spikefunc_t)(int, float[18]);// CJB added
 typedef DL_IMPORT(void) (*pluginfunc_t)(float *, int, int, int, PythonEvent *);
 typedef DL_IMPORT(int) (*isreadyfunc_t)(void);
 typedef DL_IMPORT(int) (*getparamnumfunc_t)(void);
@@ -202,7 +212,11 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PythonPlugin);
     bool wasTriggered = 0;
     uint16 lastChan = 0;
-
+	//Windows Port Variables
+#ifdef _WIN32
+	HINSTANCE old_python_home;
+	PyThreadState *mainstate = NULL;
+#endif
 };
 
 

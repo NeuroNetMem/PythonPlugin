@@ -25,7 +25,9 @@
  
  */
 
-// contents of OpenEphysLib.cpp
+#include "PythonFilter.h"
+#include "PythonSource.h"
+#include "PythonSink.h"
 
 #include <PluginInfo.h>
 #include <string>
@@ -35,10 +37,6 @@
 #else
 #define EXPORT
 #endif
-
-#include "PythonFilter.h"
-#include "PythonSource.h"
-#include "PythonSink.h"
 
 using namespace Plugin;
 //Number of plugins defined on the library. Can be of different types (Processors, RecordEngines, etc...)
@@ -96,6 +94,4 @@ BOOL WINAPI DllMain(IN HINSTANCE hDllHandle,
     return TRUE;
 }
 
-
-
-#endif // __IGNORE_PYTHON_PLUGIN
+#endif

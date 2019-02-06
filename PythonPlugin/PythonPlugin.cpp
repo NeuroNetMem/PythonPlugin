@@ -37,24 +37,27 @@ v
 #include "PythonPlugin.h"
 #include "PythonEditor.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#else
 #include <dlfcn.h>
+#endif
+
 #include <stdlib.h>
 #include <string.h>
 
 #ifdef DEBUG
-//#define PYTHON_DEBUG TRUE
+#define PYTHON_DEBUG TRUE
 #endif
 
 #ifdef PYTHON_DEBUG
 #if defined(__linux__)
 #include <sys/syscall.h>
 #include <unistd.h>
-#else
+#elif !defined(_WIN32)
 #include <pthread.h> 
 #endif
 #endif
-
-
 
 
 PythonPlugin::PythonPlugin(const String &processorName)
@@ -65,21 +68,28 @@ PythonPlugin::PythonPlugin(const String &processorName)
     //parameters.add(Parameter("thresh", 0.0, 500.0, 200.0, 0));
     filePath = "";
     plugin = 0;
+
+    char * old_python_home = getenv("PYTHONHOME");
+    if (old_python_home == NULL)
+    {
+#ifdef PYTHON_DEBUG
+        std::cout << "setting PYTHONHOME" << std::endl;
+#endif
+
+#ifdef _WIN32
+        _putenv_s("PYTHONHOME", "C:\\Users\\Ephys\\Anaconda3"); // set to default PYTHONHOME by PythonEnv.props
+#else
 #define QUOTE(name) #name
 #define STR(macro) QUOTE(macro)
 #define PYTHON_HOME_NAME STR(PYTHON_HOME)
-    char * old_python_home = getenv("PYTHONHOME");
-    if (old_python_home == NULL)
-				{
-#ifdef PYTHON_DEBUG
-					std::cout << "setting PYTHONHOME" << std::endl;
+
+        //setenv("PYTHONHOME", "/anaconda3/bin/", 1); // FIXME hardcoded PYTHONHOME!
+        setenv("PYTHONHOME", PYTHON_HOME_NAME, 1);
+        //setenv("PYTHONHOME", "/anaconda3/bin/python.app", 1); // FIXME hardcoded PYTHONHOME!
 #endif
-            //setenv("PYTHONHOME", "/anaconda3/bin/", 1); // FIXME hardcoded PYTHONHOME!
-        	setenv("PYTHONHOME", PYTHON_HOME_NAME, 1);
-            //setenv("PYTHONHOME", "/anaconda3/bin/python.app", 1); // FIXME hardcoded PYTHONHOME!
-                }
+    }
     // setenv("PYTHONHOME", "/usr/local/anaconda", 1); // FIXME hardcoded PYTHONHOME!
- 
+
 #ifdef PYTHON_DEBUG
     std::cout << "PYTHONHOME: " << getenv("PYTHONHOME") << std::endl;
 #endif
@@ -88,13 +98,14 @@ PythonPlugin::PythonPlugin(const String &processorName)
 #if defined(__linux__)
     pid_t tid;
     tid = syscall(SYS_gettid);
+#elif defined(_WIN32)
+    DWORD tid = GetCurrentThreadId();
 #else
     uint64_t tid;
     pthread_threadid_np(NULL, &tid);
 #endif
     std::cout << "in constructor pthread_threadid_np()=" << tid << std::endl;
 #endif
-    
 
 #if PY_MAJOR_VERSION==3
     Py_SetProgramName ((wchar_t *)"PythonPlugin");
@@ -118,9 +129,13 @@ PythonPlugin::PythonPlugin(const String &processorName)
 
 PythonPlugin::~PythonPlugin()
 {
-    // Problem when removing plugin from signal chain
-    //Py_Finalize();
+#ifdef _WIN32
+	//Close libary
+	PyGILState_Ensure();
+	FreeLibrary((HMODULE)plugin);
+#else
 	dlclose(plugin);
+#endif
 }
 
 void PythonPlugin::createEventChannels()
@@ -157,13 +172,14 @@ bool PythonPlugin::isReady()
 #if defined(__linux__)
     pid_t tid;
     tid = syscall(SYS_gettid);
+#elif defined(_WIN32)
+    DWORD tid = GetCurrentThreadId();
 #else
     uint64_t tid;
     pthread_threadid_np(NULL, &tid);
 #endif
     std::cout << "in isReady pthread_threadid_np()=" << tid << std::endl;
 #endif
-
 
     bool ret;
     PyEval_RestoreThread(GUIThreadState);
@@ -202,11 +218,12 @@ void PythonPlugin::setParameter(int parameterIndex, float newValue)
 
 void PythonPlugin::resetConnections()
 {
-    
 #ifdef PYTHON_DEBUG
 #if defined(__linux__)
     pid_t tid;
     tid = syscall(SYS_gettid);
+#elif defined(_WIN32)
+    DWORD tid = GetCurrentThreadId();
 #else
     uint64_t tid;
     pthread_threadid_np(NULL, &tid);
@@ -217,6 +234,7 @@ void PythonPlugin::resetConnections()
     nextAvailableChannel = 0;
     
     wasConnected = false;
+
 #ifdef PYTHON_DEBUG
     std::cout << "resetting ThreadState, which was "  << processThreadState << std::endl;
 #endif
@@ -226,10 +244,13 @@ void PythonPlugin::resetConnections()
 void PythonPlugin::process(AudioSampleBuffer& buffer)
 {
     checkForEvents(true);
+
 #ifdef PYTHON_DEBUG
 #if defined(__linux__)
     pid_t tid;
     tid = syscall(SYS_gettid);
+#elif defined(_WIN32)
+    DWORD tid = GetCurrentThreadId();
 #else
     uint64_t tid;
     pthread_threadid_np(NULL, &tid);
@@ -473,6 +494,8 @@ void PythonPlugin::sendEventPlugin(int eventType, int sourceID, int subProcessor
 #if defined(__linux__)
     pid_t tid;
     tid = syscall(SYS_gettid);
+#elif defined(_WIN32)
+    DWORD tid = GetCurrentThreadId();
 #else
     uint64_t tid;
     pthread_threadid_np(NULL, &tid);
@@ -511,13 +534,14 @@ void PythonPlugin::handleSpike(const SpikeChannel* spikeInfo, const MidiMessage&
     }
     //juce::uint16
     int sortedID = int(newSpike->getSortedID());
-    const SpikeChannel* chan = newSpike->getChannelInfo();
-    int electrode = chan->getSourceIndex();
     
+
 #ifdef PYTHON_DEBUG
 #if defined(__linux__)
     pid_t tid;
     tid = syscall(SYS_gettid);
+#elif defined(_WIN32)
+    DWORD tid = GetCurrentThreadId();
 #else
     uint64_t tid;
     pthread_threadid_np(NULL, &tid);
@@ -578,7 +602,7 @@ void PythonPlugin::handleSpike(const SpikeChannel* spikeInfo, const MidiMessage&
     //    gstate = PyGILState_Ensure();
     //    std::cout << "in process, lock acquired" << std::endl;
     
-    (*spikeFunction)(electrode, sortedID, spikeBuf);
+    (*spikeFunction)(sortedID, spikeBuf);
     processThreadState = PyEval_SaveThread();
 
     //PyGILState_Release(gstate);
@@ -613,12 +637,34 @@ void PythonPlugin::handleSpike(const SpikeChannel* spikeInfo, const MidiMessage&
  void set FloatParameter(char *name, float value) set float parameter
  
  */
+
+std::string GetLastErrorAsString()
+{
+    /*Get the error message, if any.*/
+    DWORD errorMessageID = ::GetLastError();
+    if(errorMessageID == 0)
+        return std::string(); //No error message has been recorded
+
+    LPSTR messageBuffer = nullptr;
+    size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+        NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
+
+    std::string message(messageBuffer, size);
+
+    //Free the buffer.
+    LocalFree(messageBuffer);
+
+    return message;
+}
+
 void PythonPlugin::setFile(String fullpath)
 {
 #ifdef PYTHON_DEBUG
 #if defined(__linux__)
     pid_t tid;
     tid = syscall(SYS_gettid);
+#elif defined(_WIN32)
+    DWORD tid = GetCurrentThreadId();
 #else
     uint64_t tid;
     pthread_threadid_np(NULL, &tid);
@@ -626,21 +672,34 @@ void PythonPlugin::setFile(String fullpath)
     std::cout << "in setFile pthread_threadid_np()=" << tid << std::endl;
 #endif
     
-
+#ifdef _WIN32
+	//Load plugin
     filePath = fullpath;
+	std::string path = filePath.toStdString();
+    plugin = LoadLibraryA(path.c_str());
+#else
+	filePath = fullpath;
 
-    const char* path = filePath.getCharPointer();
-    plugin = dlopen(path, RTLD_LAZY);
+	const char* path = filePath.getCharPointer();
+	plugin = dlopen(path, RTLD_LAZY);
+#endif
     if (!plugin)
       {
-          std::cout << "Can't open plugin "
-                    << '"' << path << "\""
-                    << dlerror()
-                    << std::endl;
-          return;
+		  std::cout << "Can't open plugin "
+			  << '"' << path << "\""	  
+#ifdef _WIN32
+              << GetLastErrorAsString()
+#else
+              << dlerror()	  
+#endif
+              << std::endl;
+		  return;
+
       }
 
-    String initPlugin = filePath.fromLastOccurrenceOf(String("/"), false, true);
+    //String initPlugin = filePath.fromLastOccurrenceOf(String("/"), false, true);
+    //Path is dif in windows..
+    String initPlugin = filePath.fromLastOccurrenceOf(String("\\"), false, true);
     
     initPlugin = initPlugin.upToFirstOccurrenceOf(String("."), false, true);
     
@@ -653,168 +712,267 @@ void PythonPlugin::setFile(String fullpath)
     
     std::cout << "init function is: " << initPluginName << std::endl;
     
-    void *initializer = dlsym(plugin,initPluginName.getCharPointer());
+    void *initializer;
     
+#ifdef _WIN32
+	initializer = GetProcAddress((HMODULE)plugin, initPluginName.getCharPointer());
+#else
+	initializer = dlsym(plugin, initPluginName.getCharPointer());
+#endif
+
 #ifdef PYTHON_DEBUG
-    std::cout << "initializer: " << initializer << std::endl;
+	std::cout << "initializer: " << initializer << std::endl;
 #endif
     if (!initializer)
     {
-    	std::cout << "Can't find init function in plugin "
-        << '"' << path << "\"" << std::endl
-        << dlerror()
-        << std::endl;
-    	plugin = 0;
-    	return;
+        std::cout << "Can't find init function in plugin "
+            << '"' << path << "\"" << std::endl
+#ifdef _WIN32
+            << GetLastErrorAsString()
+#else
+            << dlerror()
+#endif
+            << std::endl;
+        plugin = 0;
+        return;
     }
-    
+
     initfunc_t initF = (initfunc_t) initializer;
-    
-    void *cfunc = dlsym(plugin,"pluginisready");
+	void *cfunc;
+#ifdef _WIN32
+    cfunc = GetProcAddress((HMODULE)plugin, "pluginisready");
+#else
+	cfunc = dlsym(plugin, "pluginisready");
+#endif
     if (!cfunc)
     {
-    	std::cout << "Can't find ready function in plugin "
-        << '"' << path << "\"" << std::endl
-        << dlerror()
-        << std::endl;
-    	plugin = 0;
-    	return;
+		std::cout << "Can't find ready function in plugin "
+			<< '"' << path << "\"" << std::endl
+#ifdef _WIN32
+            << GetLastErrorAsString()
+#else
+            << dlerror()
+#endif
+			<< std::endl;
+		plugin = 0;
+		return;
     }
     pluginIsReady = (isreadyfunc_t)cfunc;
 
-    cfunc = dlsym(plugin,"pluginStartup");
+#ifdef _WIN32
+	cfunc = GetProcAddress((HMODULE)plugin, "pluginStartup");
+#else
+	cfunc = dlsym(plugin, "pluginStartup");
+#endif
     if (!cfunc)
     {
-    	std::cout << "Can't find startup function in plugin "
-        << '"' << path << "\"" << std::endl
-        << dlerror()
-        << std::endl;
-        plugin = 0;
-        return;
+		std::cout << "Can't find startup function in plugin "
+			<< '"' << path << "\"" << std::endl
+#ifdef _WIN32
+            << GetLastErrorAsString()
+#else
+            << dlerror()	  
+#endif
+			<< std::endl;
+		plugin = 0;
+		return;
     }
     pluginStartupFunction = (startupfunc_t)cfunc;
     
-    cfunc = dlsym(plugin,"getParamNum");
+#ifdef _WIN32
+	cfunc = GetProcAddress((HMODULE)plugin, "getParamNum");
+#else
+	cfunc = dlsym(plugin, "getParamNum");
+#endif
+
     if (!cfunc)
     {
-    	std::cout << "Can't find getParamNum function in plugin "
-        << '"' << path << "\"" << std::endl
-        << dlerror()
-        << std::endl;
-        plugin = 0;
-        return;
+		std::cout << "Can't find getParamNum function in plugin "
+			<< '"' << path << "\"" << std::endl
+#ifdef _WIN32
+            << GetLastErrorAsString()
+#else
+            << dlerror()	  
+#endif
+			<< std::endl;
+		plugin = 0;
+		return;
     }
     getParamNumFunction = (getparamnumfunc_t)cfunc;
     
 
-    cfunc = dlsym(plugin,"getParamConfig");
+#ifdef _WIN32
+	cfunc = GetProcAddress((HMODULE)plugin, "getParamConfig");
+#else
+	cfunc = dlsym(plugin, "getParamConfig");
+#endif
     if (!cfunc)
     {
-    	std::cout << "Can't find getParamNum function in plugin "
-        << '"' << path << "\"" << std::endl
-        << dlerror()
-        << std::endl;
-        //    	plugin = 0;
-        //    	return;
+		std::cout << "Can't find getParamNum function in plugin "
+			<< '"' << path << "\"" << std::endl
+#ifdef _WIN32
+            << GetLastErrorAsString()
+#else
+            << dlerror()
+#endif
+			<< std::endl;
+		   	plugin = 0;
+		   	return;
+
     }
     getParamConfigFunction = (getparamconfigfunc_t)cfunc;
 
     
-    cfunc = dlsym(plugin,"pluginFunction");
+#ifdef _WIN32
+	cfunc = GetProcAddress((HMODULE)plugin, "pluginFunction");
+#else
+	cfunc = dlsym(plugin, "pluginFunction");
+#endif
     // std::cout << "plugin:   " << cfunc << std::endl;
     if (!cfunc)
     {
-    	std::cout << "Can't find plugin function in plugin "
-        << '"' << path << "\"" << std::endl
-        << dlerror()
-        << std::endl;
-    	plugin = 0;
-    	return;
+		std::cout << "Can't find plugin function in plugin "
+			<< '"' << path << "\"" << std::endl
+#ifdef _WIN32
+            << GetLastErrorAsString()
+#else
+            << dlerror()	  
+#endif
+			<< std::endl;
+		plugin = 0;
+		return;
     }
     pluginFunction = (pluginfunc_t)cfunc;
     
     // CJB added start
-    
+#ifdef _WIN32
+	cfunc = GetProcAddress((HMODULE)plugin, "eventFunction");
+#else
     cfunc = dlsym(plugin,"eventFunction");
+#endif
     // std::cout << "plugin:   " << cfunc << std::endl;
     if (!cfunc)
     {
-        std::cout << "Can't find plugin function in plugin "
-        << '"' << path << "\"" << std::endl
-        << dlerror()
-        << std::endl;
-        plugin = 0;
-        return;
+		std::cout << "Can't find plugin function in plugin "
+			<< '"' << path << "\"" << std::endl
+#ifdef _WIN32
+            << GetLastErrorAsString()
+#else
+            << dlerror()
+#endif
+			<< std::endl;
+		plugin = 0;
+		return;
+
     }
     eventFunction = (eventfunc_t)cfunc;
     
+#ifdef _WIN32
+	cfunc = GetProcAddress((HMODULE)plugin, "spikeFunction");
+#else
     cfunc = dlsym(plugin,"spikeFunction");
+#endif
     // std::cout << "plugin:   " << cfunc << std::endl;
     if (!cfunc)
     {
-        std::cout << "Can't find plugin function in plugin "
-        << '"' << path << "\"" << std::endl
-        << dlerror()
-        << std::endl;
-        plugin = 0;
-        return;
+		std::cout << "Can't find plugin function in plugin "
+			<< '"' << path << "\"" << std::endl
+#ifdef _WIN32
+            << GetLastErrorAsString()
+#else
+            << dlerror()
+#endif
+			<< std::endl;
+		plugin = 0;
+		return;
     }
     spikeFunction = (spikefunc_t)cfunc;
     
     // CJB added end
 
-    cfunc = dlsym(plugin,"setIntParam");
+#ifdef _WIN32
+	cfunc = GetProcAddress((HMODULE)plugin, "setIntParam");
+#else
+	cfunc = dlsym(plugin, "setIntParam");
+#endif
     // std::cout << "plugin:   " << cfunc << std::endl;
     if (!cfunc)
     {
     	std::cout << "Can't find setIntParam function in plugin "
         << '"' << path << "\"" << std::endl
+#ifdef _WIN32
+        << GetLastErrorAsString()
+#else
         << dlerror()
+#endif
         << std::endl;
     	plugin = 0;
     	return;
     }
     setIntParamFunction = (setintparamfunc_t)cfunc;
     
-    cfunc = dlsym(plugin,"setFloatParam");
+#ifdef _WIN32
+	cfunc = GetProcAddress((HMODULE)plugin, "setFloatParam");
+#else
+	cfunc = dlsym(plugin, "setFloatParam");
+#endif
     // std::cout << "plugin:   " << cfunc << std::endl;
     if (!cfunc)
     {
-    	std::cout << "Can't find setFloatParam function in plugin "
-        << '"' << path << "\"" << std::endl
-        << dlerror()
-        << std::endl;
-    	plugin = 0;
-    	return;
+		std::cout << "Can't find setFloatParam function in plugin "
+			<< '"' << path << "\"" << std::endl
+#ifdef _WIN32
+            << GetLastErrorAsString()
+#else
+            << dlerror()
+#endif
+			<< std::endl;
+		plugin = 0;
+		return;
     }
 
     setFloatParamFunction = (setfloatparamfunc_t)cfunc;
 
-    cfunc = dlsym(plugin, "getIntParam");
+#ifdef _WIN32
+	cfunc = GetProcAddress((HMODULE)plugin, "getIntParam");
+#else
+	cfunc = dlsym(plugin, "getIntParam");
+#endif
+
     // std::cout << "plugin:   " << cfunc << std::endl;
     if (!cfunc)
     {
         std::cout << "Can't find getIntParam function in plugin "
         << '"' << path << "\"" << std::endl
+#ifdef _WIN32
+        << GetLastErrorAsString()
+#else
         << dlerror()
+#endif
         << std::endl;
         plugin = 0;
         return;
     }
     getIntParamFunction = (getintparamfunc_t)cfunc;
     
-
-    
-    cfunc = dlsym(plugin, "getFloatParam");
+#ifdef _WIN32
+	cfunc = GetProcAddress((HMODULE)plugin, "getFloatParam");
+#else
+	cfunc = dlsym(plugin, "getFloatParam");
+#endif
     // std::cout << "plugin:   " << cfunc << std::endl;
     if (!cfunc)
     {
-        std::cout << "Can't find getFloatParam function in plugin "
-        << '"' << path << "\"" << std::endl
-        << dlerror()
-        << std::endl;
-        plugin = 0;
-        return;
+		std::cout << "Can't find getFloatParam function in plugin "
+			<< '"' << path << "\"" << std::endl
+#ifdef _WIN32
+            << GetLastErrorAsString()
+#else
+            << dlerror()
+#endif
+			<< std::endl;
+		plugin = 0;
+		return;
     }
     
     getFloatParamFunction = (getfloatparamfunc_t)cfunc;
@@ -887,6 +1045,8 @@ void PythonPlugin::updateSettings()
 void PythonPlugin::setIntPythonParameter(String name, int value)
 {
     
+#ifdef _WIN32
+#else
 #ifdef PYTHON_DEBUG
 #if defined(__linux__)
     pid_t tid;
@@ -897,6 +1057,7 @@ void PythonPlugin::setIntPythonParameter(String name, int value)
 #endif
     std::cout << "in setintparam pthread_threadid_np()=" << tid << std::endl;
 #endif
+#endif
     
     PyEval_RestoreThread(GUIThreadState);
     (*setIntParamFunction)(name.getCharPointer().getAddress(), value);
@@ -906,6 +1067,8 @@ void PythonPlugin::setIntPythonParameter(String name, int value)
 void PythonPlugin::setFloatPythonParameter(String name, float value)
 {
 
+#ifdef _WIN32
+#else
 #ifdef PYTHON_DEBUG
 #if defined(__linux__)
     pid_t tid;
@@ -916,6 +1079,7 @@ void PythonPlugin::setFloatPythonParameter(String name, float value)
 #endif
     std::cout << "in setfloatparam pthread_threadid_np()=" << tid << std::endl;
 #endif
+#endif
     PyEval_RestoreThread(GUIThreadState);
     (*setFloatParamFunction)(name.getCharPointer().getAddress(), value);
     GUIThreadState = PyEval_SaveThread();
@@ -923,7 +1087,8 @@ void PythonPlugin::setFloatPythonParameter(String name, float value)
 
 int PythonPlugin::getIntPythonParameter(String name)
 {
-
+#ifdef _WIN32
+#else
 #ifdef PYTHON_DEBUG
 #if defined(__linux__)
     pid_t tid;
@@ -933,6 +1098,7 @@ int PythonPlugin::getIntPythonParameter(String name)
     pthread_threadid_np(NULL, &tid);
 #endif
     std::cout << "in getintparam pthread_threadid_np()=" << tid << std::endl;
+#endif
 #endif
 
     int value;
@@ -945,7 +1111,8 @@ int PythonPlugin::getIntPythonParameter(String name)
 float PythonPlugin::getFloatPythonParameter(String name)
 {
     
-    
+#ifdef _WIN32
+#else
 #ifdef PYTHON_DEBUG
 #if defined(__linux__)
     pid_t tid;
@@ -955,6 +1122,7 @@ float PythonPlugin::getFloatPythonParameter(String name)
     pthread_threadid_np(NULL, &tid);
 #endif
     std::cout << "in getfloatparam pthread_threadid_np()=" << tid << std::endl;
+#endif
 #endif
     
     PyEval_RestoreThread(GUIThreadState);
