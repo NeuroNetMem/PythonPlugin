@@ -685,18 +685,16 @@ void PythonPlugin::setFile(String fullpath)
 #endif
     if (!plugin)
       {
+		  std::cout << "Can't open plugin "
+			  << '"' << path << "\""	  
 #ifdef _WIN32
-		  std::cout << "Can't open plugin "
-			  << '"' << path << "\"" 
-			  << std::endl << GetLastErrorAsString() << std::endl;
-		  return;
+              << GetLastErrorAsString()
 #else
-		  std::cout << "Can't open plugin "
-			  << '"' << path << "\""
-			  << dlerror()
-			  << std::endl;
-		  return;
+              << dlerror()	  
 #endif
+              << std::endl;
+		  return;
+
       }
 
     //String initPlugin = filePath.fromLastOccurrenceOf(String("/"), false, true);
@@ -727,19 +725,16 @@ void PythonPlugin::setFile(String fullpath)
 #endif
     if (!initializer)
     {
-#ifdef _WIN32
-        std::cout << "Can't find init function in plugin "
-            << '"' << path << "\"" << std::endl << GetLastErrorAsString() << std::endl;
-        plugin = 0;
-        return;
-#else
         std::cout << "Can't find init function in plugin "
             << '"' << path << "\"" << std::endl
+#ifdef _WIN32
+            << GetLastErrorAsString()
+#else
             << dlerror()
+#endif
             << std::endl;
         plugin = 0;
         return;
-#endif
     }
 
     initfunc_t initF = (initfunc_t) initializer;
@@ -751,19 +746,16 @@ void PythonPlugin::setFile(String fullpath)
 #endif
     if (!cfunc)
     {
-#ifdef _WIN32
-		std::cout << "Can't find ready function in plugin "
-            << '"' << path << "\"" << std::endl << GetLastErrorAsString() << std::endl;
-		plugin = 0;
-		return;
-#else
 		std::cout << "Can't find ready function in plugin "
 			<< '"' << path << "\"" << std::endl
-			<< dlerror()
+#ifdef _WIN32
+            << GetLastErrorAsString()
+#else
+            << dlerror()
+#endif
 			<< std::endl;
 		plugin = 0;
 		return;
-#endif
     }
     pluginIsReady = (isreadyfunc_t)cfunc;
 
@@ -774,19 +766,16 @@ void PythonPlugin::setFile(String fullpath)
 #endif
     if (!cfunc)
     {
-#ifdef _WIN32
-		std::cout << "Can't find startup function in plugin "
-            << '"' << path << "\"" << std::endl << GetLastErrorAsString() << std::endl;
-		plugin = 0;
-		return;
-#else
 		std::cout << "Can't find startup function in plugin "
 			<< '"' << path << "\"" << std::endl
-			<< dlerror()
+#ifdef _WIN32
+            << GetLastErrorAsString()
+#else
+            << dlerror()	  
+#endif
 			<< std::endl;
 		plugin = 0;
 		return;
-#endif
     }
     pluginStartupFunction = (startupfunc_t)cfunc;
     
@@ -798,19 +787,16 @@ void PythonPlugin::setFile(String fullpath)
 
     if (!cfunc)
     {
-#ifdef _WIN32
-		std::cout << "Can't find getParamNum function in plugin "
-            << '"' << path << "\"" << std::endl << GetLastErrorAsString() << std::endl;
-		plugin = 0;
-		return;
-#else
 		std::cout << "Can't find getParamNum function in plugin "
 			<< '"' << path << "\"" << std::endl
-			<< dlerror()
+#ifdef _WIN32
+            << GetLastErrorAsString()
+#else
+            << dlerror()	  
+#endif
 			<< std::endl;
 		plugin = 0;
 		return;
-#endif
     }
     getParamNumFunction = (getparamnumfunc_t)cfunc;
     
@@ -822,19 +808,17 @@ void PythonPlugin::setFile(String fullpath)
 #endif
     if (!cfunc)
     {
-#ifdef _WIN32
-		std::cout << "Can't find getParamNum function in plugin "
-            << '"' << path << "\"" << std::endl << GetLastErrorAsString() << std::endl;
-		   	plugin = 0; 
-		   	return;
-#else
 		std::cout << "Can't find getParamNum function in plugin "
 			<< '"' << path << "\"" << std::endl
-			<< dlerror()
-			<< std::endl;
-		//   	plugin = 0;
-		//   	return;
+#ifdef _WIN32
+            << GetLastErrorAsString()
+#else
+            << dlerror()
 #endif
+			<< std::endl;
+		   	plugin = 0;
+		   	return;
+
     }
     getParamConfigFunction = (getparamconfigfunc_t)cfunc;
 
@@ -847,19 +831,16 @@ void PythonPlugin::setFile(String fullpath)
     // std::cout << "plugin:   " << cfunc << std::endl;
     if (!cfunc)
     {
-#ifdef _WIN32
-		std::cout << "Can't find plugin function in plugin "
-            << '"' << path << "\"" << std::endl << GetLastErrorAsString() << std::endl;
-		plugin = 0;
-		return;
-#else
 		std::cout << "Can't find plugin function in plugin "
 			<< '"' << path << "\"" << std::endl
-			<< dlerror()
+#ifdef _WIN32
+            << GetLastErrorAsString()
+#else
+            << dlerror()	  
+#endif
 			<< std::endl;
 		plugin = 0;
 		return;
-#endif
     }
     pluginFunction = (pluginfunc_t)cfunc;
     
@@ -872,19 +853,16 @@ void PythonPlugin::setFile(String fullpath)
     // std::cout << "plugin:   " << cfunc << std::endl;
     if (!cfunc)
     {
-#ifdef _WIN32
-		std::cout << "Can't find plugin function in plugin "
-            << '"' << path << "\"" << std::endl << GetLastErrorAsString() << std::endl;
-		plugin = 0;
-		return;
-#else
 		std::cout << "Can't find plugin function in plugin "
 			<< '"' << path << "\"" << std::endl
-			<< dlerror()
+#ifdef _WIN32
+            << GetLastErrorAsString()
+#else
+            << dlerror()
+#endif
 			<< std::endl;
 		plugin = 0;
 		return;
-#endif
 
     }
     eventFunction = (eventfunc_t)cfunc;
@@ -897,19 +875,16 @@ void PythonPlugin::setFile(String fullpath)
     // std::cout << "plugin:   " << cfunc << std::endl;
     if (!cfunc)
     {
-#ifdef _WIN32
-		std::cout << "Can't find plugin function in plugin "
-            << '"' << path << "\"" << std::endl << GetLastErrorAsString() << std::endl;
-		plugin = 0;
-		return;
-#else
 		std::cout << "Can't find plugin function in plugin "
 			<< '"' << path << "\"" << std::endl
-			<< dlerror()
+#ifdef _WIN32
+            << GetLastErrorAsString()
+#else
+            << dlerror()
+#endif
 			<< std::endl;
 		plugin = 0;
 		return;
-#endif
     }
     spikeFunction = (spikefunc_t)cfunc;
     
@@ -923,19 +898,16 @@ void PythonPlugin::setFile(String fullpath)
     // std::cout << "plugin:   " << cfunc << std::endl;
     if (!cfunc)
     {
-#ifdef _WIN32
-		std::cout << "Can't find setIntParam function in plugin "
-            << '"' << path << "\"" << std::endl << GetLastErrorAsString() << std::endl;
-		plugin = 0;
-		return;
-#else
     	std::cout << "Can't find setIntParam function in plugin "
         << '"' << path << "\"" << std::endl
+#ifdef _WIN32
+        << GetLastErrorAsString()
+#else
         << dlerror()
+#endif
         << std::endl;
     	plugin = 0;
     	return;
-#endif
     }
     setIntParamFunction = (setintparamfunc_t)cfunc;
     
@@ -947,19 +919,16 @@ void PythonPlugin::setFile(String fullpath)
     // std::cout << "plugin:   " << cfunc << std::endl;
     if (!cfunc)
     {
-#ifdef _WIN32
-		std::cout << "Can't find setFloatParam function in plugin "
-            << '"' << path << "\"" << std::endl << GetLastErrorAsString() << std::endl;
-		plugin = 0;
-		return;
-#else
 		std::cout << "Can't find setFloatParam function in plugin "
 			<< '"' << path << "\"" << std::endl
-			<< dlerror()
+#ifdef _WIN32
+            << GetLastErrorAsString()
+#else
+            << dlerror()
+#endif
 			<< std::endl;
 		plugin = 0;
 		return;
-#endif
     }
 
     setFloatParamFunction = (setfloatparamfunc_t)cfunc;
@@ -973,19 +942,16 @@ void PythonPlugin::setFile(String fullpath)
     // std::cout << "plugin:   " << cfunc << std::endl;
     if (!cfunc)
     {
-#ifdef _WIN32
-		std::cout << "Can't find getIntParam function in plugin "
-            << '"' << path << "\"" << std::endl << GetLastErrorAsString() << std::endl;
-		plugin = 0;
-		return;
-#else
         std::cout << "Can't find getIntParam function in plugin "
         << '"' << path << "\"" << std::endl
+#ifdef _WIN32
+        << GetLastErrorAsString()
+#else
         << dlerror()
+#endif
         << std::endl;
         plugin = 0;
         return;
-#endif
     }
     getIntParamFunction = (getintparamfunc_t)cfunc;
     
@@ -997,19 +963,16 @@ void PythonPlugin::setFile(String fullpath)
     // std::cout << "plugin:   " << cfunc << std::endl;
     if (!cfunc)
     {
-#ifdef _WIN32
-		std::cout << "Can't find getFloatParam function in plugin "
-            << '"' << path << "\"" << std::endl << GetLastErrorAsString() << std::endl;
-		plugin = 0;
-		return;
-#else
 		std::cout << "Can't find getFloatParam function in plugin "
 			<< '"' << path << "\"" << std::endl
-			<< dlerror()
+#ifdef _WIN32
+            << GetLastErrorAsString()
+#else
+            << dlerror()
+#endif
 			<< std::endl;
 		plugin = 0;
 		return;
-#endif
     }
     
     getFloatParamFunction = (getfloatparamfunc_t)cfunc;
