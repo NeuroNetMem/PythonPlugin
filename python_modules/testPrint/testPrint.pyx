@@ -30,10 +30,10 @@ class testPrint(object):
                 events = []
                 return events
         def handleEvents(eventType,sourceID,subProcessorIdx,timestamp,sourceIndex):
-          print('hello world_handle_events\n\n')
+                print('hello world_handle_events\n\n')
                 """handle events passed from OE"""
         def handleSpike(self, electrode, sortedID, n_arr):
-          print('hello world_handle_spike\n\n')
+                print('hello world_handle_spike\n\n')
                 """handle spikes passed from OE"""
 
 
