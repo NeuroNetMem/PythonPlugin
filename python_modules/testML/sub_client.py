@@ -2,13 +2,13 @@ import zmq
 import _pickle as pickle
 import numpy as np
 import matplotlib.pyplot as plt
-plt.ion()
-fig, ax = plt.subplots()
+#plt.ion()
+#fig, ax = plt.subplots()
 x, y = [],[]
-sc = ax.scatter(x,y)
-plt.xlim(-200,200)
-plt.ylim(-200,200)
-plt.draw()
+#sc = ax.scatter(x,y)
+#plt.xlim(-200,200)
+#plt.ylim(-200,200)
+#plt.draw()
 
 # Socket to talk to server
 context = zmq.Context()
@@ -24,10 +24,10 @@ total_value = 0
 while True:
     data = pickle.loads(socket.recv_pyobj())
     print(np.shape(data))
-    obs,d=np.shape(data)
-    for i in range(0,obs):
-        x.append(data[i,0])
-        y.append(data[i,1])
-    sc.set_offsets(np.c_[x,y])
-    fig.canvas.draw_idle()
-    plt.pause(0.1)
+    #obs,d=np.shape(data)
+    #for i in range(0,obs):
+    #    x.append(data[i,0])
+    #    y.append(data[i,1])
+    #sc.set_offsets(np.c_[x,y])
+    #fig.canvas.draw_idle()
+    #plt.pause(0.1)
