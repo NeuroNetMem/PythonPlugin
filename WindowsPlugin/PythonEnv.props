@@ -2,27 +2,22 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros">
-    <PYTHONHOME_DEFAULT>$(USERPROFILE)\Anaconda3</PYTHONHOME_DEFAULT>
-    <PYTHONHOME Condition="'$(PYTHONHOME)' == ''">$(PYTHONHOME_DEFAULT)</PYTHONHOME>
+    <PYTHON_HOME Condition="'$(CONDA_HOME)' == ''">$(USERPROFILE)\Anaconda3</PYTHON_HOME>
+    <PYTHON_HOME Condition="'$(CONDA_HOME)' != ''">$(CONDA_HOME)</PYTHON_HOME>
   </PropertyGroup>
   <PropertyGroup />
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(PYTHONHOME)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>PYTHONHOME_DEFAULT=R"?($(PYTHONHOME_DEFAULT))?";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(PYTHON_HOME)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>PYTHON_HOME_NAME=R"?($(PYTHON_HOME))?";%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(PYTHONHOME)\libs;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(PYTHON_HOME)\libs;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>python36.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y "$(PYTHONHOME)\python37.dll" "$(GUIDir)"
+      <Command>copy /Y "$(PYTHON_HOME)\python36.dll" "$(GUIDir)"
 %(Command)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <BuildMacro Include="PYTHONHOME">
-      <Value>$(PYTHONHOME)</Value>
-    </BuildMacro>
-  </ItemGroup>
 </Project>

@@ -14,7 +14,7 @@ The Plugin is organized so that it can be compiled as much as possible outside o
 A recent Python version is required.
 The Plugin needs to link to a recent enough version of Python. Development work was done with a recent [Anaconda Python](https://www.continuum.io/why-anaconda) distribution, supporting python 3.5 to 3.7.
 
-To compile the , extract in a folder just outside the Open Ephys plugin-GUI source tree
+To compile the plugin, extract in a folder just outside the Open Ephys plugin-GUI source tree
 e.g.
 
 ```
@@ -62,9 +62,17 @@ or even better make your virtual environment with all the packages that are need
 conda install cython numpy
 ```
 
-- Ideally create a new plugin by using the project files found in the Windows plugin folder. OR you may create the plugin on your own by following by the steps found at https://open-ephys.atlassian.net/wiki/spaces/OEW/pages/46596122/Plugin+build+files.
+- Copy the folder `PythonPlugin` to your plugin-GUI source tree under `Source\Plugins`.
 
-- Note you need to move PythonEnv.props from the WindowsPlugin folder next to the 4 .props files in "Builds/VisualStudio2013/Plugins".
+- Copy the contents of `WindowsPlugin` to a new folder in your plugin-GUI source tree called `Builds\VisualStudio2013\Plugins\PythonPlugin`.
+
+- Open the Plugins solution in Visual Studio and add the Python plugin by right-clicking the top-level solution in the Solution Explorer, selecting `Add > Existing Project`, and opening the `Python.vcxproj` project file that you just copied into the `PythonPlugin` build folder.
+
+- If you created a virtual environment for Open Ephys (as suggested below) or installed Anaconda in somewhere other than the default (your home directory), you need to tell the plugin where your Python root is by setting the `CONDA_HOME` environment variable. Follow these steps:
+
+1. From the Start menu, start typing "environment" and then select "Edit environment variables for your account"
+2. Click "New..." to create a new variable. Enter `CONDA_HOME` as the name and the path to your Python 3.6 root folder as the value. For example, if you are using a conda environment called `oeEnv`, this would be something like `C:\Users\your_username\Anaconda3\envs\oeEnv`. Do _not_ use a trailing slash. Click OK twice to save.
+3. Restart Visual Studio completely if you have it open. Open the Plugins solution and select Project > Rescan Solution to make sure the `PYTHON_HOME_NAME` macro gets updated.
 
 ## Usage
 
