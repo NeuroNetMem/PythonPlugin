@@ -27,6 +27,7 @@ python_modules/**/*.c
 python_modules/**/*.h
 python_modules/**/*.cpp
 python_modules/**/*.pyc
+python_modules/**/*.pyd
 python_modules/**/.ipynb_checkpoints
 
 .idea
