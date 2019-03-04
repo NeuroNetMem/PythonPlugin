@@ -79,7 +79,7 @@ typedef PyObject * (*initfunc_t)(void);
 //#endif
 typedef DL_IMPORT(void) (*startupfunc_t)(float); // passes the sampling rate
 typedef DL_IMPORT(void) (*eventfunc_t)(int, int, int, double, int);// CJB added
-typedef DL_IMPORT(void) (*spikefunc_t)(int, float[18]);// CJB added
+typedef DL_IMPORT(void) (*spikefunc_t)(int, int, float[18]);// CJB added
 typedef DL_IMPORT(void) (*pluginfunc_t)(float *, int, int, int, PythonEvent *);
 typedef DL_IMPORT(int) (*isreadyfunc_t)(void);
 typedef DL_IMPORT(int) (*getparamnumfunc_t)(void);
