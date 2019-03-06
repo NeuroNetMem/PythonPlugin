@@ -1,3 +1,4 @@
+# cython: language_level=3
 import sys
 import numpy as np
 cimport numpy as np
@@ -38,18 +39,11 @@ cdef extern from "../../PythonPlugin/PythonEvent.h":
 
 # noinspection PyPep8Naming
 cdef public void pluginStartup(float sampling_rate) with gil:
-    global sr
+    print("pre anything")
     global isDebug
+    print("after is debug")
     global pluginOp
-    #import scipy.signal
-    #import PIL
-    #print "executable is", sys.executable
-#    print "signal is", scipy.signal
-    if isDebug:
-        print("The python path is")
-        print(sys.path)
-    sr = sampling_rate
-    pluginOp.startup(sr)
+    pluginOp.startup(sampling_rate)
 
 # noinspection PyPep8Naming
 cdef public int getParamNum()  with gil:
@@ -66,19 +60,16 @@ cdef public void getParamConfig(ParamConfig *params) with gil:
         print("par[0], ", par[0])
         print("par[1], ", par[1])
         print("par[2], ", par[2])
-
         par_len = len(par[1])+1
         print("par len: ",par_len)
         par_name = <char *>malloc(par_len)
         par_bytes = par[1].encode('utf-8')
         print("par_bytes: ", par_bytes)
         print("par_name 1: ", par_name)
-
         memcpy(par_name, <char*>par_bytes, int(par_len-1))
         #par_name = par_bytes
         par_name[par_len-1] = 0
         print("par_name 2: ", par_name)
-
         if par[0] == "toggle":
             params[i].type = TOGGLE
             params[i].name = par_name
@@ -106,14 +97,12 @@ cdef public void pluginFunction(float *data_buffer, int nChans, int nSamples, in
     n_arr = np.asarray(<np.float32_t[:nChans, :nSamples]> data_buffer)
     #pluginOp.set_events(events)
     #pm2 = PluginModule(pm)
-
     if isDebug:
         print("sr: ", sr)
     samples_to_read = nRealSamples
     events_to_add = []
     if samples_to_read > 0:
         events_to_add = pluginOp.bufferfunction(n_arr[:,0:samples_to_read])
-
         # struct PythonEvent:
         # unsigned char type
         # int sampleNum
@@ -173,7 +162,7 @@ cdef public void setIntParam(char *name, int value) with gil:
 
 # noinspection PyPep8Naming
 cdef public void setFloatParam(char *name, float value) with gil:
-    # print "In Python: ", name, ": ", value
+    # print ("In Python: ", name, ": ", value)
     setattr(pluginOp, name.decode('utf-8'), value)
 
 # noinspection PyPep8Naming
@@ -185,6 +174,6 @@ cdef public int getIntParam(char *name) with gil:
 
 # noinspection PyPep8Naming
 cdef public float getFloatParam(char *name) with gil:
-    # print "In Python: ", name, ": ", value
+    # print( "In Python: ", name, ": ", value)
     value =  getattr(pluginOp, name.decode('utf-8'))
     return <float>value

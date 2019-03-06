@@ -42,7 +42,7 @@ v
 #include <string.h>
 
 #ifdef DEBUG
-//#define PYTHON_DEBUG TRUE
+#define PYTHON_DEBUG 
 #endif
 
 #ifdef PYTHON_DEBUG
@@ -628,7 +628,7 @@ void PythonPlugin::setFile(String fullpath)
     
 
     filePath = fullpath;
-
+    std::cout<<"\n \n \n \n \n \n" <<filePath<<"\n \n \n \n \n \n \n";
     const char* path = filePath.getCharPointer();
     plugin = dlopen(path, RTLD_LAZY);
     if (!plugin)
@@ -682,10 +682,11 @@ void PythonPlugin::setFile(String fullpath)
     }
     pluginIsReady = (isreadyfunc_t)cfunc;
 
+    std::cout<<"\n \n \n \n \n loading pluginStartup...";
     cfunc = dlsym(plugin,"pluginStartup");
     if (!cfunc)
     {
-    	std::cout << "Can't find startup function in plugin "
+    	std::cout << "\n \n \n \n \n Can't find startup function in plugin "
         << '"' << path << "\"" << std::endl
         << dlerror()
         << std::endl;
@@ -693,6 +694,7 @@ void PythonPlugin::setFile(String fullpath)
         return;
     }
     pluginStartupFunction = (startupfunc_t)cfunc;
+    std::cout<<"loaded pluginStartup \n \n \n \n \n ";
     
     cfunc = dlsym(plugin,"getParamNum");
     if (!cfunc)
@@ -721,10 +723,10 @@ void PythonPlugin::setFile(String fullpath)
 
     
     cfunc = dlsym(plugin,"pluginFunction");
-    // std::cout << "plugin:   " << cfunc << std::endl;
+    std::cout << "plugin:   " << cfunc << std::endl;
     if (!cfunc)
     {
-    	std::cout << "Can't find plugin function in plugin "
+    	std::cout << " \n \n \n \n \n Can't find plugin function in plugin "
         << '"' << path << "\"" << std::endl
         << dlerror()
         << std::endl;
@@ -833,7 +835,7 @@ void PythonPlugin::setFile(String fullpath)
 #ifdef PYTHON_DEBUG
     std::cout << "after initplugin" << std::endl; // DEBUG
 #endif
-    
+    std::cout<<"\n \n \n sampling rate: " << getSampleRate() << "\n \n \n";
     (*pluginStartupFunction)(getSampleRate());
     
     // load the parameter configuration
