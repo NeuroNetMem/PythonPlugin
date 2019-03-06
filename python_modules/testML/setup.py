@@ -4,6 +4,6 @@ import numpy
 
 setup(
 	name= "testML",
-	ext_modules = cythonize(Extension('testML',sources=["testML.pyx"],export_symbols=['pluginStartup','pluginisready','getParamNum','getParamConfig','pluginFunction','eventFunction','spikeFunction','setIntParam','setFloatParam','getIntParam','getFloatParam'])),
+	ext_modules = cythonize("testML.pyx"),
 	include_dirs = [numpy.get_include()]
 	)
