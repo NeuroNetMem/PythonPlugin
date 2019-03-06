@@ -537,7 +537,7 @@ void PythonPlugin::handleSpike(const SpikeChannel* spikeInfo, const MidiMessage&
     }
     //juce::uint16
     int sortedID = int(newSpike->getSortedID());
-    
+     int electrode = getSpikeChannelIndex(newSpike);
 
 #ifdef PYTHON_DEBUG
 #if defined(__linux__)
@@ -604,7 +604,7 @@ void PythonPlugin::handleSpike(const SpikeChannel* spikeInfo, const MidiMessage&
     //    PyGILState_STATE gstate;
     //    gstate = PyGILState_Ensure();
     //    std::cout << "in process, lock acquired" << std::endl;
-    (*spikeFunction)(0, sortedID, spikeBuf);
+    (*spikeFunction)(electrode, sortedID, spikeBuf);
     processThreadState = PyEval_SaveThread();
 
     //PyGILState_Release(gstate);
@@ -639,7 +639,7 @@ void PythonPlugin::handleSpike(const SpikeChannel* spikeInfo, const MidiMessage&
  void set FloatParameter(char *name, float value) set float parameter
  
  */
-
+#if defined(_WIN32)
 std::string GetLastErrorAsString()
 {
     /*Get the error message, if any.*/
@@ -658,6 +658,7 @@ std::string GetLastErrorAsString()
 
     return message;
 }
+#endif
 
 void PythonPlugin::setFile(String fullpath)
 {
