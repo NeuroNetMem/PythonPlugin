@@ -47,7 +47,7 @@ v
 #include <string.h>
 
 #ifdef DEBUG
-#define PYTHON_DEBUG TRUE
+#define PYTHON_DEBUG
 #endif
 
 #ifdef PYTHON_DEBUG
@@ -700,10 +700,12 @@ void PythonPlugin::setFile(String fullpath)
 
       }
 
-    //String initPlugin = filePath.fromLastOccurrenceOf(String("/"), false, true);
-    //Path is dif in windows..
-    String initPlugin = filePath.fromLastOccurrenceOf(String("\\"), false, true);
     
+#ifdef _WIN32
+    String initPlugin = filePath.fromLastOccurrenceOf(String("\\"), false, true); // windows
+#else
+    String initPlugin = filePath.fromLastOccurrenceOf(String("/"), false, true); // linux/mac
+#endif
     initPlugin = initPlugin.upToFirstOccurrenceOf(String("."), false, true);
     
 #if PY_MAJOR_VERSION>=3
