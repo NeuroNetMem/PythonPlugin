@@ -34,9 +34,8 @@
   ==============================================================================
 */
 
-#include "PythonEditor.h"
-
 #include "PythonPlugin.h"
+#include "PythonEditor.h"
 
 #include <stdio.h>
 
@@ -67,7 +66,7 @@ PythonEditor::PythonEditor(GenericProcessor* parentNode, bool useDefaultParamete
 
 PythonEditor::~PythonEditor()
 {
-    for(int i; i < parameterInterfaces.size(); i++)
+    for(int i=0; i < parameterInterfaces.size(); i++)
     {
         removeChildComponent(parameterInterfaces[i]);
     }

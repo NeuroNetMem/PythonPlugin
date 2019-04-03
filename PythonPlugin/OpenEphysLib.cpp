@@ -25,6 +25,10 @@
  
  */
 
+#include "PythonFilter.h"
+#include "PythonSource.h"
+#include "PythonSink.h"
+
 #include <PluginInfo.h>
 #include <string>
 #ifdef WIN32
@@ -33,10 +37,6 @@
 #else
 #define EXPORT
 #endif
-
-#include "PythonFilter.h"
-#include "PythonSource.h"
-#include "PythonSink.h"
 
 using namespace Plugin;
 //Number of plugins defined on the library. Can be of different types (Processors, RecordEngines, etc...)

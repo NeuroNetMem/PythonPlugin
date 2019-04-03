@@ -34,10 +34,22 @@
   ==============================================================================
 */
 
+
+
 #ifndef __PYTHONPLUGIN_H
 #define __PYTHONPLUGIN_H
 
+//Hack to get around python37_d.lib not exisiting on Windows (at least on my system)
+#if defined(_WIN32) && defined(_DEBUG)
+#define _DEBUG_TEMP _DEBUG
+#undef _DEBUG
 #include <Python.h>
+#define _DEBUG _DEBUG_TEMP
+#undef _DEBUG_TEMP
+#else
+#include <Python.h>
+#endif
+
 
 #if PY_MAJOR_VERSION>=3
 #define DL_IMPORT PyAPI_FUNC
@@ -52,17 +64,22 @@
 #endif
 
 
+
 #include "PythonParamConfig.h"
 #include "PythonEvent.h"
 
+#include "PythonEditor.h"
+
 //extern "C" typedef  void (*initfunc_t)(void);
 
-#if PY_MAJOR_VERSION>=3
+//#if PY_MAJOR_VERSION>=3
 typedef PyObject * (*initfunc_t)(void);
-#else
-typedef PyMODINIT_FUNC (*initfunc_t)(void);
-#endif
-typedef DL_IMPORT(void) (*startupfunc_t)(float); // passes the sampling rate 
+//#else
+//typedef PyMODINIT_FUNC (*initfunc_t)(void);
+//#endif
+typedef DL_IMPORT(void) (*startupfunc_t)(float); // passes the sampling rate
+typedef DL_IMPORT(void) (*eventfunc_t)(int, int, int, double, int);// CJB added
+typedef DL_IMPORT(void) (*spikefunc_t)(int, int, float[18]);// CJB added
 typedef DL_IMPORT(void) (*pluginfunc_t)(float *, int, int, int, PythonEvent *);
 typedef DL_IMPORT(int) (*isreadyfunc_t)(void);
 typedef DL_IMPORT(int) (*getparamnumfunc_t)(void);
@@ -118,7 +135,10 @@ public:
         size of the buffer).
          */
     virtual void process(AudioSampleBuffer& buffer /* , MidiBuffer& events */);
-
+    
+    void handleEvent (const EventChannel* eventInfo, const MidiMessage& event, int sampleNum); // CJB added
+    void handleSpike(const SpikeChannel* channelInfo, const MidiMessage& event, int samplePosition); //CJB added
+    
     /** Any variables used by the "process" function _must_ be modified only through
         this method while data acquisition is active. If they are modified in any
         other way, the application will crash.  */
@@ -158,8 +178,11 @@ public:
     float getFloatPythonParameter(String name);
     
     void resetConnections();
+    
+    void saveCustomParametersToXml (XmlElement* parentElement) override;
+    void loadCustomParametersFromXml() override;
 private:
-
+    void sendEventPlugin(int eventType, int sourceID, int subProcessorIdx, double timestamp, int sourceIndex); //CJB added
     String filePath;
     void *plugin;
     // private members and methods go here
@@ -181,13 +204,19 @@ private:
     setfloatparamfunc_t setFloatParamFunction;
     getintparamfunc_t getIntParamFunction;
     getfloatparamfunc_t getFloatParamFunction;
+    eventfunc_t eventFunction;
+    spikefunc_t spikeFunction;
     PyThreadState *GUIThreadState = 0;
     PyThreadState *processThreadState = 0;
     const EventChannel* ttlChannel{ nullptr };
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PythonPlugin);
     bool wasTriggered = 0;
     uint16 lastChan = 0;
-
+	//Windows Port Variables
+#ifdef _WIN32
+	HINSTANCE old_python_home;
+	PyThreadState *mainstate = NULL;
+#endif
 };
 
 
