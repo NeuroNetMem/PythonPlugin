@@ -194,6 +194,8 @@ private:
     int numPythonParams = 0;
     ParamConfig *params;
     Component **paramsControl;
+    // var for stashing the sample rate
+    float dataSampleRate = 44100;
     // function pointers to the python plugin
     pluginfunc_t pluginFunction;
     isreadyfunc_t pluginIsReady;
