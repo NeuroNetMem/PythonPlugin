@@ -10,7 +10,7 @@ A tutorial on how to write a python module can be found below. Example modules c
 
 The Plugin is organized so that it can be compiled as much as possible outside of the main open-ephys source tree. Under Linux, a symlink to the Source/Plugins directory is however necessary.
 A recent Python version is required.
-The Plugin needs to link to a recent enough version of Python. Development work was done with a recent [Anaconda Python](https://www.continuum.io/why-anaconda) distribution, supporting python 3.5 to 3.7.
+The Plugin needs to link to a recent enough version of Python. Development work was done with a recent [Anaconda Python](https://www.continuum.io/why-anaconda) distribution, supporting python 3.5 to 3.7. Windows users must use python 3.6 (see below).
 
 To compile the plugin, extract in a folder just outside the Open Ephys plugin-GUI source tree
 e.g.
