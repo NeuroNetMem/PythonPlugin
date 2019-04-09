@@ -2,11 +2,9 @@
 
 A plugin for open-ephys enabling the insertion of Cython (Python code translated to C and compiled) into the open-ephys signal chain.
 Most of the Cython peculiarities are dealt with by a wrapper code, so that essentially usual, "pure" Python code may be used.
-A tutorial on how to write a python module will follow soon, however, the code in the examples under the `python-modules` directory may serve as good guidance for now.
+A tutorial on how to write a python module can be found below. Examples modules can be found under the `python-modules` directory.
 
 ## Installation Instruction
-
-At the moment, the plugin is compatible with the Linux and MacOSX versions of Open Ephys. I don't have Windows development expertise, so I will not port it to Windows myseld. If you are interested in porting it to Windows, this is probably a fairly simple task for an experienced developer (most if not all of the work will be replacing the dlopen/dlsym UNIX-style DLL import with the Windows equivalent). Please do contact me, and I will support the port as far as I can.
 
 ### Compile from source code
 
