@@ -79,25 +79,25 @@ set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -DNDEBUG=1")
 
 # link libraries
 target_link_libraries(${PLUGIN_NAME} ${PYTHON_LIBRARIES})
+target_link_directories(${PLUGIN_NAME} PUBLIC ${PYTHON_INCLUDE_DIRS})
 
 # preprocessor definitions
 add_definitions(-DOEPLUGIN)
 add_definitions(-DJUCE_APP_VERSION=0.4.2)
 add_definitions(-DJUCE_APP_VERSION_HEX=0x402)
+add_definitions(-DJUCE_APP_VERSION_HEX=0x402)
+add_definitions(-DPYTHON_HOME="${PYTHON_HOME}")
 
-# include directories for the plugin
-target_include_directories(${PLUGIN_NAME} PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/PythonPlugin>
-    # $<INSTALL_INTERFACE:include>
+# include directories
+target_include_directories(${PLUGIN_NAME}
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/PythonPlugin>
+        $<INSTALL_INTERFACE:include>
+        ${OPEN_EPHYS_DIR}/JuceLibraryCode
+        ${OPEN_EPHYS_DIR}/JuceLibraryCode/modules
+        ${OPEN_EPHYS_DIR}/Source/Plugins/Headers
+        ${PYTHON_INCLUDE_DIRS}
     )
-
-target_include_directories(${PLUGIN_NAME} PUBLIC
-    ${OPEN_EPHYS_DIR}/JuceLibraryCode
-    ${OPEN_EPHYS_DIR}/JuceLibraryCode/modules
-    ${OPEN_EPHYS_DIR}/Source/Plugins/Headers
-    )
-
-target_include_directories(${PLUGIN_NAME} PUBLIC ${PYTHON_INCLUDE_DIRS})
 
 # platform specific stuff
 if(APPLE)
@@ -116,28 +116,27 @@ if(APPLE)
     get_filename_component(MAC_PACKAGE_DIR ${MAC_PACKAGE_DIR} ABSOLUTE)
 
     # install location
-    # IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-        SET(CMAKE_INSTALL_PREFIX
-            "$ENV{HOME}/Library/Application Support/open-ephys/PlugIns"
-            CACHE PATH
-            "Plugin install location. See Open Ephys docs for details."
-            FORCE)
-    # ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    SET(CMAKE_INSTALL_PREFIX
+        "$ENV{HOME}/Library/Application Support/open-ephys/PlugIns"
+        CACHE PATH
+        "Plugin install location. See Open Ephys docs for details."
+        FORCE)
 
     set_xcode_property(${PLUGIN_NAME} INSTALL_PATH ${CMAKE_INSTALL_PREFIX})
     set_xcode_property(${PLUGIN_NAME} GCC_INLINES_ARE_PRIVATE_EXTERN NO)
 
     # rpath stuff
     # see: https://gitlab.kitware.com/cmake/community/wikis/doc/cmake/RPATH-handling
-    set(CMAKE_MACOSX_RPATH ON)
-    set(CMAKE_SKIP_BUILD_RPATH FALSE)
-    set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-    set(CMAKE_INSTALL_RPATH "${PYTHON_LIB_DIR}")
-    set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+    set_target_properties(${PLUGIN_NAME} PROPERTIES MACOSX_RPATH TRUE)
+    set_target_properties(${PLUGIN_NAME} PROPERTIES SKIP_BUILD_RPATH FALSE)
+    set_target_properties(${PLUGIN_NAME} PROPERTIES BUILD_WITH_INSTALL_RPATH FALSE)
+    set_target_properties(${PLUGIN_NAME} PROPERTIES INSTALL_RPATH "${PYTHON_LIB_DIR}")
+    set_target_properties(${PLUGIN_NAME} PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
     list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${PYTHON_LIB_DIR}" isSystemDir)
     if("${isSystemDir}" STREQUAL "-1")
-        set(CMAKE_INSTALL_RPATH "${PYTHON_LIB_DIR}")
+        set_target_properties(${PLUGIN_NAME} PROPERTIES INSTALL_RPATH "${PYTHON_LIB_DIR}")
     endif()
+    message("install rpath: " ${CMAKE_INSTALL_RPATH})
 
     # link the IOKit framework
     target_link_libraries(${PLUGIN_NAME} debug "-framework IOKit")
