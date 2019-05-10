@@ -86,7 +86,7 @@ add_definitions(-DOEPLUGIN)
 add_definitions(-DJUCE_APP_VERSION=0.4.2)
 add_definitions(-DJUCE_APP_VERSION_HEX=0x402)
 add_definitions(-DJUCE_APP_VERSION_HEX=0x402)
-add_definitions(-DPYTHON_HOME="${PYTHON_HOME}")
+add_definitions(-DPYTHON_HOME=${PYTHON_HOME})
 
 # include directories
 target_include_directories(${PLUGIN_NAME}
