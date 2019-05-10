@@ -67,12 +67,7 @@ set_target_properties(${PLUGIN_NAME} PROPERTIES BUNDLE TRUE)
 
 target_compile_features(${PLUGIN_NAME} PUBLIC cxx_std_11)
 
-##
-## cmake should set these automatically... so I'm just going to set some
-## CMAKE_CXX_FLAGS and add defines below
-##
-# Debug Only:
-# Release Only:
+# compiler flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG=1 -D_DEBUG=1")
 set(CMAKE_CXX_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG=1")
@@ -83,7 +78,6 @@ set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -DDEBUG=1 -D_DEBUG=1")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -DNDEBUG=1")
 
 # link libraries
-# target_link_libraries(${PLUGIN_NAME} pthread)
 target_link_libraries(${PLUGIN_NAME} ${PYTHON_LIBRARIES})
 
 # preprocessor definitions
@@ -173,20 +167,6 @@ if(APPLE)
 
     # xcode properties
     set_xcode_property(${PLUGIN_NAME} WRAPPER_EXTENSION bundle)
-
-    # # dir for config files
-    # file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Config)
-
-    # # copy and configure Env.xcconfig
-    # configure_file(${PROJECT_SOURCE_DIR}/resources/Env.xcconfig.in Config/Env.xcconfig @ONLY)
-
-    # # copy plugin xcconfig files from open ephys
-    # configure_file(${OPEN_EPHYS_DIR}/Builds/MacOSX/Plugins/Config/Base.xcconfig Config COPYONLY)
-    # configure_file(${OPEN_EPHYS_DIR}/Builds/MacOSX/Plugins/Config/Debug.xcconfig Config COPYONLY)
-    # configure_file(${OPEN_EPHYS_DIR}/Builds/MacOSX/Plugins/Config/Release.xcconfig Config COPYONLY)
-    # configure_file(${OPEN_EPHYS_DIR}/Builds/MacOSX/Plugins/Config/Plugin_Debug.xcconfig Config COPYONLY)
-    # configure_file(${OPEN_EPHYS_DIR}/Builds/MacOSX/Plugins/Config/Plugin_Release.xcconfig Config COPYONLY)
-    # configure_file(${OPEN_EPHYS_DIR}/Builds/MacOSX/Plugins/Config/Plugin.xcconfig Config COPYONLY)
 
 elseif(LINUX)
     if(TARGET_ARCH)
@@ -292,8 +272,8 @@ elseif(WIN32)
     )
     set(DEFAULT_COMPILE_FLAGS ${WIN32_COMPILE_FLAGS})
 
-    target_link_libraries(${PLUGIN_NAME} debug ${LIBSERIAL_LIBRARIES} "setupapi.lib" )
-    target_link_libraries(${PLUGIN_NAME} optimized ${LIBSERIAL_LIBRARIES} "setupapi.lib")
+    # target_link_libraries(${PLUGIN_NAME} debug ${LIBSERIAL_LIBRARIES} "setupapi.lib" )
+    # target_link_libraries(${PLUGIN_NAME} optimized ${LIBSERIAL_LIBRARIES} "setupapi.lib")
 else()
     # maybe non-apple unix
     message(FATAL_ERROR, "Build Platform Not Recognized: Aborting...")
