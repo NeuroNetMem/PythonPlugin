@@ -44,9 +44,11 @@ endif()
 set(PLUGIN_MODULES_PATH "${PROJECT_SOURCE_DIR}/python_modules" CACHE PATH "Where are the python modules you want to plug in?")
 file(TO_NATIVE_PATH "${PLUGIN_MODULES_PATH}" NATIVE_PLUGIN_MODULES_PATH)
 
-execute_process(COMMAND python -c "import sys; import os; print(os.pathsep.join(sys.path))" OUTPUT_VARIABLE ORIG_PY_PATH)
-string(STRIP "${ORIG_PY_PATH}" ORIG_PY_PATH)
+# TODO: remove if you're sure this is overkill
+# execute_process(COMMAND python -c "import sys; import os; print(os.pathsep.join(sys.path))" OUTPUT_VARIABLE ORIG_PY_PATH)
+# string(STRIP "${ORIG_PY_PATH}" ORIG_PY_PATH)
 
+# TODO: remove orig_py_path if you remove the bit above
 set(PYTHON_PATH "${ORIG_PY_PATH}${PY_PATH_SEP}${NATIVE_PLUGIN_MODULES_PATH}" CACHE PATH "What do you want on your PYTHONPATH?")
 message(STATUS "ORIG PYTHONPATH: " ${ORIG_PY_PATH})
 message(STATUS "PYTHONPATH: " ${PYTHON_PATH})
