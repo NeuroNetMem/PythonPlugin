@@ -33,8 +33,6 @@ message(STATUS "Python executable: " ${PYTHON_EXECUTABLE})
 message(STATUS "Python library: " ${PYTHON_LIBRARIES})
 message(STATUS "Python lib dir: " ${PYTHON_LIB_DIR})
 message(STATUS "Python include dir: " ${PYTHON_INCLUDE_DIRS})
-target_include_directories(${PLUGIN_NAME} PUBLIC ${PYTHON_INCLUDE_DIRS})
-target_link_libraries(${PLUGIN_NAME} ${PYTHON_LIBRARIES})
 
 # we need to know where the open ephys source is
 set(OPEN_EPHYS_DIR "" CACHE PATH "Where is the Open Ephys repo's base directory?")
@@ -86,6 +84,7 @@ set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -DNDEBUG=1")
 
 # link libraries
 # target_link_libraries(${PLUGIN_NAME} pthread)
+target_link_libraries(${PLUGIN_NAME} ${PYTHON_LIBRARIES})
 
 # preprocessor definitions
 add_definitions(-DOEPLUGIN)
@@ -103,6 +102,8 @@ target_include_directories(${PLUGIN_NAME} PUBLIC
     ${OPEN_EPHYS_DIR}/JuceLibraryCode/modules
     ${OPEN_EPHYS_DIR}/Source/Plugins/Headers
     )
+
+target_include_directories(${PLUGIN_NAME} PUBLIC ${PYTHON_INCLUDE_DIRS})
 
 # platform specific stuff
 if(APPLE)
