@@ -1,28 +1,28 @@
 /*
  ------------------------------------------------------------------
- 
+
  Python Plugin
  Copyright (C) 2016 FP Battaglia
- 
+
  based on
  Open Ephys GUI
  Copyright (C) 2013, 2015 Open Ephys
- 
+
  ------------------------------------------------------------------
-v 
+v
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
- 
+
  This program is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  GNU General Public License for more details.
- 
+
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- 
+
  */
 /*
   ==============================================================================
@@ -56,7 +56,7 @@ v
 #include <sys/syscall.h>
 #include <unistd.h>
 #elif !defined(_WIN32)
-#include <pthread.h> 
+#include <pthread.h>
 #endif
 #endif
 
@@ -159,19 +159,19 @@ void PythonPlugin::process(AudioSampleBuffer& buffer)
     {
         lastChan = (uint16)pyEvents->eventId;
         uint8 ttlData = 1 << lastChan;
-        
+
         // std::cout << "in Python plugin ts is " << getTimestamp(0) + pyEvents->sampleNum << " and sampleNum is " <<
         // pyEvents->sampleNum << " eventId: " <<  uint16(pyEvents->eventId) <<  " ttlData: " << int(ttlData) << std::endl;
         // FIXME now we set the ts at the first samble in the block
         TTLEventPtr event = TTLEvent::createTTLEvent(ttlChannel, getTimestamp(0) + pyEvents->sampleNum,
                                                      &ttlData, sizeof(uint8), lastChan);
         addEvent(ttlChannel, event, pyEvents->sampleNum);
-        
+
         PythonEvent *lastEvent = pyEvents;
         PythonEvent *nextEvent = lastEvent->nextEvent;
         free((void *)lastEvent);
         wasTriggered = true;
-        
+
         // std::cout << "lastChan is " << lastChan << std::endl;
         while (nextEvent) {
             lastChan = (uint16)nextEvent->eventId;
@@ -185,7 +185,7 @@ void PythonPlugin::process(AudioSampleBuffer& buffer)
             lastEvent = nextEvent;
             nextEvent = nextEvent->nextEvent;
             free((void *)lastEvent);
-            
+
             wasTriggered = true;
         }
     }
@@ -200,12 +200,12 @@ void PythonPlugin::handleEvent(const EventChannel* eventInfo, const MidiMessage&
     double timestamp;
     int sourceIndex;
     const void* ptr;
-    
+
     if (eventInfo->getChannelType() == EventChannel::TTL)
     {
-        
+
         TTLEventPtr ttl = TTLEvent::deserializeFromMessage(event, eventInfo);
-        
+
         eventType = int(ttl->getEventType());
         sourceID = int(ttl->getSourceID());
         subProcessorIdx = int(ttl->getSubProcessorIdx());
@@ -216,7 +216,7 @@ void PythonPlugin::handleEvent(const EventChannel* eventInfo, const MidiMessage&
     }
     else if (eventInfo->getChannelType() == EventChannel::TEXT)
     {
-        
+
         TextEventPtr txt = TextEvent::deserializeFromMessage(event, eventInfo);
         eventType = int(txt->getEventType());
         sourceID = int(txt->getSourceID());
@@ -228,7 +228,7 @@ void PythonPlugin::handleEvent(const EventChannel* eventInfo, const MidiMessage&
     }
     else if (eventInfo->getChannelType() == EventChannel::TEXT)
     {
-        
+
         BinaryEventPtr bi = BinaryEvent::deserializeFromMessage(event, eventInfo);
         eventType = int(bi->getEventType());
         sourceID = int(bi->getSourceID());
@@ -243,7 +243,7 @@ void PythonPlugin::handleEvent(const EventChannel* eventInfo, const MidiMessage&
 void PythonPlugin::sendEventPlugin(int eventType, int sourceID, int subProcessorIdx, double timestamp, int sourceIndex)
 {
     LOG_ENTER("sendEventPlugin");
-    
+
     const PythonLock pyLock;
     (*eventFunction)(eventType, sourceID, subProcessorIdx,timestamp,sourceIndex);
 }
@@ -275,7 +275,7 @@ void PythonPlugin::handleSpike(const SpikeChannel* spikeInfo, const MidiMessage&
  ParamConfig *getParamConfig(void) this will allow generating the editor GUI TODO
  void setIntParameter(char *name, int value) set integer parameter
  void set FloatParameter(char *name, float value) set float parameter
- 
+
  */
 
 String lastError()
@@ -305,7 +305,7 @@ String lastError()
 void PythonPlugin::setFile(String fullpath)
 {
     LOG_ENTER("setFile");
-    
+
     filePath = fullpath;
     if (!plugin.open(filePath))
     {
@@ -316,16 +316,16 @@ void PythonPlugin::setFile(String fullpath)
     }
 
     String pluginName = File(filePath).getFileName().upToFirstOccurrenceOf(".", false, true);
-    
+
 #if PY_MAJOR_VERSION>=3
     String initPluginName = String("PyInit_");
 #else
     String initPluginName = String("init");
 #endif
     initPluginName.append(pluginName, 200);
-    
+
     std::cout << "init function is: " << initPluginName << std::endl;
-    
+
     void *initializer = plugin.getFunction(initPluginName);
     DEBUG_LOG("initializer: " << initializer);
     if (!initializer)
@@ -486,7 +486,7 @@ void PythonPlugin::setFile(String fullpath)
     getFloatParamFunction = (getfloatparamfunc_t)cfunc;
 
     // now the API should be fully loaded
-    
+
     const PythonLock pyLock;
     // initialize the plugin
 
@@ -496,7 +496,6 @@ void PythonPlugin::setFile(String fullpath)
 
     DEBUG_LOG("after initplugin");
 
-
     (*pluginStartupFunction)(nChans, dataSampleRate, chanEnabled.getRawDataPointer());
     
     // load the parameter configuration
@@ -505,10 +504,10 @@ void PythonPlugin::setFile(String fullpath)
 
     params = (ParamConfig *)calloc(numPythonParams, sizeof(ParamConfig));
     paramsControl = (Component **)calloc(numPythonParams, sizeof(Component *));
-    
+
     (*getParamConfigFunction)(params);
     DEBUG_LOG("release paramconfig");
-    
+
     auto ed = static_cast<PythonEditor*>(getEditor());
     for(int i = 0; i < numPythonParams; i++)
     {
@@ -582,7 +581,7 @@ void PythonPlugin::channelChanged(int chan, bool state)
 void PythonPlugin::setIntPythonParameter(String name, int value)
 {
     LOG_ENTER("setIntPythonParameter");
-    
+
     const PythonLock pyLock;
     (*setIntParamFunction)(name.getCharPointer().getAddress(), value);
 }
@@ -608,7 +607,7 @@ int PythonPlugin::getIntPythonParameter(String name)
 float PythonPlugin::getFloatPythonParameter(String name)
 {
     LOG_ENTER("getFloatPythonParameter");
-    
+
     float value;
     const PythonLock pyLock;
     value = (*getFloatParamFunction)(name.getCharPointer().getAddress());
@@ -694,6 +693,13 @@ static PyThreadState* startInterpreter()
 #ifdef _WIN32
     // set PYTHONPATH to avoid error described here: https://stackoverflow.com/questions/5694706/py-initialize-fails-unable-to-load-the-file-system-codec
     _putenv_s("PYTHONPATH", PYTHON_HOME_NAME "\\DLLs;" PYTHON_HOME_NAME "\\Lib;" PYTHON_HOME_NAME "\\Lib\\site-packages");
+#else
+    setenv("PYTHONPATH", PYTHON_PATH_NAME, 1);
+#endif
+
+#ifdef PYTHON_DEBUG
+    std::cout << "PYTHONPATH: " << getenv("PYTHONPATH") << std::endl;
+    std::cout << "PYTHON VERSION: " << Py_GetVersion() << std::endl;
 #endif
 
 #if PY_MAJOR_VERSION==3

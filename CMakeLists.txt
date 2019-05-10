@@ -28,6 +28,7 @@ find_package(PythonInterp REQUIRED)
 find_package(PythonLibs REQUIRED)
 set(PYTHON_HOME $ENV{CONDA_PREFIX} CACHE PATH "Where is the root of your python installation?")
 get_filename_component(PYTHON_LIB_DIR ${PYTHON_LIBRARIES} DIRECTORY)
+set(PYTHON_PATH $ENV{PYTHONPATH} CACHE PATH "What do you want on your PYTHONPATH?") # TODO: add python_modules + subdirs
 message(STATUS "Python home: " ${PYTHON_HOME})
 message(STATUS "Python executable: " ${PYTHON_EXECUTABLE})
 message(STATUS "Python library: " ${PYTHON_LIBRARIES})
@@ -87,6 +88,7 @@ add_definitions(-DJUCE_APP_VERSION=0.4.2)
 add_definitions(-DJUCE_APP_VERSION_HEX=0x402)
 add_definitions(-DJUCE_APP_VERSION_HEX=0x402)
 add_definitions(-DPYTHON_HOME=${PYTHON_HOME})
+add_definitions(-DPYTHON_PATH=${PYTHON_PATH})
 
 # include directories
 target_include_directories(${PLUGIN_NAME}
