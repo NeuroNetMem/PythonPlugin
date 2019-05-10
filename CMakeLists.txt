@@ -28,12 +28,28 @@ find_package(PythonInterp REQUIRED)
 find_package(PythonLibs REQUIRED)
 set(PYTHON_HOME $ENV{CONDA_PREFIX} CACHE PATH "Where is the root of your python installation?")
 get_filename_component(PYTHON_LIB_DIR ${PYTHON_LIBRARIES} DIRECTORY)
-set(PYTHON_PATH $ENV{PYTHONPATH} CACHE PATH "What do you want on your PYTHONPATH?") # TODO: add python_modules + subdirs
 message(STATUS "Python home: " ${PYTHON_HOME})
 message(STATUS "Python executable: " ${PYTHON_EXECUTABLE})
 message(STATUS "Python library: " ${PYTHON_LIBRARIES})
 message(STATUS "Python lib dir: " ${PYTHON_LIB_DIR})
 message(STATUS "Python include dir: " ${PYTHON_INCLUDE_DIRS})
+
+# extend PYTHONPATH to include python_modules
+if(WIN32)
+    set(PY_PATH_SEP ;)
+else()
+    set(PY_PATH_SEP :)
+endif()
+# might have to get file(TO_NATIVE_PATH "<path>" <variable>) involved for windows...
+set(PLUGIN_MODULES_PATH "${PROJECT_SOURCE_DIR}/python_modules" CACHE PATH "Where are the python modules you want to plug in?")
+file(TO_NATIVE_PATH "${PLUGIN_MODULES_PATH}" NATIVE_PLUGIN_MODULES_PATH)
+
+execute_process(COMMAND python -c "import sys; import os; print(os.pathsep.join(sys.path))" OUTPUT_VARIABLE ORIG_PY_PATH)
+string(STRIP "${ORIG_PY_PATH}" ORIG_PY_PATH)
+
+set(PYTHON_PATH "${ORIG_PY_PATH}${PY_PATH_SEP}${NATIVE_PLUGIN_MODULES_PATH}" CACHE PATH "What do you want on your PYTHONPATH?")
+message(STATUS "ORIG PYTHONPATH: " ${ORIG_PY_PATH})
+message(STATUS "PYTHONPATH: " ${PYTHON_PATH})
 
 # we need to know where the open ephys source is
 set(OPEN_EPHYS_DIR "" CACHE PATH "Where is the Open Ephys repo's base directory?")
