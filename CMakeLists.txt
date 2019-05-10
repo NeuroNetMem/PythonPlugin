@@ -19,25 +19,28 @@ if(NOT (CMAKE_BUILD_TYPE STREQUAL Debug) OR (CMAKE_BUILD_TYPE STREQUAL Release))
 endif()
 message(STATUS "Build type: " ${CMAKE_BUILD_TYPE})
 
-# Find Python (users can override by specifying the three vars printed out below)
+# Find Python. Users can specify by providing the following in the call to cmake:
+    # -DPYTHON_EXECUTABLE
+    # -DPYTHON_LIBRARIES
+    # -DPYTHON_INCLUDE_DIRS
+    # -DPYTHON_HOME
 find_package(PythonInterp REQUIRED)
 find_package(PythonLibs REQUIRED)
+set(PYTHON_HOME $ENV{CONDA_PREFIX} CACHE PATH "Where is the root of your python installation?")
+get_filename_component(PYTHON_LIB_DIR ${PYTHON_LIBRARIES} DIRECTORY)
+message(STATUS "Python home: " ${PYTHON_HOME})
 message(STATUS "Python executable: " ${PYTHON_EXECUTABLE})
 message(STATUS "Python library: " ${PYTHON_LIBRARIES})
+message(STATUS "Python lib dir: " ${PYTHON_LIB_DIR})
 message(STATUS "Python include dir: " ${PYTHON_INCLUDE_DIRS})
-
-
-
-# PYTHON_LIBRARIES = /Users/benacland/anaconda/envs/online/lib/libpython3.4m.dylib
-# PYTHON_INCLUDE_DIRS = /Users/benacland/anaconda/envs/online/include/python3.4m
-
-
+target_include_directories(${PLUGIN_NAME} PUBLIC ${PYTHON_INCLUDE_DIRS})
+target_link_libraries(${PLUGIN_NAME} ${PYTHON_LIBRARIES})
 
 # we need to know where the open ephys source is
 set(OPEN_EPHYS_DIR "" CACHE PATH "Where is the Open Ephys repo's base directory?")
 string(STRIP "${OPEN_EPHYS_DIR}" OPEN_EPHYS_DIR)
 if(NOT OPEN_EPHYS_DIR)
-    message(FATAL_ERROR, "OPEN_EPHYS_DIR not specified... please call ccmake.")
+    message(FATAL_ERROR, "OPEN_EPHYS_DIR not specified... please call ccmake or use -DOPEN_EPHYS_DIR.")
     return()
 else()
     get_filename_component(OPEN_EPHYS_DIR ${OPEN_EPHYS_DIR} ABSOLUTE)
@@ -113,7 +116,7 @@ if(APPLE)
     set(MAC_PACKAGE_DIR "/usr/local" CACHE PATH "Where do you install custom libs on this mac?")
     string(STRIP "${MAC_PACKAGE_DIR}" MAC_PACKAGE_DIR)
     if(NOT MAC_PACKAGE_DIR)
-        message(FATAL_ERROR, "MAC_PACKAGE_DIR not specified... please call ccmake.")
+        message(FATAL_ERROR, "MAC_PACKAGE_DIR not specified... please call ccmake or use -DMAC_PACKAGE_DIR.")
     endif()
     get_filename_component(MAC_PACKAGE_DIR ${MAC_PACKAGE_DIR} ABSOLUTE)
 
@@ -130,14 +133,15 @@ if(APPLE)
     set_xcode_property(${PLUGIN_NAME} GCC_INLINES_ARE_PRIVATE_EXTERN NO)
 
     # rpath stuff
+    # see: https://gitlab.kitware.com/cmake/community/wikis/doc/cmake/RPATH-handling
     set(CMAKE_MACOSX_RPATH ON)
     set(CMAKE_SKIP_BUILD_RPATH FALSE)
     set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-    set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+    set(CMAKE_INSTALL_RPATH "${PYTHON_LIB_DIR}")
     set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-    list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
+    list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${PYTHON_LIB_DIR}" isSystemDir)
     if("${isSystemDir}" STREQUAL "-1")
-        set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+        set(CMAKE_INSTALL_RPATH "${PYTHON_LIB_DIR}")
     endif()
 
     # link the IOKit framework
@@ -204,10 +208,6 @@ elseif(LINUX)
     find_package(LibFreetype2 REQUIRED)
     file(GLOB LIBFREETYPE2_HEADER_FILES "${LIBFREETYPE2_INCLUDE_DIRS}/libserialport.h")
 
-    # generate shared library
-    # TODO: do I really need the freetype header files here? I add its include dir below...
-    # add_library(${PLUGIN_NAME} SHARED ${SOURCES} ${HEADER_FILES} ${LIBFREETYPE2_HEADER_FILES})
-
     # install into the open ephy plugins directory
     get_filename_component(OE_PLUGIN_DIR ${OPEN_EPHYS_DIR}/Builds/Linux/build/plugins ABSOLUTE)
     SET(CMAKE_INSTALL_PREFIX
@@ -238,12 +238,12 @@ elseif(LINUX)
     set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -pg  -fPIC -rdynamic")
     set(CMAKE_MODULE_LINKER_FLAGS_DEBUG "${CMAKE_MODULE_LINKER_FLAGS_DEBUG} -L/usr/local/include") # is this really needed?
 
-    # STRONGLY consider removing fvisibility call... it's what lead to the keypress issue
+    # STRONGLY consider removing fvisibility call...
     # https://github.com/open-ephys/plugin-GUI/issues/89
     set(CMAKE_MODULE_LINKER_FLAGS_RELEASE "${CMAKE_MODULE_LINKER_FLAGS_RELEASE} -fvisibility=hidden")
 
     ##
-    ## TODO: there's a more robust way to link libs using add_libra() w/SHARED, but
+    ## TODO LATER: there's a more robust way to link libs using add_library() w/SHARED, but
     ## we'll do that later if there's time / a need
     ##
 
@@ -272,14 +272,16 @@ elseif(LINUX)
         target_link_libraries(${PLUGIN_NAME} ${LIBFREETYPE2_LIBRARIES})
     endif()
 
-    # TODO: run makefiles in subdirs of COMMON_DIR
-    # TODO: figure out how to link against these...
-        # previously, it was by doing this: # $(COMMONDIRS): OUTDIR := $(BINDIR)
-                                            # $(COMMONDIRS): LIB_PREFIX := lib
-        # ... causes these common libs to put output into build dir... which gets
-        # picked up thanks to link_directories(${CMAKE_CURRENT_BINARY_DIR})... i think
-    # COMMONDIRS := $(wildcard $(COMMON_DIR)/*)
-    # libs: $(COMMONDIRS)
+    # rpath stuff
+    # see: https://gitlab.kitware.com/cmake/community/wikis/doc/cmake/RPATH-handling
+    set(CMAKE_SKIP_BUILD_RPATH FALSE)
+    set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+    set(CMAKE_INSTALL_RPATH "${PYTHON_LIB_DIR}") # TODO: can I delete this as long as I have the line below?
+    set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+    list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${PYTHON_LIB_DIR}" isSystemDir)
+    if("${isSystemDir}" STREQUAL "-1")
+        set(CMAKE_INSTALL_RPATH "${PYTHON_LIB_DIR}")
+    endif()
 elseif(WIN32)
     # TODO: this is surely broken... fix it (if you ever need to)
 
