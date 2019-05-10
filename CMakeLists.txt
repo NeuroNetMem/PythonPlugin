@@ -265,6 +265,17 @@ elseif(LINUX)
 elseif(WIN32)
     # TODO: this is surely broken... fix it (if you ever need to)
 
+    # install into the open ephy plugins directory
+    get_filename_component(OE_PLUGIN_DIR ${OPEN_EPHYS_DIR}/Builds/Linux/build/plugins ABSOLUTE)
+    SET(CMAKE_INSTALL_PREFIX
+        ${OE_PLUGIN_DIR}
+        CACHE PATH
+        "Plugin install location. See Open Ephys docs for details."
+        FORCE)
+
+    # no 'lib' prefix, please...
+    SET_TARGET_PROPERTIES(${PLUGIN_NAME} PROPERTIES PREFIX "")
+
     # compile flags
     set(WIN32_COMPILE_FLAGS
         "/nologo /Zc:wchar_t /Zc:forScope /GX /GL /GF /GR /GS- /Zi /fp:precise /MP /W4 "
