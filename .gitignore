@@ -31,3 +31,4 @@ python_modules/**/*.pyd
 python_modules/**/.ipynb_checkpoints
 
 .idea
+.DS_Store
