@@ -998,7 +998,7 @@ void PythonPlugin::setFile(String fullpath)
     std::cout << "after initplugin" << std::endl; // DEBUG
 #endif
 
-    (*pluginStartupFunction)(getSampleRate());
+    (*pluginStartupFunction)(dataSampleRate);
     
     // load the parameter configuration
     numPythonParams = (*getParamNumFunction)();
@@ -1045,7 +1045,14 @@ String PythonPlugin::getFile()
 
 void PythonPlugin::updateSettings()
 {
-
+    // update the sample rate...
+    // if you have input data channels, we'll use the first one's sample rate (sane?)
+    // otherwise, we'll just use the superclass' implementation if getSampleRate()
+    if (getNumInputs() > 0) {
+        dataSampleRate = getDataChannel(0)->getSampleRate();
+    } else {
+        dataSampleRate = GenericProcessor::getSampleRate();
+    }
 }
 
 void PythonPlugin::setIntPythonParameter(String name, int value)
