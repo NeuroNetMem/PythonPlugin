@@ -105,12 +105,18 @@ typedef DL_IMPORT(float) (*getfloatparamfunc_t)(char*);
 class ManualPyThreadState
 {
 public:
+    // initializes with a null state.
     explicit ManualPyThreadState(PyThreadState* creatorState);
     ~ManualPyThreadState();
+
+    void updateIfThreadChanged();
+
     operator PyThreadState*();
     ManualPyThreadState& operator=(PyThreadState* otherState);
 
 private:
+    static void deleteThreadState(PyThreadState*& deleter, PyThreadState* deleted);
+
     PyThreadState* creator;
     PyThreadState* state;
 
@@ -151,6 +157,8 @@ public:
         size of the buffer).
          */
     virtual void process(AudioSampleBuffer& buffer /* , MidiBuffer& events */);
+
+    bool disable() override;
     
     void handleEvent (const EventChannel* eventInfo, const MidiMessage& event, int sampleNum); // CJB added
     void handleSpike(const SpikeChannel* channelInfo, const MidiMessage& event, int samplePosition); //CJB added
@@ -224,6 +232,7 @@ private:
     spikefunc_t spikeFunction;
     static PyThreadState *GUIThreadState;
     static ManualPyThreadState processThreadState;
+    bool updateProcessThreadState = true;
     const EventChannel* ttlChannel{ nullptr };
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PythonPlugin);
     bool wasTriggered = 0;

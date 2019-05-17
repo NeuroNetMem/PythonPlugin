@@ -61,20 +61,36 @@ v
 
 // ManualPyThreadState
 
-ManualPyThreadState::ManualPyThreadState(PyThreadState* creatorState)
-    : creator(creatorState)
-{
-    jassert(Py_IsInitialized() && creator);
-
-    state = PyThreadState_New(creator->interp);
-}
+ManualPyThreadState::ManualPyThreadState(PyThreadState* creatorState )
+    : creator   (creatorState)
+    , state     (nullptr)
+{}
 
 ManualPyThreadState::~ManualPyThreadState()
 {
-    PyEval_RestoreThread(creator);
-    PyThreadState_Clear(state);
-    PyThreadState_Delete(state);
-    PyEval_SaveThread();
+    if (creator && state)
+    {
+        deleteThreadState(creator, state);
+    }
+}
+
+void ManualPyThreadState::updateIfThreadChanged()
+{
+    if (state && state == PyGILState_GetThisThreadState())
+    {
+        return;
+    }
+
+    // make new state from the creator interpreter
+    PyThreadState* newState = PyThreadState_New(creator->interp);
+
+    if (state)
+    {
+        // need to clear the existing state
+        deleteThreadState(newState, state);
+    }
+
+    state = newState;
 }
 
 ManualPyThreadState::operator PyThreadState*()
@@ -86,6 +102,14 @@ ManualPyThreadState& ManualPyThreadState::operator=(PyThreadState* otherState)
 {
     state = otherState;
     return *this;
+}
+
+void ManualPyThreadState::deleteThreadState(PyThreadState*& deleter, PyThreadState* deleted)
+{
+    PyEval_RestoreThread(deleter);
+    PyThreadState_Clear(deleted);
+    PyThreadState_Delete(deleted);
+    deleter = PyEval_SaveThread();
 }
 
 // Statically initializing Python and thread states
@@ -147,7 +171,6 @@ ManualPyThreadState PythonPlugin::processThreadState(GUIThreadState);
 
 PythonPlugin::PythonPlugin(const String &processorName)
     : GenericProcessor(processorName) //, threshold(200.0), state(true)
-
 {
 
     //parameters.add(Parameter("thresh", 0.0, 500.0, 200.0, 0));
@@ -261,6 +284,13 @@ void PythonPlugin::setParameter(int parameterIndex, float newValue)
 
 void PythonPlugin::process(AudioSampleBuffer& buffer)
 {
+    // this should be called once every time acquisition starts, in case the thread has changed.
+    if (updateProcessThreadState)
+    {
+        processThreadState.updateIfThreadChanged();
+        updateProcessThreadState = false;
+    }
+
     checkForEvents(true);
 
 #ifdef PYTHON_DEBUG
@@ -275,25 +305,16 @@ void PythonPlugin::process(AudioSampleBuffer& buffer)
 #endif
     // std::cout << "in process pthread_threadid_np()=" << tid << std::endl;
 #endif
-    
-    PyEval_RestoreThread(processThreadState);
-    
+
     PythonEvent *pyEvents = (PythonEvent *)calloc(1, sizeof(PythonEvent));
     pyEvents->type = 0; // this marks an empty event
-#ifdef PYTHON_DEBUG
-    // std::cout << "in process, trying to acquire lock" << std::endl;
-#endif 
-    
-    // PyEval_InitThreads();
-//    
-//    std::cout << "in process, threadstate: " << PyGILState_GetThisThreadState() << std::endl;
-//    PyGILState_STATE gstate;
-//    gstate = PyGILState_Ensure();
-//    std::cout << "in process, lock acquired" << std::endl;
+
+
+    PyEval_RestoreThread(processThreadState);
     (*pluginFunction)(*(buffer.getArrayOfWritePointers()), buffer.getNumChannels(), buffer.getNumSamples(), getNumSamples(0), pyEvents);
-//    PyGILState_Release(gstate);
-//    std::cout << "in process, lock released" << std::endl;
-    
+    processThreadState = PyEval_SaveThread();
+
+
     if(wasTriggered)
     {
         uint8 ttlData = 0;
@@ -344,10 +365,15 @@ void PythonPlugin::process(AudioSampleBuffer& buffer)
         }
     }
     
-    processThreadState = PyEval_SaveThread();
 #ifdef PYTHON_DEBUG
     // std::cout << "Thread saved" << std::endl;
 #endif
+}
+
+bool PythonPlugin::disable()
+{
+    updateProcessThreadState = true;
+    return true;
 }
 
 /** START CJB ADDED **/
@@ -498,9 +524,9 @@ void PythonPlugin::sendEventPlugin(int eventType, int sourceID, int subProcessor
     std::cout << "in sendEventPlugin pthread_threadid_np()=" << tid << std::endl;
 #endif
     
-    PyEval_RestoreThread(GUIThreadState);
+    PyEval_RestoreThread(processThreadState);
     (*eventFunction)(eventType, sourceID, subProcessorIdx,timestamp,sourceIndex);
-    GUIThreadState = PyEval_SaveThread();
+    processThreadState = PyEval_SaveThread();
 }
 
 void PythonPlugin::handleSpike(const SpikeChannel* spikeInfo, const MidiMessage& event, int samplePosition){
@@ -543,57 +569,10 @@ void PythonPlugin::handleSpike(const SpikeChannel* spikeInfo, const MidiMessage&
 #endif
     std::cout << "in handleSpike pthread_threadid_np()=" << tid << std::endl;
 #endif
-     
-    /*
-    PyGILState_STATE gstate;
-    gstate = PyGILState_Ensure();
-    
-    Perform Python actions here.
-    result = CallSomeFunction();
-    evaluate result or handle exception
-    Release the thread. No Python API allowed beyond this point.
-    PyGILState_Release(gstate);
-    */
-    //PyGILState_STATE gstate;
-    //gstate = PyGILState_Ensure();
-    
+
     PyEval_RestoreThread(processThreadState);
-    
-    //PythonEvent *pyEvents = (PythonEvent *)calloc(1, sizeof(PythonEvent));
-    
-   // pyEvents->type = 0; // this marks an empty event
-#ifdef PYTHON_DEBUG
-    // std::cout << "in process, trying to acquire lock" << std::endl;
-#endif
-    
-    // PyEval_InitThreads();
-    //
-    //    std::cout << "in process, threadstate: " << PyGILState_GetThisThreadState() << std::endl;
-    //    PyGILState_STATE gstate;
-    //    gstate = PyGILState_Ensure();
-    //    std::cout << "in process, lock acquired" << std::endl;
     (*spikeFunction)(electrode, sortedID, spikeBuf);
     processThreadState = PyEval_SaveThread();
-
-    //PyGILState_Release(gstate);
-    
-    //processThreadState = PyEval_SaveThread();
-    /**
-     #ifdef PYTHON_DEBUG
-     #if defined(__linux__)
-     pid_t tid;
-     tid = syscall(SYS_gettid);
-     #else
-     uint64_t tid;
-     pthread_threadid_np(NULL, &tid);
-     #endif
-     std::cout << "in handleSpike pthread_threadid_np()=" << tid << std::endl;
-     #endif
-     
-     PyEval_RestoreThread(GUIThreadState);
-     (*spikeFunction)(sortedID, spikeBuf);
-     GUIThreadState = PyEval_SaveThread();
-     **/
 }
 
 /** END CJB ADDED **/
