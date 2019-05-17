@@ -59,6 +59,37 @@ v
 #endif
 #endif
 
+// ManualPyThreadState
+
+ManualPyThreadState::ManualPyThreadState(PyThreadState* creatorState)
+    : creator(creatorState)
+{
+    jassert(Py_IsInitialized() && creator);
+
+    state = PyThreadState_New(creator->interp);
+}
+
+ManualPyThreadState::~ManualPyThreadState()
+{
+    PyEval_RestoreThread(creator);
+    PyThreadState_Clear(state);
+    PyThreadState_Delete(state);
+    PyEval_SaveThread();
+}
+
+ManualPyThreadState::operator PyThreadState*()
+{
+    return state;
+}
+
+ManualPyThreadState& ManualPyThreadState::operator=(PyThreadState* otherState)
+{
+    state = otherState;
+    return *this;
+}
+
+// Statically initializing Python and thread states
+
 static PyThreadState* startInterpreter()
 {
     // if on windows, PYTHON_HOME_NAME is set by PythonEnv.props (corresponds to CONDA_HOME environment variable)
@@ -109,6 +140,11 @@ static PyThreadState* startInterpreter()
 }
 
 
+PyThreadState* PythonPlugin::GUIThreadState = startInterpreter();
+
+ManualPyThreadState PythonPlugin::processThreadState(GUIThreadState);
+
+
 PythonPlugin::PythonPlugin(const String &processorName)
     : GenericProcessor(processorName) //, threshold(200.0), state(true)
 
@@ -130,16 +166,6 @@ PythonPlugin::PythonPlugin(const String &processorName)
 #endif
     std::cout << "in constructor pthread_threadid_np()=" << tid << std::endl;
 #endif
-
-    if (Py_IsInitialized())
-    {
-        // have a thread state already, just need to retrieve it
-        GUIThreadState = PyGILState_GetThisThreadState();
-    }
-    else
-    {
-        GUIThreadState = startInterpreter();
-    }
 }
 
 PythonPlugin::~PythonPlugin()
@@ -233,32 +259,6 @@ void PythonPlugin::setParameter(int parameterIndex, float newValue)
     editor->updateParameterButtons(parameterIndex);
 }
 
-
-void PythonPlugin::resetConnections()
-{
-#ifdef PYTHON_DEBUG
-#if defined(__linux__)
-    pid_t tid;
-    tid = syscall(SYS_gettid);
-#elif defined(_WIN32)
-    DWORD tid = GetCurrentThreadId();
-#else
-    uint64_t tid;
-    pthread_threadid_np(NULL, &tid);
-#endif
-    std::cout << "in resetConnection pthread_threadid_np()=" << tid << std::endl;
-#endif
-
-    nextAvailableChannel = 0;
-    
-    wasConnected = false;
-
-#ifdef PYTHON_DEBUG
-    std::cout << "resetting ThreadState, which was "  << processThreadState << std::endl;
-#endif
-    processThreadState = 0;
-}
-
 void PythonPlugin::process(AudioSampleBuffer& buffer)
 {
     checkForEvents(true);
@@ -276,29 +276,6 @@ void PythonPlugin::process(AudioSampleBuffer& buffer)
     // std::cout << "in process pthread_threadid_np()=" << tid << std::endl;
 #endif
     
-    
-    if(!processThreadState)
-    {
-        
-        //DEBUG
-        PyThreadState *nowState;
-        nowState = PyGILState_GetThisThreadState();
-#ifdef PYTHON_DEBUG
-        std::cout << "currentState: " << nowState << std::endl;
-        std::cout << "initialiting ThreadState" << std::endl;
-#endif
-        if(nowState) //UGLY HACK!!!
-        {
-            processThreadState = nowState;
-        }
-        else
-        {
-            processThreadState =  PyThreadState_New(GUIThreadState->interp);
-        }
-        if(!processThreadState)
-            std::cout << "ThreadState is Null!" << std::endl;
-    }
-
     PyEval_RestoreThread(processThreadState);
     
     PythonEvent *pyEvents = (PythonEvent *)calloc(1, sizeof(PythonEvent));
@@ -579,30 +556,6 @@ void PythonPlugin::handleSpike(const SpikeChannel* spikeInfo, const MidiMessage&
     */
     //PyGILState_STATE gstate;
     //gstate = PyGILState_Ensure();
-    
-    if(!processThreadState)
-    {
-        //*
-        
-        //DEBUG
-        //PyEval_RestoreThread(processThreadState);
-        PyThreadState *nowState;
-        nowState = PyGILState_GetThisThreadState();
-#ifdef PYTHON_DEBUG
-        std::cout << "currentState: " << nowState << std::endl;
-        std::cout << "initialiting ThreadState" << std::endl;
-#endif
-        if(nowState) //UGLY HACK!!!
-        {
-            processThreadState = nowState;
-        }
-        else
-        {
-            processThreadState =  PyThreadState_New(GUIThreadState->interp);
-        }
-        if(!processThreadState)
-            std::cout << "ThreadState is Null!" << std::endl;
-    }
     
     PyEval_RestoreThread(processThreadState);
     
@@ -1013,7 +966,7 @@ void PythonPlugin::setFile(String fullpath)
     std::cout << "after initplugin" << std::endl; // DEBUG
 #endif
 
-    (*pluginStartupFunction)(getSampleRate());
+    (*pluginStartupFunction)(dataSampleRate);
     
     // load the parameter configuration
     numPythonParams = (*getParamNumFunction)();
@@ -1060,7 +1013,14 @@ String PythonPlugin::getFile()
 
 void PythonPlugin::updateSettings()
 {
-
+    // update the sample rate...
+    // if you have input data channels, we'll use the first one's sample rate (sane?)
+    // otherwise, we'll just use the superclass' implementation if getSampleRate()
+    if (getNumInputs() > 0) {
+        dataSampleRate = getDataChannel(0)->getSampleRate();
+    } else {
+        dataSampleRate = GenericProcessor::getSampleRate();
+    }
 }
 
 void PythonPlugin::setIntPythonParameter(String name, int value)

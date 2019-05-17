@@ -101,6 +101,22 @@ typedef DL_IMPORT(float) (*getfloatparamfunc_t)(char*);
 //=============================================================================
 /*
 */
+
+class ManualPyThreadState
+{
+public:
+    explicit ManualPyThreadState(PyThreadState* creatorState);
+    ~ManualPyThreadState();
+    operator PyThreadState*();
+    ManualPyThreadState& operator=(PyThreadState* otherState);
+
+private:
+    PyThreadState* creator;
+    PyThreadState* state;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ManualPyThreadState)
+};
+
 class PythonPlugin    : public GenericProcessor
 {
 public:
@@ -176,9 +192,7 @@ public:
     
     int getIntPythonParameter(String name);
     float getFloatPythonParameter(String name);
-    
-    void resetConnections();
-    
+        
     void saveCustomParametersToXml (XmlElement* parentElement) override;
     void loadCustomParametersFromXml() override;
 private:
@@ -208,8 +222,8 @@ private:
     getfloatparamfunc_t getFloatParamFunction;
     eventfunc_t eventFunction;
     spikefunc_t spikeFunction;
-    PyThreadState *GUIThreadState = 0;
-    PyThreadState *processThreadState = 0;
+    static PyThreadState *GUIThreadState;
+    static ManualPyThreadState processThreadState;
     const EventChannel* ttlChannel{ nullptr };
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PythonPlugin);
     bool wasTriggered = 0;
