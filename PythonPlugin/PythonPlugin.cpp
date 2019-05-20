@@ -59,62 +59,51 @@ v
 #endif
 #endif
 
-// ManualPyThreadState
+// PythonCallerWithThread (+ inner classes)
 
-ManualPyThreadState::ManualPyThreadState(PyThreadState* creatorState )
-    : creator   (creatorState)
-    , state     (nullptr)
-{}
-
-ManualPyThreadState::~ManualPyThreadState()
+PythonCallerWithThread::PythonLock::PythonLock()
+    : pgss(PyGILState_Ensure())
 {
-    if (creator && state)
+    // if current state is not the mainState or saved threadState, need to save it
+    PyThreadState* currState = PyThreadState_Get();
+    if (currState != mainState && (!threadState || currState != threadState->rawState()))
     {
-        deleteThreadState(creator, state);
+        // abusing the API a little - call ...Ensure again to increment the counter
+        // and prevent it from being deleted automatically when the lock is released
+        PyGILState_Ensure();
+
+        // deletes the old thread state, if any
+        threadState = new ManualPyThreadState(currState);
     }
 }
 
-void ManualPyThreadState::updateIfThreadChanged()
+PythonCallerWithThread::PythonLock::~PythonLock()
 {
-    if (state && state == PyGILState_GetThisThreadState())
-    {
-        return;
-    }
-
-    // make new state from the creator interpreter
-    PyThreadState* newState = PyThreadState_New(creator->interp);
-
-    if (state)
-    {
-        // need to clear the existing state
-        deleteThreadState(newState, state);
-    }
-
-    state = newState;
+    PyGILState_Release(pgss);
 }
 
-ManualPyThreadState::operator PyThreadState*()
+PythonCallerWithThread::ManualPyThreadState::ManualPyThreadState(PyThreadState* currentState)
+    : state(currentState)
+{
+    jassert(state == PyGILState_GetThisThreadState() && PyGILState_Check());
+}
+
+PythonCallerWithThread::ManualPyThreadState::~ManualPyThreadState()
+{
+    const PyGILState_STATE pgss = PyGILState_Ensure();
+    jassert(state != PyGILState_GetThisThreadState());
+
+    PyThreadState_Clear(state);
+    PyThreadState_Delete(state);
+    PyGILState_Release(pgss);
+}
+
+const PyThreadState* PythonCallerWithThread::ManualPyThreadState::rawState() const
 {
     return state;
 }
 
-ManualPyThreadState& ManualPyThreadState::operator=(PyThreadState* otherState)
-{
-    state = otherState;
-    return *this;
-}
-
-void ManualPyThreadState::deleteThreadState(PyThreadState*& deleter, PyThreadState* deleted)
-{
-    PyEval_RestoreThread(deleter);
-    PyThreadState_Clear(deleted);
-    PyThreadState_Delete(deleted);
-    deleter = PyEval_SaveThread();
-}
-
-// Statically initializing Python and thread states
-
-static PyThreadState* startInterpreter()
+PyThreadState* PythonCallerWithThread::startInterpreter()
 {
     // if on windows, PYTHON_HOME_NAME is set by PythonEnv.props (corresponds to CONDA_HOME environment variable)
 #ifndef _WIN32
@@ -163,11 +152,11 @@ static PyThreadState* startInterpreter()
     return PyEval_SaveThread();
 }
 
+const PyThreadState* PythonCallerWithThread::mainState(startInterpreter());
+ScopedPointer<PythonCallerWithThread::ManualPyThreadState> PythonCallerWithThread::threadState;
 
-PyThreadState* PythonPlugin::GUIThreadState = startInterpreter();
 
-ManualPyThreadState PythonPlugin::processThreadState(GUIThreadState);
-
+// PythonPlugin
 
 PythonPlugin::PythonPlugin(const String &processorName)
     : GenericProcessor(processorName) //, threshold(200.0), state(true)
@@ -248,25 +237,21 @@ bool PythonPlugin::isReady()
     std::cout << "in isReady pthread_threadid_np()=" << tid << std::endl;
 #endif
 
-    bool ret;
-    PyEval_RestoreThread(GUIThreadState);
     if (plugin == 0 )
     {
         CoreServices::sendStatusMessage ("No plugin selected in Python Plugin.");
-        ret = false;
-    }
-    else if (pluginIsReady && !(*pluginIsReady)())
-    {
-        CoreServices::sendStatusMessage ("Python Plugin is not ready");
-        ret = false;
+        return false;
     }
     else
     {
-        ret = true;
+        const PythonLock pyLock;
+        if (pluginIsReady && !(*pluginIsReady)())
+        {
+            CoreServices::sendStatusMessage("Python Plugin is not ready");
+            return false;
+        }
+        return true;
     }
-    GUIThreadState = PyEval_SaveThread();
-    return ret;
-
 }
 
 void PythonPlugin::setParameter(int parameterIndex, float newValue)
@@ -284,13 +269,6 @@ void PythonPlugin::setParameter(int parameterIndex, float newValue)
 
 void PythonPlugin::process(AudioSampleBuffer& buffer)
 {
-    // this should be called once every time acquisition starts, in case the thread has changed.
-    if (updateProcessThreadState)
-    {
-        processThreadState.updateIfThreadChanged();
-        updateProcessThreadState = false;
-    }
-
     checkForEvents(true);
 
 #ifdef PYTHON_DEBUG
@@ -309,11 +287,10 @@ void PythonPlugin::process(AudioSampleBuffer& buffer)
     PythonEvent *pyEvents = (PythonEvent *)calloc(1, sizeof(PythonEvent));
     pyEvents->type = 0; // this marks an empty event
 
-
-    PyEval_RestoreThread(processThreadState);
-    (*pluginFunction)(*(buffer.getArrayOfWritePointers()), buffer.getNumChannels(), buffer.getNumSamples(), getNumSamples(0), pyEvents);
-    processThreadState = PyEval_SaveThread();
-
+    {
+        const PythonLock pyLock;
+        (*pluginFunction)(*(buffer.getArrayOfWritePointers()), buffer.getNumChannels(), buffer.getNumSamples(), getNumSamples(0), pyEvents);
+    }
 
     if(wasTriggered)
     {
@@ -524,9 +501,8 @@ void PythonPlugin::sendEventPlugin(int eventType, int sourceID, int subProcessor
     std::cout << "in sendEventPlugin pthread_threadid_np()=" << tid << std::endl;
 #endif
     
-    PyEval_RestoreThread(processThreadState);
+    const PythonLock pyLock;
     (*eventFunction)(eventType, sourceID, subProcessorIdx,timestamp,sourceIndex);
-    processThreadState = PyEval_SaveThread();
 }
 
 void PythonPlugin::handleSpike(const SpikeChannel* spikeInfo, const MidiMessage& event, int samplePosition){
@@ -570,9 +546,8 @@ void PythonPlugin::handleSpike(const SpikeChannel* spikeInfo, const MidiMessage&
     std::cout << "in handleSpike pthread_threadid_np()=" << tid << std::endl;
 #endif
 
-    PyEval_RestoreThread(processThreadState);
+    const PythonLock pyLock;
     (*spikeFunction)(electrode, sortedID, spikeBuf);
-    processThreadState = PyEval_SaveThread();
 }
 
 /** END CJB ADDED **/
@@ -933,7 +908,7 @@ void PythonPlugin::setFile(String fullpath)
     
 // now the API should be fully loaded
     
-    PyEval_RestoreThread(GUIThreadState);
+    const PythonLock pyLock;
     // initialize the plugin
 #ifdef PYTHON_DEBUG
     std::cout << "before initplugin" << std::endl; // DEBUG
@@ -981,7 +956,6 @@ void PythonPlugin::setFile(String fullpath)
                 break;
         }
     }
-    GUIThreadState = PyEval_SaveThread();
 }
 
 
@@ -1019,9 +993,8 @@ void PythonPlugin::setIntPythonParameter(String name, int value)
 #endif
 #endif
     
-    PyEval_RestoreThread(GUIThreadState);
+    const PythonLock pyLock;
     (*setIntParamFunction)(name.getCharPointer().getAddress(), value);
-    GUIThreadState = PyEval_SaveThread();
 }
 
 void PythonPlugin::setFloatPythonParameter(String name, float value)
@@ -1040,9 +1013,8 @@ void PythonPlugin::setFloatPythonParameter(String name, float value)
     std::cout << "in setfloatparam pthread_threadid_np()=" << tid << std::endl;
 #endif
 #endif
-    PyEval_RestoreThread(GUIThreadState);
+    const PythonLock pyLock;
     (*setFloatParamFunction)(name.getCharPointer().getAddress(), value);
-    GUIThreadState = PyEval_SaveThread();
 }
 
 int PythonPlugin::getIntPythonParameter(String name)
@@ -1062,9 +1034,8 @@ int PythonPlugin::getIntPythonParameter(String name)
 #endif
 
     int value;
-    PyEval_RestoreThread(GUIThreadState);
+    const PythonLock pyLock;
     value = (*getIntParamFunction)(name.getCharPointer().getAddress());
-    GUIThreadState = PyEval_SaveThread();
     return value;
 }
 
@@ -1085,10 +1056,9 @@ float PythonPlugin::getFloatPythonParameter(String name)
 #endif
 #endif
     
-    PyEval_RestoreThread(GUIThreadState);
     float value;
+    const PythonLock pyLock;
     value = (*getFloatParamFunction)(name.getCharPointer().getAddress());
-    GUIThreadState = PyEval_SaveThread();
     return value;
 }
 

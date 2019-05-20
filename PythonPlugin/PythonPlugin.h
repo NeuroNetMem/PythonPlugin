@@ -102,28 +102,50 @@ typedef DL_IMPORT(float) (*getfloatparamfunc_t)(char*);
 /*
 */
 
-class ManualPyThreadState
+
+class PythonCallerWithThread
 {
 public:
-    // initializes with a null state.
-    explicit ManualPyThreadState(PyThreadState* creatorState);
-    ~ManualPyThreadState();
+    PythonCallerWithThread() = default;
 
-    void updateIfThreadChanged();
+protected:
+    class PythonLock
+    {
+    public:
+        PythonLock();
+        ~PythonLock();
 
-    operator PyThreadState*();
-    ManualPyThreadState& operator=(PyThreadState* otherState);
+    private:
+        const PyGILState_STATE pgss;
+
+        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PythonLock);
+    };
 
 private:
-    static void deleteThreadState(PyThreadState*& deleter, PyThreadState* deleted);
+    class ManualPyThreadState
+    {
+    public:
+        explicit ManualPyThreadState(PyThreadState* currentState);
+        ~ManualPyThreadState();
 
-    PyThreadState* creator;
-    PyThreadState* state;
+        const PyThreadState* rawState() const;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ManualPyThreadState)
+    private:
+        PyThreadState* state;
+
+        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ManualPyThreadState)
+    };
+
+    static PyThreadState* startInterpreter();
+
+    static const PyThreadState* mainState;
+    static ScopedPointer<ManualPyThreadState> threadState;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PythonCallerWithThread);
 };
 
-class PythonPlugin    : public GenericProcessor
+
+class PythonPlugin : public GenericProcessor, public PythonCallerWithThread
 {
 public:
     /** The class constructor, used to initialize any members. */
@@ -230,8 +252,6 @@ private:
     getfloatparamfunc_t getFloatParamFunction;
     eventfunc_t eventFunction;
     spikefunc_t spikeFunction;
-    static PyThreadState *GUIThreadState;
-    static ManualPyThreadState processThreadState;
     bool updateProcessThreadState = true;
     const EventChannel* ttlChannel{ nullptr };
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PythonPlugin);
