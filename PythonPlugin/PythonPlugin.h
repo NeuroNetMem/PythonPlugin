@@ -180,8 +180,6 @@ public:
          */
     virtual void process(AudioSampleBuffer& buffer /* , MidiBuffer& events */);
 
-    bool disable() override;
-    
     void handleEvent (const EventChannel* eventInfo, const MidiMessage& event, int sampleNum); // CJB added
     void handleSpike(const SpikeChannel* channelInfo, const MidiMessage& event, int samplePosition); //CJB added
     
@@ -252,7 +250,6 @@ private:
     getfloatparamfunc_t getFloatParamFunction;
     eventfunc_t eventFunction;
     spikefunc_t spikeFunction;
-    bool updateProcessThreadState = true;
     const EventChannel* ttlChannel{ nullptr };
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PythonPlugin);
     bool wasTriggered = 0;

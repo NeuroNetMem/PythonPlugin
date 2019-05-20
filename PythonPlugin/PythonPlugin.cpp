@@ -347,12 +347,6 @@ void PythonPlugin::process(AudioSampleBuffer& buffer)
 #endif
 }
 
-bool PythonPlugin::disable()
-{
-    updateProcessThreadState = true;
-    return true;
-}
-
 /** START CJB ADDED **/
 
 void PythonPlugin::handleEvent(const EventChannel* eventInfo, const MidiMessage& event, int sampleNum){
