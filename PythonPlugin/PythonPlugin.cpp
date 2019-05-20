@@ -66,41 +66,25 @@ PythonCallerWithThread::PythonLock::PythonLock()
 {
     // if current state is not the mainState or saved threadState, need to save it
     PyThreadState* currState = PyThreadState_Get();
-    if (currState != mainState && (!threadState || currState != threadState->rawState()))
+    if (currState != mainState && currState != threadState)
     {
         // abusing the API a little - call ...Ensure again to increment the counter
         // and prevent it from being deleted automatically when the lock is released
         PyGILState_Ensure();
 
         // deletes the old thread state, if any
-        threadState = new ManualPyThreadState(currState);
+        if (threadState)
+        {
+            PyThreadState_Clear(threadState);
+            PyThreadState_Delete(threadState);
+        }
+        threadState = currState;
     }
 }
 
 PythonCallerWithThread::PythonLock::~PythonLock()
 {
     PyGILState_Release(pgss);
-}
-
-PythonCallerWithThread::ManualPyThreadState::ManualPyThreadState(PyThreadState* currentState)
-    : state(currentState)
-{
-    jassert(state == PyGILState_GetThisThreadState() && PyGILState_Check());
-}
-
-PythonCallerWithThread::ManualPyThreadState::~ManualPyThreadState()
-{
-    const PyGILState_STATE pgss = PyGILState_Ensure();
-    jassert(state != PyGILState_GetThisThreadState());
-
-    PyThreadState_Clear(state);
-    PyThreadState_Delete(state);
-    PyGILState_Release(pgss);
-}
-
-const PyThreadState* PythonCallerWithThread::ManualPyThreadState::rawState() const
-{
-    return state;
 }
 
 PyThreadState* PythonCallerWithThread::startInterpreter()
@@ -153,7 +137,7 @@ PyThreadState* PythonCallerWithThread::startInterpreter()
 }
 
 const PyThreadState* PythonCallerWithThread::mainState(startInterpreter());
-ScopedPointer<PythonCallerWithThread::ManualPyThreadState> PythonCallerWithThread::threadState;
+PyThreadState* PythonCallerWithThread::threadState(nullptr);
 
 
 // PythonPlugin

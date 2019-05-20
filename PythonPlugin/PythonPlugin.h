@@ -122,24 +122,10 @@ protected:
     };
 
 private:
-    class ManualPyThreadState
-    {
-    public:
-        explicit ManualPyThreadState(PyThreadState* currentState);
-        ~ManualPyThreadState();
-
-        const PyThreadState* rawState() const;
-
-    private:
-        PyThreadState* state;
-
-        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ManualPyThreadState)
-    };
-
     static PyThreadState* startInterpreter();
 
     static const PyThreadState* mainState;
-    static ScopedPointer<ManualPyThreadState> threadState;
+    static PyThreadState* threadState;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PythonCallerWithThread);
 };
