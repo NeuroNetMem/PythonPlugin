@@ -45,6 +45,7 @@ v
 
 #include <stdlib.h>
 #include <string.h>
+#include <iostream>
 
 #ifdef DEBUG
 #define PYTHON_DEBUG
@@ -59,11 +60,32 @@ v
 #endif
 #endif
 
+// debug logs when entering function
+#ifdef PYTHON_DEBUG
+#if defined(__linux__)
+#define GET_TID pid_t tid = syscall(SYS_gettid)
+#elif defined(_WIN32)
+#define GET_TID DWORD tid = GetCurrentThreadId()
+#else
+#define GET_TID  uint64_t tid; pthread_threadid_np(NULL, &tid)
+#endif
+
+#define DEBUG_LOG(str) JUCE_BLOCK_WITH_FORCED_SEMICOLON(std::cout << str << std::endl;)
+
+#define LOG_ENTER(fname) \
+    GET_TID;             \
+    std::cout << "in " << fname << " pthread_threadid_np()=" << tid << std::endl
+
+#else // not debugging
+#define DEBUG_LOG(str)
+#define LOG_ENTER(fname)
+#endif
 
 PythonPlugin::PythonPlugin(const String &processorName)
     : GenericProcessor(processorName) //, threshold(200.0), state(true)
 
 {
+    LOG_ENTER("constructor");
 
     //parameters.add(Parameter("thresh", 0.0, 500.0, 200.0, 0));
     filePath = "";
@@ -96,20 +118,10 @@ PythonPlugin::PythonPlugin(const String &processorName)
 
 #ifdef _WIN32
     // set PYTHONPATH to avoid error described here: https://stackoverflow.com/questions/5694706/py-initialize-fails-unable-to-load-the-file-system-codec
-    _putenv_s("PYTHONPATH", PYTHON_HOME_NAME "\\DLLs;" PYTHON_HOME_NAME "\\Lib;" PYTHON_HOME_NAME "\\Lib\\site-packages");
-#endif
-    
-#ifdef PYTHON_DEBUG
-#if defined(__linux__)
-    pid_t tid;
-    tid = syscall(SYS_gettid);
-#elif defined(_WIN32)
-    DWORD tid = GetCurrentThreadId();
-#else
-    uint64_t tid;
-    pthread_threadid_np(NULL, &tid);
-#endif
-    std::cout << "in constructor pthread_threadid_np()=" << tid << std::endl;
+    _putenv_s("PYTHONPATH",
+        PYTHON_HOME_NAME "\\DLLs;"
+        PYTHON_HOME_NAME "\\Lib;"
+        PYTHON_HOME_NAME "\\Lib\\site-packages");
 #endif
 
 #if PY_MAJOR_VERSION==3
@@ -128,17 +140,6 @@ PythonPlugin::PythonPlugin(const String &processorName)
     std::cout << Py_GetVersion() << std::endl;
 #endif
     GUIThreadState = PyEval_SaveThread();
-}
-
-PythonPlugin::~PythonPlugin()
-{
-#ifdef _WIN32
-    //Close libary
-    PyGILState_Ensure();
-    FreeLibrary((HMODULE)plugin);
-#else
-    dlclose(plugin);
-#endif
 }
 
 void PythonPlugin::createEventChannels()

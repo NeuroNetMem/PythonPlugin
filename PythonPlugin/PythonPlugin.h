@@ -107,9 +107,6 @@ public:
     /** The class constructor, used to initialize any members. */
     PythonPlugin(const String &processorName = "Python Plugin");
 
-    /** The class destructor, used to deallocate memory */
-    ~PythonPlugin();
-
     /** Determines whether the processor is treated as a source. */
     virtual bool isSource()
     {
@@ -184,7 +181,7 @@ public:
 private:
     void sendEventPlugin(int eventType, int sourceID, int subProcessorIdx, double timestamp, int sourceIndex); //CJB added
     String filePath;
-    void *plugin;
+    DynamicLibrary plugin;
     // private members and methods go here
     //
     // e.g.:
