@@ -2,3 +2,5 @@
 *.c
 *.h
 *.pyd
+
+.config.py

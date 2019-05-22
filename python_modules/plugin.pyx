@@ -8,13 +8,13 @@ from libc.string cimport memcpy
 
 sr = 1.
 
-cdef extern from "../../PythonPlugin/PythonParamConfig.h":
+cdef extern from "PythonParamConfig.h":
     enum paramType:
         TOGGLE, INT_SET, FLOAT_RANGE
 
 
 
-cdef extern from "../../PythonPlugin/PythonParamConfig.h":
+cdef extern from "PythonParamConfig.h":
     struct ParamConfig:
         paramType type
         char *name
@@ -26,7 +26,7 @@ cdef extern from "../../PythonPlugin/PythonParamConfig.h":
         float startValue
 
 
-cdef extern from "../../PythonPlugin/PythonEvent.h":
+cdef extern from "PythonEvent.h":
     struct PythonEvent:
         unsigned char type
         int sampleNum
