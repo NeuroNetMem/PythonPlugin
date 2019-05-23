@@ -59,88 +59,6 @@ v
 #endif
 #endif
 
-// PythonCallerWithThread (+ inner classes)
-
-PythonCallerWithThread::PythonLock::PythonLock()
-    : pgss(PyGILState_Ensure())
-{
-    // if current state is not the mainState or saved threadState, need to save it
-    PyThreadState* currState = PyThreadState_Get();
-    if (currState != mainState && currState != threadState)
-    {
-        // abusing the API a little - call ...Ensure again to increment the counter
-        // and prevent it from being deleted automatically when the lock is released
-        PyGILState_Ensure();
-
-        // deletes the old thread state, if any
-        if (threadState)
-        {
-            PyThreadState_Clear(threadState);
-            PyThreadState_Delete(threadState);
-        }
-        threadState = currState;
-    }
-}
-
-PythonCallerWithThread::PythonLock::~PythonLock()
-{
-    PyGILState_Release(pgss);
-}
-
-PyThreadState* PythonCallerWithThread::startInterpreter()
-{
-    // if on windows, PYTHON_HOME_NAME is set by PythonEnv.props (corresponds to CONDA_HOME environment variable)
-#ifndef _WIN32
-#define QUOTE(name) #name
-#define STR(macro) QUOTE(macro)
-#define PYTHON_HOME_NAME STR(PYTHON_HOME)
-#endif
-
-    char * old_python_home = getenv("PYTHONHOME");
-    if (old_python_home == NULL || strcmp(old_python_home, PYTHON_HOME_NAME) != 0)
-    {
-#ifdef PYTHON_DEBUG
-        std::cout << "setting PYTHONHOME" << std::endl;
-#endif
-
-#ifdef _WIN32
-        _putenv_s("PYTHONHOME", PYTHON_HOME_NAME);
-#else
-        setenv("PYTHONHOME", PYTHON_HOME_NAME, 1);
-#endif
-    }
-
-#ifdef PYTHON_DEBUG
-    std::cout << "PYTHONHOME: " << getenv("PYTHONHOME") << std::endl;
-#endif
-
-#ifdef _WIN32
-    // set PYTHONPATH to avoid error described here: https://stackoverflow.com/questions/5694706/py-initialize-fails-unable-to-load-the-file-system-codec
-    _putenv_s("PYTHONPATH", PYTHON_HOME_NAME "\\DLLs;" PYTHON_HOME_NAME "\\Lib;" PYTHON_HOME_NAME "\\Lib\\site-packages");
-#endif
-
-#if PY_MAJOR_VERSION==3
-    Py_SetProgramName((wchar_t *)"PythonPlugin");
-#else
-    Py_SetProgramName((char *)"PythonPlugin");
-#endif
-    Py_Initialize();
-    PyEval_InitThreads();
-
-    PyRun_SimpleString("import sys");
-    PyRun_SimpleString("sys.setcheckinterval(10000)");
-#ifdef PYTHON_DEBUG
-    std::cout << Py_GetPrefix() << std::endl;
-    std::cout << Py_GetVersion() << std::endl;
-#endif
-    return PyEval_SaveThread();
-}
-
-const PyThreadState* PythonCallerWithThread::mainState(startInterpreter());
-PyThreadState* PythonCallerWithThread::threadState(nullptr);
-
-
-// PythonPlugin
 
 PythonPlugin::PythonPlugin(const String &processorName)
     : GenericProcessor(processorName) //, threshold(200.0), state(true)
@@ -1068,4 +986,83 @@ void PythonPlugin::loadCustomParametersFromXml()
 }
 
 
+// PythonLock
 
+PythonPlugin::PythonLock::PythonLock()
+    : pgss(PyGILState_Ensure())
+{
+    // if current state is not the mainState or saved threadState, need to save it
+    PyThreadState* currState = PyThreadState_Get();
+    if (currState != mainState && currState != threadState)
+    {
+        // abusing the API a little - call ...Ensure again to increment the counter
+        // and prevent it from being deleted automatically when the lock is released
+        PyGILState_Ensure();
+
+        // delete the old thread state, if any
+        if (threadState)
+        {
+            PyThreadState_Clear(threadState);
+            PyThreadState_Delete(threadState);
+        }
+
+        threadState = currState;
+    }
+}
+
+PythonPlugin::PythonLock::~PythonLock()
+{
+    PyGILState_Release(pgss);
+}
+
+static PyThreadState* startInterpreter()
+{
+    // if on windows, PYTHON_HOME_NAME is set by PythonEnv.props (corresponds to CONDA_HOME environment variable)
+#ifndef _WIN32
+#define QUOTE(name) #name
+#define STR(macro) QUOTE(macro)
+#define PYTHON_HOME_NAME STR(PYTHON_HOME)
+#endif
+
+    char * old_python_home = getenv("PYTHONHOME");
+    if (old_python_home == NULL || strcmp(old_python_home, PYTHON_HOME_NAME) != 0)
+    {
+#ifdef PYTHON_DEBUG
+        std::cout << "setting PYTHONHOME" << std::endl;
+#endif
+
+#ifdef _WIN32
+        _putenv_s("PYTHONHOME", PYTHON_HOME_NAME);
+#else
+        setenv("PYTHONHOME", PYTHON_HOME_NAME, 1);
+#endif
+    }
+
+#ifdef PYTHON_DEBUG
+    std::cout << "PYTHONHOME: " << getenv("PYTHONHOME") << std::endl;
+#endif
+
+#ifdef _WIN32
+    // set PYTHONPATH to avoid error described here: https://stackoverflow.com/questions/5694706/py-initialize-fails-unable-to-load-the-file-system-codec
+    _putenv_s("PYTHONPATH", PYTHON_HOME_NAME "\\DLLs;" PYTHON_HOME_NAME "\\Lib;" PYTHON_HOME_NAME "\\Lib\\site-packages");
+#endif
+
+#if PY_MAJOR_VERSION==3
+    Py_SetProgramName((wchar_t *)"PythonPlugin");
+#else
+    Py_SetProgramName((char *)"PythonPlugin");
+#endif
+    Py_Initialize();
+    PyEval_InitThreads();
+
+    PyRun_SimpleString("import sys");
+    PyRun_SimpleString("sys.setcheckinterval(10000)");
+#ifdef PYTHON_DEBUG
+    std::cout << Py_GetPrefix() << std::endl;
+    std::cout << Py_GetVersion() << std::endl;
+#endif
+    return PyEval_SaveThread();
+}
+
+const PyThreadState* PythonPlugin::PythonLock::mainState(startInterpreter());
+PyThreadState* PythonPlugin::PythonLock::threadState(nullptr);

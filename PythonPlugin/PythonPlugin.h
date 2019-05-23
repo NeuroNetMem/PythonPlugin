@@ -101,37 +101,7 @@ typedef DL_IMPORT(float) (*getfloatparamfunc_t)(char*);
 //=============================================================================
 /*
 */
-
-
-class PythonCallerWithThread
-{
-public:
-    PythonCallerWithThread() = default;
-
-protected:
-    class PythonLock
-    {
-    public:
-        PythonLock();
-        ~PythonLock();
-
-    private:
-        const PyGILState_STATE pgss;
-
-        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PythonLock);
-    };
-
-private:
-    static PyThreadState* startInterpreter();
-
-    static const PyThreadState* mainState;
-    static PyThreadState* threadState;
-
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PythonCallerWithThread);
-};
-
-
-class PythonPlugin : public GenericProcessor, public PythonCallerWithThread
+class PythonPlugin : public GenericProcessor
 {
 public:
     /** The class constructor, used to initialize any members. */
@@ -209,16 +179,37 @@ public:
         
     void saveCustomParametersToXml (XmlElement* parentElement) override;
     void loadCustomParametersFromXml() override;
+
 private:
     void sendEventPlugin(int eventType, int sourceID, int subProcessorIdx, double timestamp, int sourceIndex); //CJB added
+
+    /* Added by EBB
+     Why do it this way:
+     * Using a class allows object destruction to control releasing the GIL (RAII)
+     * Private inner class so that random other objects with other threads can't use it;
+       it's just for the main GUI and process threads
+     * Static state pointers b/c all instances of PythonPlugin use the same threads and therefore
+       can use the same Python states
+     * State pointers encapuslated in here so that they can only be manipulated by creating
+       and destroying PythonLocks (abstracting away confusing Python C API)
+     */
+    class PythonLock
+    {
+    public:
+        PythonLock();
+        ~PythonLock();
+
+    private:
+        const PyGILState_STATE pgss;
+
+        static const PyThreadState* mainState;
+        static PyThreadState* threadState;
+
+        JUCE_DECLARE_NON_COPYABLE(PythonLock);
+    };
+
     String filePath;
     void *plugin;
-    // private members and methods go here
-    //
-    // e.g.:
-    //
-    // float threshold;
-    // bool state;
     int numPythonParams = 0;
     ParamConfig *params;
     Component **paramsControl;
@@ -237,14 +228,10 @@ private:
     eventfunc_t eventFunction;
     spikefunc_t spikeFunction;
     const EventChannel* ttlChannel{ nullptr };
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PythonPlugin);
     bool wasTriggered = 0;
     uint16 lastChan = 0;
-	//Windows Port Variables
-#ifdef _WIN32
-	HINSTANCE old_python_home;
-	PyThreadState *mainstate = NULL;
-#endif
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PythonPlugin);
 };
 
 
