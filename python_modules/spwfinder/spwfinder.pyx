@@ -1,22 +1,28 @@
+# import sys
+# noinspection PyUnresolvedReferences
 import numpy as np
-cimport numpy as np
-from cython cimport view
-import serial
 import scipy.signal
-
+import serial
+# noinspection PyUnresolvedReferences
+cimport numpy as np
+# noinspection PyUnresolvedReferences
+from cython cimport view
 
 isDebug = False
 
-class SPWFinder(object):
+
+# noinspection PyPep8Naming
+class spwfinder(object):
     def __init__(self):
-        self.enabled = True
+        """initialize object data"""
+        self.Enabled = 1
         self.jitter = False
         self.jitter_count_down_thresh = 0
         self.jitter_count_down = 0
-        self.jitter_time = 200. # in ms
+        self.jitter_time = 200.  # in ms
         self.refractory_count_down_thresh = 0
         self.refractory_count_down = 0
-        self.refractory_time = 100. # time that the plugin will not react to trigger after one pulse
+        self.refractory_time = 100.  # time that the plugin will not react to trigger after one pulse
         self.chan_in = 1
         self.chan_out = 0
         self.n_samples = 0
@@ -36,11 +42,10 @@ class SPWFinder(object):
         self.thresh_start = 30.
         self.threshold = self.thresh_start
 
-
         self.averaging_time_min = 10.
         self.averaging_time_max = 50.
         self.averaging_time_start = 20.
-        self.averaging_time = self.averaging_time_start # in ms
+        self.averaging_time = self.averaging_time_start  # in ms
         self.samples_for_average = 0
 
         self.swing_thresh_min = 10.
@@ -53,7 +58,7 @@ class SPWFinder(object):
         self.swing_state = self.NOT_SWINGING
         self.swing_count_down_thresh = 0
         self.swing_count_down = 0
-        self.swing_down_time = 2000. # time that it will be prevetned from firing after a swing event
+        self.swing_down_time = 2000.  # time that it will be prevetned from firing after a swing event
 
         self.pulseNo = 0
         self.triggered = 0
@@ -65,28 +70,29 @@ class SPWFinder(object):
         self.lfp_buffer_max_count = 1000
         self.lfp_buffer = np.zeros((self.lfp_buffer_max_count,))
         self.spw_power = 0.
-        self.READY=1
-        self.ARMED=2
-        self.REFRACTORY=3
+        self.READY = 1
+        self.ARMED = 2
+        self.REFRACTORY = 3
         self.FIRING = 4
         self.state = self.READY
 
-        print ("finished SPWfinder constructor")
+    def startup(self, sr):
+        """to be run upon startup"""
+        self.samplingRate = sr
 
-    def startup(self, sampling_rate):
-        self.samplingRate = sampling_rate
-        print (self.samplingRate)
-
+        # noinspection PyTupleAssignmentBalance
         self.filter_b, self.filter_a = scipy.signal.butter(3,
-                                                     (self.band_lo/(self.samplingRate/2), self.band_hi/(self.samplingRate/2)),
-                                                     'pass')
+                                                           (self.band_lo / (self.samplingRate / 2),
+                                                            self.band_hi / (self.samplingRate / 2)),
+                                                           btype='bandpass',
+                                                           output='ba')
         print(self.filter_a)
         print(self.filter_b)
         print(self.band_lo)
         print(self.band_hi)
-        print(self.band_lo/(self.samplingRate/2))
-        print(self.band_hi/(self.samplingRate/2))
-        self.enabled = 1
+        print(self.band_lo / (self.samplingRate / 2))
+        print(self.band_hi / (self.samplingRate / 2))
+        self.Enabled = 1
         self.jitter = 0
         try:
             self.arduino = serial.Serial('/dev/ttyACM0', 57600)
@@ -94,36 +100,26 @@ class SPWFinder(object):
             print("Can't open Arduino")
 
     def plugin_name(self):
-        return "SPWFinder"
+        """tells OE the name of the program"""
+        return "spwfinder"
 
     def is_ready(self):
-        return 1
+        """tells OE everything ran smoothly"""
+        return self.Enabled
 
     def param_config(self):
+        """return button, sliders, etc to be present in the editor OE side"""
+        """return button, sliders, etc to be present in the editor OE side"""
         chan_labels = range(1, 33)
-        return (("toggle", "enabled", True),
+        return (("toggle", "Enabled", True),
                 ("int_set", "chan_in", chan_labels),
                 ("float_range", "threshold", self.thresh_min, self.thresh_max, self.thresh_start),
                 ("float_range", "swing_thresh", self.swing_thresh_min, self.swing_thresh_max, self.swing_thresh_start),
                 ("float_range", "averaging_time", self.averaging_time_min, self.averaging_time_max, self.averaging_time_start))
 
-    def spw_condition(self, n_arr):
-        return (self.spw_power > self.threshold) and self.swing_state == self.NOT_SWINGING
-
-    def stimulate(self):
-        try:
-            self.arduino.write(b'1')
-        except AttributeError:
-            print("Can't send pulse")
-        self.pulseNo += 1
-        print("generating pulse ", self.pulseNo)
-
-    def new_event(self, events, code, channel=0, timestamp=None):
-        if not timestamp:
-            timestamp = self.n_samples
-        events.append({'type': 3, 'sampleNum': timestamp, 'eventId': code, 'eventChannel': channel})
-
     def bufferfunction(self, n_arr):
+        """Access to voltage data buffer. Returns events"""
+        """Access to voltage data buffer. Returns events"""
         #print("plugin start")
         if isDebug:
             print("shape: ", n_arr.shape)
@@ -187,7 +183,7 @@ class SPWFinder(object):
         # states:
         # READY, REFRACTORY, ARMED, FIRING
 
-        if not self.enabled:
+        if not self.Enabled:
             # DISABLED machine, has only READY state
             if self.spw_condition(n_arr):
                 self.new_event(events, 3)
@@ -236,7 +232,19 @@ class SPWFinder(object):
 
         return events
 
+    @staticmethod
+    def handleEvents(eventType,sourceID,subProcessorIdx,timestamp,sourceIndex):
+        """handle events passed from OE"""
+        pass
 
-pluginOp = SPWFinder()
+    @staticmethod
+    def handleSpike(self, electrode, sortedID, n_arr):
+        """handle spikes passed from OE"""
+        pass
 
-include "../plugin.pyx"
+pluginOp = spwfinder()
+
+include '../plugin.pyx'
+
+
+

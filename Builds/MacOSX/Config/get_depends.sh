@@ -2,6 +2,7 @@
 
 
 . ~/.bash_profile
+. activate oeEnv
 
 CONFIG_DIR=${PROJECT_DIR}/Config
 
