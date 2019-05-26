@@ -24,7 +24,7 @@ class EXAMPLE(object):
                 """Access to voltage data buffer. Returns events""" 
                 events = []
                 return events
-        def handleEvents(eventType,sourceID,subProcessorIdx,timestamp,sourceIndex):
+        def handleEvents(self, eventType,sourceID,subProcessorIdx,timestamp,sourceIndex):
                 """handle events passed from OE"""
         def handleSpike(self, electrode, sortedID, n_arr):
                 """handle spikes passed from OE"""
