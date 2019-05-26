@@ -62,42 +62,11 @@ v
 
 PythonPlugin::PythonPlugin(const String &processorName)
     : GenericProcessor(processorName) //, threshold(200.0), state(true)
-
 {
 
     //parameters.add(Parameter("thresh", 0.0, 500.0, 200.0, 0));
     filePath = "";
     plugin = 0;
-
-    // if on windows, PYTHON_HOME_NAME is set by PythonEnv.props (corresponds to CONDA_HOME environment variable)
-#ifndef _WIN32
-#define QUOTE(name) #name
-#define STR(macro) QUOTE(macro)
-#define PYTHON_HOME_NAME STR(PYTHON_HOME)
-#endif
-
-    char * old_python_home = getenv("PYTHONHOME");
-    if (old_python_home == NULL || strcmp(old_python_home, PYTHON_HOME_NAME) != 0)
-    {
-#ifdef PYTHON_DEBUG
-        std::cout << "setting PYTHONHOME" << std::endl;
-#endif
-
-#ifdef _WIN32
-        _putenv_s("PYTHONHOME", PYTHON_HOME_NAME);
-#else
-        setenv("PYTHONHOME", PYTHON_HOME_NAME, 1);
-#endif
-    }
-
-#ifdef PYTHON_DEBUG
-    std::cout << "PYTHONHOME: " << getenv("PYTHONHOME") << std::endl;
-#endif
-
-#ifdef _WIN32
-    // set PYTHONPATH to avoid error described here: https://stackoverflow.com/questions/5694706/py-initialize-fails-unable-to-load-the-file-system-codec
-    _putenv_s("PYTHONPATH", PYTHON_HOME_NAME "\\DLLs;" PYTHON_HOME_NAME "\\Lib;" PYTHON_HOME_NAME "\\Lib\\site-packages");
-#endif
     
 #ifdef PYTHON_DEBUG
 #if defined(__linux__)
@@ -111,35 +80,21 @@ PythonPlugin::PythonPlugin(const String &processorName)
 #endif
     std::cout << "in constructor pthread_threadid_np()=" << tid << std::endl;
 #endif
-
-#if PY_MAJOR_VERSION==3
-    Py_SetProgramName ((wchar_t *)"PythonPlugin");
-#else
-    Py_SetProgramName ((char *)"PythonPlugin");
-#endif
-    Py_Initialize ();
-    PyEval_InitThreads();
-
-    
-    PyRun_SimpleString("import sys");
-    PyRun_SimpleString("sys.setcheckinterval(10000)");
-#ifdef PYTHON_DEBUG
-    std::cout << Py_GetPrefix() << std::endl;
-    std::cout << Py_GetVersion() << std::endl;
-#endif
-    GUIThreadState = PyEval_SaveThread();
 }
 
 PythonPlugin::~PythonPlugin()
 {
+    if (plugin)
+    {
 #ifdef _WIN32
-    //Close libary
-    PyGILState_Ensure();
-    FreeLibrary((HMODULE)plugin);
+        //Close libary
+        FreeLibrary((HMODULE)plugin);
 #else
-    dlclose(plugin);
+        dlclose(plugin);
 #endif
+    }
 }
+
 
 void PythonPlugin::createEventChannels()
 {
@@ -184,25 +139,21 @@ bool PythonPlugin::isReady()
     std::cout << "in isReady pthread_threadid_np()=" << tid << std::endl;
 #endif
 
-    bool ret;
-    PyEval_RestoreThread(GUIThreadState);
     if (plugin == 0 )
     {
         CoreServices::sendStatusMessage ("No plugin selected in Python Plugin.");
-        ret = false;
-    }
-    else if (pluginIsReady && !(*pluginIsReady)())
-    {
-        CoreServices::sendStatusMessage ("Python Plugin is not ready");
-        ret = false;
+        return false;
     }
     else
     {
-        ret = true;
+        const PythonLock pyLock;
+        if (pluginIsReady && !(*pluginIsReady)())
+        {
+            CoreServices::sendStatusMessage("Python Plugin is not ready");
+            return false;
+        }
+        return true;
     }
-    GUIThreadState = PyEval_SaveThread();
-    return ret;
-
 }
 
 void PythonPlugin::setParameter(int parameterIndex, float newValue)
@@ -216,32 +167,6 @@ void PythonPlugin::setParameter(int parameterIndex, float newValue)
 
     //std::cout << float(p[0]) << std::endl;
     editor->updateParameterButtons(parameterIndex);
-}
-
-
-void PythonPlugin::resetConnections()
-{
-#ifdef PYTHON_DEBUG
-#if defined(__linux__)
-    pid_t tid;
-    tid = syscall(SYS_gettid);
-#elif defined(_WIN32)
-    DWORD tid = GetCurrentThreadId();
-#else
-    uint64_t tid;
-    pthread_threadid_np(NULL, &tid);
-#endif
-    std::cout << "in resetConnection pthread_threadid_np()=" << tid << std::endl;
-#endif
-
-    nextAvailableChannel = 0;
-    
-    wasConnected = false;
-
-#ifdef PYTHON_DEBUG
-    std::cout << "resetting ThreadState, which was "  << processThreadState << std::endl;
-#endif
-    processThreadState = 0;
 }
 
 void PythonPlugin::process(AudioSampleBuffer& buffer)
@@ -260,48 +185,15 @@ void PythonPlugin::process(AudioSampleBuffer& buffer)
 #endif
     // std::cout << "in process pthread_threadid_np()=" << tid << std::endl;
 #endif
-    
-    
-    if(!processThreadState)
-    {
-        
-        //DEBUG
-        PyThreadState *nowState;
-        nowState = PyGILState_GetThisThreadState();
-#ifdef PYTHON_DEBUG
-        std::cout << "currentState: " << nowState << std::endl;
-        std::cout << "initialiting ThreadState" << std::endl;
-#endif
-        if(nowState) //UGLY HACK!!!
-        {
-            processThreadState = nowState;
-        }
-        else
-        {
-            processThreadState =  PyThreadState_New(GUIThreadState->interp);
-        }
-        if(!processThreadState)
-            std::cout << "ThreadState is Null!" << std::endl;
-    }
 
-    PyEval_RestoreThread(processThreadState);
-    
     PythonEvent *pyEvents = (PythonEvent *)calloc(1, sizeof(PythonEvent));
     pyEvents->type = 0; // this marks an empty event
-#ifdef PYTHON_DEBUG
-    // std::cout << "in process, trying to acquire lock" << std::endl;
-#endif 
-    
-    // PyEval_InitThreads();
-//    
-//    std::cout << "in process, threadstate: " << PyGILState_GetThisThreadState() << std::endl;
-//    PyGILState_STATE gstate;
-//    gstate = PyGILState_Ensure();
-//    std::cout << "in process, lock acquired" << std::endl;
-    (*pluginFunction)(*(buffer.getArrayOfWritePointers()), buffer.getNumChannels(), buffer.getNumSamples(), getNumSamples(0), pyEvents);
-//    PyGILState_Release(gstate);
-//    std::cout << "in process, lock released" << std::endl;
-    
+
+    {
+        const PythonLock pyLock;
+        (*pluginFunction)(*(buffer.getArrayOfWritePointers()), buffer.getNumChannels(), buffer.getNumSamples(), getNumSamples(0), pyEvents);
+    }
+
     if(wasTriggered)
     {
         uint8 ttlData = 0;
@@ -352,7 +244,6 @@ void PythonPlugin::process(AudioSampleBuffer& buffer)
         }
     }
     
-    processThreadState = PyEval_SaveThread();
 #ifdef PYTHON_DEBUG
     // std::cout << "Thread saved" << std::endl;
 #endif
@@ -506,9 +397,8 @@ void PythonPlugin::sendEventPlugin(int eventType, int sourceID, int subProcessor
     std::cout << "in sendEventPlugin pthread_threadid_np()=" << tid << std::endl;
 #endif
     
-    PyEval_RestoreThread(GUIThreadState);
+    const PythonLock pyLock;
     (*eventFunction)(eventType, sourceID, subProcessorIdx,timestamp,sourceIndex);
-    GUIThreadState = PyEval_SaveThread();
 }
 
 void PythonPlugin::handleSpike(const SpikeChannel* spikeInfo, const MidiMessage& event, int samplePosition){
@@ -551,81 +441,9 @@ void PythonPlugin::handleSpike(const SpikeChannel* spikeInfo, const MidiMessage&
 #endif
     std::cout << "in handleSpike pthread_threadid_np()=" << tid << std::endl;
 #endif
-     
-    /*
-    PyGILState_STATE gstate;
-    gstate = PyGILState_Ensure();
-    
-    Perform Python actions here.
-    result = CallSomeFunction();
-    evaluate result or handle exception
-    Release the thread. No Python API allowed beyond this point.
-    PyGILState_Release(gstate);
-    */
-    //PyGILState_STATE gstate;
-    //gstate = PyGILState_Ensure();
-    
-    if(!processThreadState)
-    {
-        //*
-        
-        //DEBUG
-        //PyEval_RestoreThread(processThreadState);
-        PyThreadState *nowState;
-        nowState = PyGILState_GetThisThreadState();
-#ifdef PYTHON_DEBUG
-        std::cout << "currentState: " << nowState << std::endl;
-        std::cout << "initialiting ThreadState" << std::endl;
-#endif
-        if(nowState) //UGLY HACK!!!
-        {
-            processThreadState = nowState;
-        }
-        else
-        {
-            processThreadState =  PyThreadState_New(GUIThreadState->interp);
-        }
-        if(!processThreadState)
-            std::cout << "ThreadState is Null!" << std::endl;
-    }
-    
-    PyEval_RestoreThread(processThreadState);
-    
-    //PythonEvent *pyEvents = (PythonEvent *)calloc(1, sizeof(PythonEvent));
-    
-   // pyEvents->type = 0; // this marks an empty event
-#ifdef PYTHON_DEBUG
-    // std::cout << "in process, trying to acquire lock" << std::endl;
-#endif
-    
-    // PyEval_InitThreads();
-    //
-    //    std::cout << "in process, threadstate: " << PyGILState_GetThisThreadState() << std::endl;
-    //    PyGILState_STATE gstate;
-    //    gstate = PyGILState_Ensure();
-    //    std::cout << "in process, lock acquired" << std::endl;
-    (*spikeFunction)(electrode, sortedID, spikeBuf);
-    processThreadState = PyEval_SaveThread();
 
-    //PyGILState_Release(gstate);
-    
-    //processThreadState = PyEval_SaveThread();
-    /**
-     #ifdef PYTHON_DEBUG
-     #if defined(__linux__)
-     pid_t tid;
-     tid = syscall(SYS_gettid);
-     #else
-     uint64_t tid;
-     pthread_threadid_np(NULL, &tid);
-     #endif
-     std::cout << "in handleSpike pthread_threadid_np()=" << tid << std::endl;
-     #endif
-     
-     PyEval_RestoreThread(GUIThreadState);
-     (*spikeFunction)(sortedID, spikeBuf);
-     GUIThreadState = PyEval_SaveThread();
-     **/
+    const PythonLock pyLock;
+    (*spikeFunction)(electrode, sortedID, spikeBuf);
 }
 
 /** END CJB ADDED **/
@@ -986,7 +804,7 @@ void PythonPlugin::setFile(String fullpath)
     
 // now the API should be fully loaded
     
-    PyEval_RestoreThread(GUIThreadState);
+    const PythonLock pyLock;
     // initialize the plugin
 #ifdef PYTHON_DEBUG
     std::cout << "before initplugin" << std::endl; // DEBUG
@@ -1034,7 +852,6 @@ void PythonPlugin::setFile(String fullpath)
                 break;
         }
     }
-    GUIThreadState = PyEval_SaveThread();
 }
 
 
@@ -1072,9 +889,8 @@ void PythonPlugin::setIntPythonParameter(String name, int value)
 #endif
 #endif
     
-    PyEval_RestoreThread(GUIThreadState);
+    const PythonLock pyLock;
     (*setIntParamFunction)(name.getCharPointer().getAddress(), value);
-    GUIThreadState = PyEval_SaveThread();
 }
 
 void PythonPlugin::setFloatPythonParameter(String name, float value)
@@ -1093,9 +909,8 @@ void PythonPlugin::setFloatPythonParameter(String name, float value)
     std::cout << "in setfloatparam pthread_threadid_np()=" << tid << std::endl;
 #endif
 #endif
-    PyEval_RestoreThread(GUIThreadState);
+    const PythonLock pyLock;
     (*setFloatParamFunction)(name.getCharPointer().getAddress(), value);
-    GUIThreadState = PyEval_SaveThread();
 }
 
 int PythonPlugin::getIntPythonParameter(String name)
@@ -1115,9 +930,8 @@ int PythonPlugin::getIntPythonParameter(String name)
 #endif
 
     int value;
-    PyEval_RestoreThread(GUIThreadState);
+    const PythonLock pyLock;
     value = (*getIntParamFunction)(name.getCharPointer().getAddress());
-    GUIThreadState = PyEval_SaveThread();
     return value;
 }
 
@@ -1138,10 +952,9 @@ float PythonPlugin::getFloatPythonParameter(String name)
 #endif
 #endif
     
-    PyEval_RestoreThread(GUIThreadState);
     float value;
+    const PythonLock pyLock;
     value = (*getFloatParamFunction)(name.getCharPointer().getAddress());
-    GUIThreadState = PyEval_SaveThread();
     return value;
 }
 
@@ -1173,4 +986,83 @@ void PythonPlugin::loadCustomParametersFromXml()
 }
 
 
+// PythonLock
 
+PythonPlugin::PythonLock::PythonLock()
+    : pgss(PyGILState_Ensure())
+{
+    // if current state is not the mainState or saved threadState, need to save it
+    PyThreadState* currState = PyThreadState_Get();
+    if (currState != mainState && currState != threadState)
+    {
+        // abusing the API a little - call ...Ensure again to increment the counter
+        // and prevent it from being deleted automatically when the lock is released
+        PyGILState_Ensure();
+
+        // delete the old thread state, if any
+        if (threadState)
+        {
+            PyThreadState_Clear(threadState);
+            PyThreadState_Delete(threadState);
+        }
+
+        threadState = currState;
+    }
+}
+
+PythonPlugin::PythonLock::~PythonLock()
+{
+    PyGILState_Release(pgss);
+}
+
+static PyThreadState* startInterpreter()
+{
+    // if on windows, PYTHON_HOME_NAME is set by PythonEnv.props (corresponds to CONDA_HOME environment variable)
+#ifndef _WIN32
+#define QUOTE(name) #name
+#define STR(macro) QUOTE(macro)
+#define PYTHON_HOME_NAME STR(PYTHON_HOME)
+#endif
+
+    char * old_python_home = getenv("PYTHONHOME");
+    if (old_python_home == NULL || strcmp(old_python_home, PYTHON_HOME_NAME) != 0)
+    {
+#ifdef PYTHON_DEBUG
+        std::cout << "setting PYTHONHOME" << std::endl;
+#endif
+
+#ifdef _WIN32
+        _putenv_s("PYTHONHOME", PYTHON_HOME_NAME);
+#else
+        setenv("PYTHONHOME", PYTHON_HOME_NAME, 1);
+#endif
+    }
+
+#ifdef PYTHON_DEBUG
+    std::cout << "PYTHONHOME: " << getenv("PYTHONHOME") << std::endl;
+#endif
+
+#ifdef _WIN32
+    // set PYTHONPATH to avoid error described here: https://stackoverflow.com/questions/5694706/py-initialize-fails-unable-to-load-the-file-system-codec
+    _putenv_s("PYTHONPATH", PYTHON_HOME_NAME "\\DLLs;" PYTHON_HOME_NAME "\\Lib;" PYTHON_HOME_NAME "\\Lib\\site-packages");
+#endif
+
+#if PY_MAJOR_VERSION==3
+    Py_SetProgramName((wchar_t *)"PythonPlugin");
+#else
+    Py_SetProgramName((char *)"PythonPlugin");
+#endif
+    Py_Initialize();
+    PyEval_InitThreads();
+
+    PyRun_SimpleString("import sys");
+    PyRun_SimpleString("sys.setcheckinterval(10000)");
+#ifdef PYTHON_DEBUG
+    std::cout << Py_GetPrefix() << std::endl;
+    std::cout << Py_GetVersion() << std::endl;
+#endif
+    return PyEval_SaveThread();
+}
+
+const PyThreadState* PythonPlugin::PythonLock::mainState(startInterpreter());
+PyThreadState* PythonPlugin::PythonLock::threadState(nullptr);
