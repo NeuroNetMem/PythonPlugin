@@ -1,4 +1,4 @@
-PYTHON_DIR = /Users/ClaytonBarnes/anaconda3
+PYTHON_DIR = /usr/local/anaconda/envs/oeEnv
 PYTHON_VERSION = python3.6m
 
 OPENEPHYS_SOURCE_DIR = $(PROJECT_DIR)/../../../plugin-GUI

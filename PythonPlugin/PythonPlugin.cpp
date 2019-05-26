@@ -83,7 +83,6 @@ v
 
 PythonPlugin::PythonPlugin(const String &processorName)
     : GenericProcessor(processorName) //, threshold(200.0), state(true)
-
 {
     LOG_ENTER("constructor");
 
@@ -131,7 +130,8 @@ PythonPlugin::PythonPlugin(const String &processorName)
     DEBUG_LOG(Py_GetVersion());
 
     GUIThreadState = PyEval_SaveThread();
-}
+
+
 
 void PythonPlugin::createEventChannels()
 {
@@ -165,22 +165,21 @@ bool PythonPlugin::isReady()
     bool ret;
     PyEval_RestoreThread(GUIThreadState);
     if (plugin.getNativeHandle() == nullptr)
+
     {
         CoreServices::sendStatusMessage ("No plugin selected in Python Plugin.");
-        ret = false;
-    }
-    else if (pluginIsReady && !(*pluginIsReady)())
-    {
-        CoreServices::sendStatusMessage ("Python Plugin is not ready");
-        ret = false;
+        return false;
     }
     else
     {
-        ret = true;
+        const PythonLock pyLock;
+        if (pluginIsReady && !(*pluginIsReady)())
+        {
+            CoreServices::sendStatusMessage("Python Plugin is not ready");
+            return false;
+        }
+        return true;
     }
-    GUIThreadState = PyEval_SaveThread();
-    return ret;
-
 }
 
 void PythonPlugin::resetConnections()
@@ -194,6 +193,7 @@ void PythonPlugin::resetConnections()
     DEBUG_LOG("resetting ThreadState, which was " << processThreadState);
 
     processThreadState = 0;
+
 }
 
 void PythonPlugin::process(AudioSampleBuffer& buffer)
@@ -224,12 +224,12 @@ void PythonPlugin::process(AudioSampleBuffer& buffer)
             std::cout << "ThreadState is Null!" << std::endl;
     }
 
-    PyEval_RestoreThread(processThreadState);
-    
+
     PythonEvent *pyEvents = (PythonEvent *)calloc(1, sizeof(PythonEvent));
     pyEvents->type = 0; // this marks an empty event
 
     (*pluginFunction)(*(buffer.getArrayOfWritePointers()), buffer.getNumChannels(), buffer.getNumSamples(), getNumSamples(0), pyEvents);
+
 
     if(wasTriggered)
     {
@@ -276,6 +276,7 @@ void PythonPlugin::process(AudioSampleBuffer& buffer)
     }
     
     processThreadState = PyEval_SaveThread();
+
 }
 
 /** START CJB ADDED **/
@@ -331,9 +332,8 @@ void PythonPlugin::sendEventPlugin(int eventType, int sourceID, int subProcessor
 {
     LOG_ENTER("sendEventPlugin");
     
-    PyEval_RestoreThread(GUIThreadState);
+    const PythonLock pyLock;
     (*eventFunction)(eventType, sourceID, subProcessorIdx,timestamp,sourceIndex);
-    GUIThreadState = PyEval_SaveThread();
 }
 
 void PythonPlugin::handleSpike(const SpikeChannel* spikeInfo, const MidiMessage& event, int samplePosition)
@@ -373,6 +373,7 @@ void PythonPlugin::handleSpike(const SpikeChannel* spikeInfo, const MidiMessage&
     PyEval_RestoreThread(processThreadState);
     (*spikeFunction)(electrode, sortedID, spikeBuf);
     processThreadState = PyEval_SaveThread();
+
 }
 
 /** END CJB ADDED **/
@@ -574,7 +575,7 @@ void PythonPlugin::setFile(String fullpath)
 
     // now the API should be fully loaded
     
-    PyEval_RestoreThread(GUIThreadState);
+    const PythonLock pyLock;
     // initialize the plugin
 
     DEBUG_LOG("before initplugin");
@@ -642,9 +643,8 @@ void PythonPlugin::setIntPythonParameter(String name, int value)
 {
     LOG_ENTER("setIntPythonParameter");
     
-    PyEval_RestoreThread(GUIThreadState);
+    const PythonLock pyLock;
     (*setIntParamFunction)(name.getCharPointer().getAddress(), value);
-    GUIThreadState = PyEval_SaveThread();
 }
 
 void PythonPlugin::setFloatPythonParameter(String name, float value)
@@ -652,8 +652,8 @@ void PythonPlugin::setFloatPythonParameter(String name, float value)
     LOG_ENTER("setFloatPythonParameter");
 
     PyEval_RestoreThread(GUIThreadState);
+
     (*setFloatParamFunction)(name.getCharPointer().getAddress(), value);
-    GUIThreadState = PyEval_SaveThread();
 }
 
 int PythonPlugin::getIntPythonParameter(String name)
@@ -661,9 +661,8 @@ int PythonPlugin::getIntPythonParameter(String name)
     LOG_ENTER("getIntPythonParameter");
 
     int value;
-    PyEval_RestoreThread(GUIThreadState);
+    const PythonLock pyLock;
     value = (*getIntParamFunction)(name.getCharPointer().getAddress());
-    GUIThreadState = PyEval_SaveThread();
     return value;
 }
 
@@ -671,9 +670,9 @@ float PythonPlugin::getFloatPythonParameter(String name)
 {
     LOG_ENTER("getFloatPythonParameter");
     
-    PyEval_RestoreThread(GUIThreadState);
     float value;
+    const PythonLock pyLock;
     value = (*getFloatParamFunction)(name.getCharPointer().getAddress());
-    GUIThreadState = PyEval_SaveThread();
     return value;
 }
+

@@ -1,19 +1,15 @@
-# noinspection PyUnresolvedReferences
 import numpy as np
-# noinspection PyUnresolvedReferences
 cimport numpy as np
-# noinspection PyUnresolvedReferences
 from cython cimport view
 import serial
 
+
 isDebug = False
 
-
-# noinspection PyPep8Naming
-class spwrandom(object):
+class SPWFinder(object):
     def __init__(self):
-        """initialize object data"""
-        self.Enabled = 1
+        self.enabled = True
+
         self.refractory_count_down_thresh = 0
         self.refractory_count_down = 0
         self.refractory_time = 100. # time that the plugin will not react to trigger after one pulse
@@ -54,33 +50,33 @@ class spwrandom(object):
         self.swing_thresh_start = 1000.
         self.swing_thresh = self.swing_thresh_start
 
-    def startup(self, sr):
-        """to be run upon startup"""
-        self.samplingRate = sr
+
+        print ("finished SPWrandom constructor")
+
+    def startup(self, sampling_rate):
+        self.samplingRate = sampling_rate
         print (self.samplingRate)
 
         print('starting random stimulation at rate ', self.random_stim_rate)
 
-        self.Enabled = 1
+        self.enabled = 1
         try:
             self.arduino = serial.Serial('/dev/ttyACM0', 57600)
         except (OSError, serial.serialutil.SerialException):
             print("Can't open Arduino")
 
     def plugin_name(self):
-        """tells OE the name of the program"""
-        return "spwrandom"
+        return "SPWRandom"
 
     def is_ready(self):
-        """tells OE everything ran smoothly"""
-        return self.Enabled
+        return 1
 
     def param_config(self):
-        """return button, sliders, etc to be present in the editor OE side"""
         chan_labels = range(1,33)
-        return (("toggle", "Enabled", True),
+        return (("toggle", "enabled", True),
                 ("float_range", "random_stim_rate", self.random_stim_rate_min, self.random_stim_rate_max, self.random_stim_rate),
                 ("float_range", "swing_thresh", self.swing_thresh_min, self.swing_thresh_max, self.swing_thresh_start))
+
 
     def spw_condition(self, n_arr):
         return np.random.random() < self.prob_threshold and self.swing_state == self.NOT_SWINGING
@@ -99,8 +95,7 @@ class spwrandom(object):
         events.append({'type': 3, 'sampleNum': timestamp, 'eventId': code, 'eventChannel': channel})
 
     def bufferfunction(self, n_arr):
-        """Access to voltage data buffer. Returns events"""
-                #print("plugin start")
+        #print("plugin start")
         if isDebug:
             print("shape: ", n_arr.shape)
         events = []
@@ -135,6 +130,7 @@ class spwrandom(object):
                 self.swing_state = self.NOT_SWINGING
                 print("NOT_SWINGING")
 
+
         if isDebug:
             print("Mean: ", np.mean(n_arr[self.chan_out+1,:]))
             print("done processing")
@@ -152,7 +148,7 @@ class spwrandom(object):
         # READY, REFRACTORY, ARMED, FIRING
 
 
-        if self.Enabled:
+        if self.enabled:
             # ENABLED machine, has READY, REFRACTORY, FIRING states
             if self.state == self.READY:
                 if self.spw_condition(n_arr):
@@ -173,13 +169,7 @@ class spwrandom(object):
 
         return events
 
-    def handleEvents(self, eventType, sourceID, subProcessorIdx, timestamp, sourceIndex):
-        """handle events passed from OE"""
 
-    def handleSpike(self, electrode, sortedID, n_arr):
-        """handle spikes passed from OE"""
+pluginOp = SPWFinder()
 
-
-pluginOp = spwrandom()
-
-include '../plugin.pyx'
+include "../plugin.pyx"

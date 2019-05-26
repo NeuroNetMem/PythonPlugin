@@ -115,7 +115,7 @@ public:
         size of the buffer).
          */
     virtual void process(AudioSampleBuffer& buffer /* , MidiBuffer& events */);
-    
+
     void handleEvent (const EventChannel* eventInfo, const MidiMessage& event, int sampleNum); // CJB added
     void handleSpike(const SpikeChannel* channelInfo, const MidiMessage& event, int samplePosition); //CJB added
 
@@ -166,6 +166,7 @@ private:
 
     String filePath;
     DynamicLibrary plugin;
+
     int numPythonParams = 0;
     ParamConfig *params;
     Component **paramsControl;
@@ -183,8 +184,6 @@ private:
     getfloatparamfunc_t getFloatParamFunction;
     eventfunc_t eventFunction;
     spikefunc_t spikeFunction;
-    PyThreadState *GUIThreadState = 0;
-    PyThreadState *processThreadState = 0;
     const EventChannel* ttlChannel{ nullptr };
     bool wasTriggered = 0;
     uint16 lastChan = 0;
