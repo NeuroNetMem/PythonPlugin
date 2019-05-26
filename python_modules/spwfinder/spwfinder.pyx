@@ -232,12 +232,10 @@ class spwfinder(object):
 
         return events
 
-    @staticmethod
-    def handleEvents(eventType,sourceID,subProcessorIdx,timestamp,sourceIndex):
+    def handleEvents(self, eventType,sourceID,subProcessorIdx,timestamp,sourceIndex):
         """handle events passed from OE"""
         pass
 
-    @staticmethod
     def handleSpike(self, electrode, sortedID, n_arr):
         """handle spikes passed from OE"""
         pass
