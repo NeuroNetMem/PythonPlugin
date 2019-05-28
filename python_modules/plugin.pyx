@@ -39,9 +39,7 @@ cdef extern from "PythonEvent.h":
 
 # noinspection PyPep8Naming
 cdef public void pluginStartup(float sampling_rate) with gil:
-    print("pre anything")
     global isDebug
-    print("after is debug")
     global pluginOp
     pluginOp.startup(sampling_rate)
 

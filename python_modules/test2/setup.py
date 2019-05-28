@@ -22,5 +22,3 @@ setup(
                 'getFloatParam'
         ]))
 )
-
-
