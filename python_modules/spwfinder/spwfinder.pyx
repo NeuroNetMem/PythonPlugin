@@ -117,6 +117,22 @@ class spwfinder(object):
                 ("float_range", "swing_thresh", self.swing_thresh_min, self.swing_thresh_max, self.swing_thresh_start),
                 ("float_range", "averaging_time", self.averaging_time_min, self.averaging_time_max, self.averaging_time_start))
 
+    def spw_condition(self, n_arr):
+        return (self.spw_power > self.threshold) and self.swing_state == self.NOT_SWINGING
+
+    def stimulate(self):
+        try:
+            self.arduino.write(b'1')
+        except AttributeError:
+            print("Can't send pulse")
+        self.pulseNo += 1
+        print("generating pulse ", self.pulseNo)
+
+    def new_event(self, events, code, channel=0, timestamp=None):
+        if not timestamp:
+            timestamp = self.n_samples
+        events.append({'type': 3, 'sampleNum': timestamp, 'eventId': code, 'eventChannel': channel})
+
     def bufferfunction(self, n_arr):
         """Access to voltage data buffer. Returns events"""
         """Access to voltage data buffer. Returns events"""
