@@ -50,44 +50,27 @@
 #include <Python.h>
 #endif
 
-
-#if PY_MAJOR_VERSION>=3
-#define DL_IMPORT PyAPI_FUNC
-#endif
-
-#ifndef __PYX_EXTERN_C
-  #ifdef __cplusplus
-    #define __PYX_EXTERN_C extern "C"
-  #else
-    #define __PYX_EXTERN_C extern
-  #endif
-#endif
-
-
-
 #include "PythonParamConfig.h"
 #include "PythonEvent.h"
 
 #include "PythonEditor.h"
-
-//extern "C" typedef  void (*initfunc_t)(void);
 
 //#if PY_MAJOR_VERSION>=3
 typedef PyObject * (*initfunc_t)(void);
 //#else
 //typedef PyMODINIT_FUNC (*initfunc_t)(void);
 //#endif
-typedef DL_IMPORT(void) (*startupfunc_t)(float); // passes the sampling rate
-typedef DL_IMPORT(void) (*eventfunc_t)(int, int, int, double, int);// CJB added
-typedef DL_IMPORT(void) (*spikefunc_t)(int, int, float[18]);// CJB added
-typedef DL_IMPORT(void) (*pluginfunc_t)(float *, int, int, int, PythonEvent *);
-typedef DL_IMPORT(int) (*isreadyfunc_t)(void);
-typedef DL_IMPORT(int) (*getparamnumfunc_t)(void);
-typedef DL_IMPORT(void) (*getparamconfigfunc_t)(struct ParamConfig*);
-typedef DL_IMPORT(void) (*setintparamfunc_t)(char*, int);
-typedef DL_IMPORT(void) (*setfloatparamfunc_t)(char*, float);
-typedef DL_IMPORT(int) (*getintparamfunc_t)(char*);
-typedef DL_IMPORT(float) (*getfloatparamfunc_t)(char*);
+typedef void (*startupfunc_t)(float); // passes the sampling rate
+typedef void (*eventfunc_t)(int, int, int, double, int);// CJB added
+typedef void (*spikefunc_t)(int, int, float[18]);// CJB added
+typedef void (*pluginfunc_t)(float *, int, int, int, PythonEvent *);
+typedef int (*isreadyfunc_t)(void);
+typedef int (*getparamnumfunc_t)(void);
+typedef void (*getparamconfigfunc_t)(struct ParamConfig*);
+typedef void (*setintparamfunc_t)(char*, int);
+typedef void (*setfloatparamfunc_t)(char*, float);
+typedef int (*getintparamfunc_t)(char*);
+typedef float (*getfloatparamfunc_t)(char*);
 
 
 #ifdef _WIN32
@@ -106,9 +89,6 @@ class PythonPlugin : public GenericProcessor
 public:
     /** The class constructor, used to initialize any members. */
     PythonPlugin(const String &processorName = "Python Plugin");
-
-    /** The class destructor, used to deallocate memory */
-    ~PythonPlugin();
 
     /** Determines whether the processor is treated as a source. */
     virtual bool isSource()
@@ -138,11 +118,6 @@ public:
 
     void handleEvent (const EventChannel* eventInfo, const MidiMessage& event, int sampleNum); // CJB added
     void handleSpike(const SpikeChannel* channelInfo, const MidiMessage& event, int samplePosition); //CJB added
-    
-    /** Any variables used by the "process" function _must_ be modified only through
-        this method while data acquisition is active. If they are modified in any
-        other way, the application will crash.  */
-    void setParameter(int parameterIndex, float newValue);
 
     AudioProcessorEditor* createEditor();
 
@@ -177,9 +152,6 @@ public:
     int getIntPythonParameter(String name);
     float getFloatPythonParameter(String name);
         
-    void saveCustomParametersToXml (XmlElement* parentElement) override;
-    void loadCustomParametersFromXml() override;
-
 private:
     void sendEventPlugin(int eventType, int sourceID, int subProcessorIdx, double timestamp, int sourceIndex); //CJB added
 
@@ -209,7 +181,7 @@ private:
     };
 
     String filePath;
-    void *plugin;
+    DynamicLibrary plugin;
     int numPythonParams = 0;
     ParamConfig *params;
     Component **paramsControl;
