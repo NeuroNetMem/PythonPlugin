@@ -51,6 +51,8 @@ public:
 
     void buttonEvent(Button* button);
 
+    void channelChanged(int chan, bool newState) override;
+
     void setFile(String file);
 
     void saveCustomParameters(XmlElement*);
