@@ -60,13 +60,15 @@ typedef PyObject * (*initfunc_t)(void);
 //#else
 //typedef PyMODINIT_FUNC (*initfunc_t)(void);
 //#endif
-typedef void (*startupfunc_t)(float); // passes the sampling rate
+typedef void (*startupfunc_t)(int, float, int*); // passes the sampling rate and channel states
 typedef void (*eventfunc_t)(int, int, int, double, int);// CJB added
 typedef void (*spikefunc_t)(int, int, float[18]);// CJB added
 typedef void (*pluginfunc_t)(float *, int, int, int, PythonEvent *);
 typedef int (*isreadyfunc_t)(void);
 typedef int (*getparamnumfunc_t)(void);
 typedef void (*getparamconfigfunc_t)(struct ParamConfig*);
+typedef void (*updatefunc_t)(int, float);
+typedef void (*chanchangefunc_t)(int, int);
 typedef void (*setintparamfunc_t)(char*, int);
 typedef void (*setfloatparamfunc_t)(char*, float);
 typedef int (*getintparamfunc_t)(char*);
@@ -127,6 +129,7 @@ public:
     }
 
     void updateSettings();
+    void channelChanged(int chan, bool state);
     void createEventChannels(); 
     void setFile(String fullpath);
     String getFile();
@@ -154,6 +157,9 @@ public:
         
 private:
     void sendEventPlugin(int eventType, int sourceID, int subProcessorIdx, double timestamp, int sourceIndex); //CJB added
+
+    // close plugin library and reset all functions to null
+    void resetPlugin();
 
     /* Added by EBB
      Why do it this way:
@@ -185,21 +191,27 @@ private:
     int numPythonParams = 0;
     ParamConfig *params;
     Component **paramsControl;
-    // var for stashing the sample rate
+
+    // data to keep track of and send to plugin
+    int nChans = 0;
     float dataSampleRate = 44100;
+    Array<int> chanEnabled;
+
     // function pointers to the python plugin
-    pluginfunc_t pluginFunction;
-    isreadyfunc_t pluginIsReady;
-    startupfunc_t pluginStartupFunction;
-    getparamnumfunc_t getParamNumFunction;
-    getparamconfigfunc_t getParamConfigFunction;
-    setintparamfunc_t setIntParamFunction;
-    setfloatparamfunc_t setFloatParamFunction;
-    getintparamfunc_t getIntParamFunction;
-    getfloatparamfunc_t getFloatParamFunction;
-    eventfunc_t eventFunction;
-    spikefunc_t spikeFunction;
-    const EventChannel* ttlChannel{ nullptr };
+    pluginfunc_t pluginFunction = nullptr;
+    isreadyfunc_t pluginIsReady = nullptr;
+    startupfunc_t pluginStartupFunction = nullptr;
+    getparamnumfunc_t getParamNumFunction = nullptr;
+    getparamconfigfunc_t getParamConfigFunction = nullptr;
+    updatefunc_t updateSettingsFunction = nullptr;
+    chanchangefunc_t channelChangedFunction = nullptr;
+    setintparamfunc_t setIntParamFunction = nullptr;
+    setfloatparamfunc_t setFloatParamFunction = nullptr;
+    getintparamfunc_t getIntParamFunction = nullptr;
+    getfloatparamfunc_t getFloatParamFunction = nullptr;
+    eventfunc_t eventFunction = nullptr;
+    spikefunc_t spikeFunction = nullptr;
+    const EventChannel* ttlChannel = nullptr;
     bool wasTriggered = 0;
     uint16 lastChan = 0;
 

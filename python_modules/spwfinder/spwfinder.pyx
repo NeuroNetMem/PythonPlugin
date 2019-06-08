@@ -16,6 +16,8 @@ class spwfinder(object):
     def __init__(self):
         """initialize object data"""
         self.Enabled = 1
+        self.chan_enabled = []
+
         self.jitter = False
         self.jitter_count_down_thresh = 0
         self.jitter_count_down = 0
@@ -76,22 +78,13 @@ class spwfinder(object):
         self.FIRING = 4
         self.state = self.READY
 
-    def startup(self, sr):
+    def startup(self, nchans, srate, states):
         """to be run upon startup"""
-        self.samplingRate = sr
+        self.update_settings(nchans, srate)
+        for chan in range(nchans):
+            if not states[chan]:
+                self.channel_changed(chan, False)
 
-        # noinspection PyTupleAssignmentBalance
-        self.filter_b, self.filter_a = scipy.signal.butter(3,
-                                                           (self.band_lo / (self.samplingRate / 2),
-                                                            self.band_hi / (self.samplingRate / 2)),
-                                                           btype='bandpass',
-                                                           output='ba')
-        print(self.filter_a)
-        print(self.filter_b)
-        print(self.band_lo)
-        print(self.band_hi)
-        print(self.band_lo / (self.samplingRate / 2))
-        print(self.band_hi / (self.samplingRate / 2))
         self.Enabled = 1
         self.jitter = 0
         try:
@@ -132,6 +125,34 @@ class spwfinder(object):
         if not timestamp:
             timestamp = self.n_samples
         events.append({'type': 3, 'sampleNum': timestamp, 'eventId': code, 'eventChannel': channel})
+
+    def update_settings(self, nchans, srate):
+        """handle changing number of channels and sample rates"""
+        if srate != self.samplingRate:
+            self.samplingRate = srate
+
+            # noinspection PyTupleAssignmentBalance
+            self.filter_b, self.filter_a = scipy.signal.butter(3,
+                                                               (self.band_lo / (self.samplingRate / 2),
+                                                                self.band_hi / (self.samplingRate / 2)),
+                                                               btype='bandpass',
+                                                               output='ba')
+            print(self.filter_a)
+            print(self.filter_b)
+            print(self.band_lo)
+            print(self.band_hi)
+            print(self.band_lo / (self.samplingRate / 2))
+            print(self.band_hi / (self.samplingRate / 2))
+
+        old_nchans = len(self.chan_enabled)
+        if old_nchans > nchans:
+            del self.chan_enabled[nchans:]
+        elif len(self.chan_enabled) < nchans:
+            self.chan_enabled.extend([True] * (nchans - old_nchans))
+
+    def channel_changed(self, chan, state):
+        """do something when channels are turned on or off in PARAMS tab"""
+        self.chan_enabled[chan] = state
 
     def bufferfunction(self, n_arr):
         """Access to voltage data buffer. Returns events"""

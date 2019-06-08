@@ -146,6 +146,11 @@ void PythonEditor::buttonEvent(Button* button)
     }
 }
 
+void PythonEditor::channelChanged(int chan, bool newState)
+{
+    pythonPlugin->channelChanged(chan, newState);
+}
+
 void PythonEditor::saveCustomParameters(XmlElement* xml)
 {
 
