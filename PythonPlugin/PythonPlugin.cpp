@@ -670,6 +670,7 @@ static PyThreadState* startInterpreter()
 #define QUOTE(name) #name
 #define STR(macro) QUOTE(macro)
 #define PYTHON_HOME_NAME STR(PYTHON_HOME)
+#define PYTHON_PATH_NAME STR(PYTHON_PATH)
 #endif
 
     char * old_python_home = getenv("PYTHONHOME");
