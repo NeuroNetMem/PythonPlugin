@@ -14,6 +14,8 @@ class pulse_test_delay(object):
     def __init__(self):
         """initialize object data"""
         self.Enabled = 1
+        self.chan_enabled = []
+
         self.chan_in = 0
         self.thresh_min = -2
         self.thresh_max = 2
@@ -23,10 +25,13 @@ class pulse_test_delay(object):
         self.triggered = 0
         self.samplingRate = 0
 
-    def startup(self, sr):
+    def startup(self, nchans, srate, states):
         """to be run upon startup"""
-        self.samplingRate = sr
-        print (self.samplingRate)
+        self.update_settings(nchans, srate)
+        for chan in range(nchans):
+            if not states[chan]:
+                self.channel_changed(chan, False)
+
         self.arduino = serial.Serial('/dev/tty.usbmodem45561', 57600)
         print ("Arduino: ", self.arduino)
         self.Enabled = 1
@@ -46,6 +51,22 @@ class pulse_test_delay(object):
         return (("toggle", "Enabled", True),
                 ("int_set", "chan_in", chan_labels),
                 ("float_range", "threshold", self.thresh_min, self.thresh_max, self.thresh_start))
+
+    def update_settings(self, nchans, srate):
+        """handle changing number of channels and sample rates"""
+        if srate != self.samplingRate:
+            self.samplingRate = srate
+            print(self.samplingRate)
+
+        old_nchans = len(self.chan_enabled)
+        if old_nchans > nchans:
+            del self.chan_enabled[nchans:]
+        elif len(self.chan_enabled) < nchans:
+            self.chan_enabled.extend([True] * (nchans - old_nchans))
+
+    def channel_changed(self, chan, state):
+        """do something when channels are turned on or off in PARAMS tab"""
+        self.chan_enabled[chan] = state
 
     def bufferfunction(self, n_arr):
         """Access to voltage data buffer. Returns events"""

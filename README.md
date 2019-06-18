@@ -128,7 +128,7 @@ def handleEvents(eventType,sourceID,subProcessorIdx,timestamp,sourceIndex):
 - The handleSpike(self,electrode,sortedID,n_arr) function passes on spike events generated elsewhere in the OE signal chain to the python plugin. the n_arr is an 18 element long spike waveform.
 
 ### Compilation
-Currently, only Cython version 0.28.2 is supported. Recently downloaded or upgraded versions of Anaconda will come with version 0.29.2, which will cause the application to crash upon loading a python module. To avoid this, we recommend creating a virtual enviroment with the correct versions of python and cython by running:
+Currently, only Cython version 0.28.2 is supported. Recently downloaded or upgraded versions of Anaconda will come with version 0.29.2, which will cause the application to crash upon loading a python module. To avoid this, create a virtual enviroment with the correct versions of python and cython by running:
 
 ```
 conda create -n oeEnv python=3.6 cython=0.28.2

@@ -38,12 +38,18 @@ cdef extern from "PythonEvent.h":
 
 
 # noinspection PyPep8Naming
-cdef public void pluginStartup(float sampling_rate):
+cdef public void pluginStartup(int nChans, float samplingRate, int *chanStates):
     print("pre anything")
     global isDebug
     print("after is debug")
     global pluginOp
-    pluginOp.startup(sampling_rate)
+    cdef bint[:] states
+    if nChans == 0:
+        # pointer might be null
+        pluginOp.startup(nChans, samplingRate, [])
+    else:
+        states = <bint[:nChans]>(<bint*> chanStates)
+        pluginOp.startup(nChans, samplingRate, states)
 
 # noinspection PyPep8Naming
 cdef public int getParamNum():
@@ -153,6 +159,15 @@ cdef void add_event(PythonEvent *e_c, object e_py):
 
 cdef public int pluginisready():
     return pluginOp.is_ready()
+
+
+# called from C++ updateSettings (not during acquisition)
+cdef public void updateSettings(int nChans, float samplingRate):
+    pluginOp.update_settings(nChans, samplingRate)
+
+# called any time param button is changed (maybe during acquisition)
+cdef public void channelChanged(int chan, int newState):
+    pluginOp.channel_changed(chan, <bint>newState)
 
 # noinspection PyPep8Naming
 cdef public void setIntParam(char *name, int value):

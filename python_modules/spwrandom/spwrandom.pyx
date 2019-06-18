@@ -14,6 +14,8 @@ class spwrandom(object):
     def __init__(self):
         """initialize object data"""
         self.Enabled = 1
+        self.chan_enabled = []
+
         self.refractory_count_down_thresh = 0
         self.refractory_count_down = 0
         self.refractory_time = 100. # time that the plugin will not react to trigger after one pulse
@@ -54,10 +56,12 @@ class spwrandom(object):
         self.swing_thresh_start = 1000.
         self.swing_thresh = self.swing_thresh_start
 
-    def startup(self, sr):
+    def startup(self, nchans, srate, states):
         """to be run upon startup"""
-        self.samplingRate = sr
-        print (self.samplingRate)
+        self.update_settings(nchans, srate)
+        for chan in range(nchans):
+            if not states[chan]:
+                self.channel_changed(chan, False)
 
         print('starting random stimulation at rate ', self.random_stim_rate)
 
@@ -97,6 +101,22 @@ class spwrandom(object):
         if not timestamp:
             timestamp = self.n_samples
         events.append({'type': 3, 'sampleNum': timestamp, 'eventId': code, 'eventChannel': channel})
+
+    def update_settings(self, nchans, srate):
+        """handle changing number of channels and sample rates"""
+        if srate != self.samplingRate:
+            self.samplingRate = srate
+            print (self.samplintRate)
+
+        old_nchans = len(self.chan_enabled)
+        if old_nchans > nchans:
+            del self.chan_enabled[nchans:]
+        elif len(self.chan_enabled) < nchans:
+            self.chan_enabled.extend([True] * (nchans - old_nchans))
+
+    def channel_changed(self, chan, state):
+        """do something when channels are turned on or off in PARAMS tab"""
+        self.chan_enabled[chan] = state
 
     def bufferfunction(self, n_arr):
         """Access to voltage data buffer. Returns events"""
