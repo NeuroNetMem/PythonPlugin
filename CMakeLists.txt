@@ -1,19 +1,49 @@
-cmake_minimum_required(VERSION 3.14)
-project(PythonPlugin)
+cmake_minimum_required(VERSION 3.5.0)
+# MS: Updated to follow the regular cmake format (11/5/19)
+# Needed to change some paths to follow new cmake file structure. If using old GUI build you may need to change them back. Also needs to be tested to make sure the changes didn't break apple/linux building.
 
-set(PLUGIN_NAME PythonPlugin)
-
-# define LINUX if you're building on linux.
-# for now we assume that you're building to run on the build machine
-if(CMAKE_HOST_SYSTEM_NAME STREQUAL Linux)
-    set(LINUX TRUE)
+# Get GUI Base Dir
+if (NOT DEFINED GUI_BASE_DIR)
+    if (DEFINED ENV{GUI_BASE_DIR})
+		set(GUI_BASE_DIR $ENV{GUI_BASE_DIR})
+    else()
+		set(GUI_BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../plugin-GUI)
+    endif()
 endif()
+
+# Get plugin info
+get_filename_component(PROJECT_FOLDER ${CMAKE_CURRENT_SOURCE_DIR} ABSOLUTE)
+get_filename_component(PLUGIN_NAME ${PROJECT_FOLDER} NAME)
+# Set plugin info
+project(OE_PLUGIN_${PLUGIN_NAME})
+set(CMAKE_SHARED_LIBRARY_PREFIX "")
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+	set(LINUX 1)
+	if(NOT CMAKE_BUILD_TYPE)
+		set(CMAKE_BUILD_TYPE Debug)
+	endif()
+endif()
+
+# Compiler definitions
+set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS
+	OEPLUGIN
+	"$<$<PLATFORM_ID:Windows>:JUCE_API=__declspec(dllimport)>"
+	$<$<PLATFORM_ID:Windows>:_CRT_SECURE_NO_WARNINGS>
+	$<$<PLATFORM_ID:Linux>:JUCE_DISABLE_NATIVE_FILECHOOSERS=1>
+	$<$<CONFIG:Debug>:DEBUG=1>
+	$<$<CONFIG:Debug>:_DEBUG=1>
+	$<$<NOT:$<CONFIG:Debug>>:NDEBUG=1>
+    )
+     
+# Get source files
+set(SOURCE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/PythonPlugin)
+file(GLOB_RECURSE SRC_FILES LIST_DIRECTORIES false "${SOURCE_PATH}/*.cpp" "${SOURCE_PATH}/*.h")
+set(GUI_COMMONLIB_DIR ${GUI_BASE_DIR}/installed_libs)
 
 # set build type to debug by default
-if(NOT DEFINED CONFIG)
+if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
-
 if(NOT (CMAKE_BUILD_TYPE STREQUAL Debug) OR (CMAKE_BUILD_TYPE STREQUAL Release))
     message(FATAL_ERROR, "Unsupported CMAKE_BUILD_TYPE: " ${CMAKE_BUILD_TYPE})
 endif()
@@ -26,7 +56,7 @@ message(STATUS "Build type: " ${CMAKE_BUILD_TYPE})
     # -DPYTHON_HOME
 find_package(PythonInterp REQUIRED)
 find_package(PythonLibs REQUIRED)
-set(PYTHON_HOME $ENV{CONDA_PREFIX} CACHE PATH "Where is the root of your python installation?")
+set(PYTHON_HOME $ENV{CONDA_HOME} CACHE PATH "Where is the root of your python installation?")
 get_filename_component(PYTHON_LIB_DIR ${PYTHON_LIBRARIES} DIRECTORY)
 message(STATUS "Python home: " ${PYTHON_HOME})
 message(STATUS "Python executable: " ${PYTHON_EXECUTABLE})
@@ -40,65 +70,51 @@ if(WIN32)
 else()
     set(PY_PATH_SEP :)
 endif()
+
+# TODO: MS, will test this (also do we need this???)
 # might have to get file(TO_NATIVE_PATH "<path>" <variable>) involved for windows...
 set(PLUGIN_MODULES_PATH "${PROJECT_SOURCE_DIR}/python_modules" CACHE PATH "Where are the python modules you want to plug in?")
 file(TO_NATIVE_PATH "${PLUGIN_MODULES_PATH}" NATIVE_PLUGIN_MODULES_PATH)
-
-# TODO: remove if you're sure this is overkill
-# execute_process(COMMAND python -c "import sys; import os; print(os.pathsep.join(sys.path))" OUTPUT_VARIABLE ORIG_PY_PATH)
-# string(STRIP "${ORIG_PY_PATH}" ORIG_PY_PATH)
-
-# TODO: remove orig_py_path if you remove the bit above
-set(PYTHON_PATH "${ORIG_PY_PATH}${PY_PATH_SEP}${NATIVE_PLUGIN_MODULES_PATH}" CACHE PATH "What do you want on your PYTHONPATH?")
-message(STATUS "ORIG PYTHONPATH: " ${ORIG_PY_PATH})
+# Need this???
+set(PYTHON_PATH "${PY_PATH_SEP}${NATIVE_PLUGIN_MODULES_PATH}" CACHE PATH "What do you want on your PYTHONPATH?")
 message(STATUS "PYTHONPATH: " ${PYTHON_PATH})
 
-# we need to know where the open ephys source is
-set(OPEN_EPHYS_DIR "" CACHE PATH "Where is the Open Ephys repo's base directory?")
-string(STRIP "${OPEN_EPHYS_DIR}" OPEN_EPHYS_DIR)
-if(NOT OPEN_EPHYS_DIR)
-    message(FATAL_ERROR, "OPEN_EPHYS_DIR not specified... please set using ccmake or use -DOPEN_EPHYS_DIR.")
-    return()
-else()
-    get_filename_component(OPEN_EPHYS_DIR ${OPEN_EPHYS_DIR} ABSOLUTE)
-    message("Open Ephys Source: " ${OPEN_EPHYS_DIR})
-endif()
-
 # put together path for common plugin libraries
-get_filename_component(COMMON_DIR ${OPEN_EPHYS_DIR}/Source/Plugins/CommonLibs ABSOLUTE)
+#get_filename_component(COMMON_DIR ${GUI_BASE_DIR}/Source/Plugins/CommonLibs ABSOLUTE)
+# MS: Above looks like old GUI file format? 
+get_filename_component(COMMON_DIR ${GUI_BASE_DIR}/installed_libs ABSOLUTE)
 message("CommonLibs: " ${COMMON_DIR})
 
 # add project dir to module path so the library finding .cmake files are found
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
 
-# our headers
-file(GLOB PLUGIN_HEADER_FILES "PythonPlugin/*.h")
-set(HEADER_FILES "${PLUGIN_HEADER_FILES}")
-
-# our c and cpp files
-file(GLOB PLUGIN_SOURCES "PythonPlugin/*.cpp" "PythonPlugin/*.c")
-set(SOURCES "${PLUGIN_SOURCES}")
 
 # generate shared library
-add_library(${PLUGIN_NAME} MODULE ${PLUGIN_SOURCES} ${PLUGIN_HEADER_FILES})
+if (APPLE)
+	add_library(${PLUGIN_NAME} MODULE ${SRC_FILES})
+else()
+	add_library(${PLUGIN_NAME} SHARED ${SRC_FILES})
+endif()
+
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
-set_target_properties(${PLUGIN_NAME} PROPERTIES BUNDLE TRUE)
 
-target_compile_features(${PLUGIN_NAME} PUBLIC cxx_std_11)
 
-# compiler flags
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG=1 -D_DEBUG=1")
-set(CMAKE_CXX_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG=1")
+target_compile_features(${PLUGIN_NAME} PUBLIC cxx_auto_type cxx_generalized_initializers)
+
+# MS: I believe this can be deleted
+# compiler flags 
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+#set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG=1 -D_DEBUG=1")
+#set(CMAKE_CXX_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG=1")
 
 # cross-platform CFLAGS
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
-set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -DDEBUG=1 -D_DEBUG=1")
-set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -DNDEBUG=1")
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+#set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -DDEBUG=1 -D_DEBUG=1")
+#set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -DNDEBUG=1")
 
 # link libraries
 target_link_libraries(${PLUGIN_NAME} ${PYTHON_LIBRARIES})
-target_link_directories(${PLUGIN_NAME} PUBLIC ${PYTHON_INCLUDE_DIRS})
+#target_link_directories(${PLUGIN_NAME} PUBLIC ${PYTHON_INCLUDE_DIRS})
 
 # preprocessor definitions
 add_definitions(-DOEPLUGIN)
@@ -109,18 +125,39 @@ add_definitions(-DPYTHON_HOME=${PYTHON_HOME})
 add_definitions(-DPYTHON_PATH=${PYTHON_PATH})
 
 # include directories
-target_include_directories(${PLUGIN_NAME}
-    PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/PythonPlugin>
-        $<INSTALL_INTERFACE:include>
-        ${OPEN_EPHYS_DIR}/JuceLibraryCode
-        ${OPEN_EPHYS_DIR}/JuceLibraryCode/modules
-        ${OPEN_EPHYS_DIR}/Source/Plugins/Headers
-        ${PYTHON_INCLUDE_DIRS}
-    )
+target_include_directories(${PLUGIN_NAME} PUBLIC
+	${GUI_BASE_DIR}/JuceLibraryCode
+	${GUI_BASE_DIR}/JuceLibraryCode/modules
+	${GUI_BASE_DIR}/Plugins/Headers
+    ${GUI_COMMONLIB_DIR}/include
+    ${PYTHON_INCLUDE_DIRS})
+
+# Check if configuration types are set up by GUI and common libs are installed.
+set(GUI_BIN_DIR ${GUI_BASE_DIR}/Build/$<CONFIG>)
+foreach(config ${CMAKE_CONFIGURATION_TYPES})
+    if (NOT EXISTS ${GUI_BASE_DIR}/Build/${config})
+        if (EXISTS ${GUI_BASE_DIR}/Build/Release)
+            # default to release
+            message(WARNING "${config} ${PLUGIN_NAME} build will link to Release GUI build")
+            set(GUI_BIN_DIR $<IF:$<CONFIG:${config}>,${GUI_BASE_DIR}/Build/Release,${GUI_BIN_DIR}>)
+        else()
+            message(WARNING "${config} ${PLUGIN_NAME} build will not be available")
+        endif()
+    endif()
+endforeach()
+
+# Check for 64bit compiler
+if (NOT CMAKE_LIBRARY_ARCHITECTURE)
+	if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+		set(CMAKE_LIBRARY_ARCHITECTURE "x64")
+	else()
+		set(CMAKE_LIBRARY_ARCHITECTURE "x86")
+	endif()
+endif()
 
 # platform specific stuff
 if(APPLE)
+    set_target_properties(${PLUGIN_NAME} PROPERTIES BUNDLE TRUE)
     # macros for working with apple stuff
     macro (set_xcode_property TARGET XCODE_PROPERTY XCODE_VALUE)
         set_property(TARGET ${TARGET} PROPERTY XCODE_ATTRIBUTE_${XCODE_PROPERTY}
@@ -188,6 +225,7 @@ if(APPLE)
     set_xcode_property(${PLUGIN_NAME} WRAPPER_EXTENSION bundle)
 
 elseif(LINUX)
+	# MS: Don't know anything about how Linux building is different, but the regular cmake file format is much more condensed. Can probably use it as a baseline.
     if(TARGET_ARCH)
         # (this disables dependency generation if multiple architectures are set)
         list(LENGTH TARGET_ARCH ARCH_COUNT)
@@ -209,7 +247,7 @@ elseif(LINUX)
     file(GLOB LIBFREETYPE2_HEADER_FILES "${LIBFREETYPE2_INCLUDE_DIRS}/libserialport.h")
 
     # install into the open ephy plugins directory
-    get_filename_component(OE_PLUGIN_DIR ${OPEN_EPHYS_DIR}/Builds/Linux/build/plugins ABSOLUTE)
+    get_filename_component(OE_PLUGIN_DIR ${GUI_BASE_DIR}/Builds/Linux/build/plugins ABSOLUTE)
     SET(CMAKE_INSTALL_PREFIX
         ${OE_PLUGIN_DIR}
         CACHE PATH
@@ -283,10 +321,10 @@ elseif(LINUX)
         set(CMAKE_INSTALL_RPATH "${PYTHON_LIB_DIR}")
     endif()
 elseif(WIN32)
-    # TODO: this is surely broken... fix it (if you ever need to)
+    # MS: Working!
 
     # install into the open ephy plugins directory
-    get_filename_component(OE_PLUGIN_DIR ${OPEN_EPHYS_DIR}/Builds/Linux/build/plugins ABSOLUTE)
+    get_filename_component(OE_PLUGIN_DIR ${GUI_BASE_DIR}/Build/Plugins ABSOLUTE)
     SET(CMAKE_INSTALL_PREFIX
         ${OE_PLUGIN_DIR}
         CACHE PATH
@@ -296,14 +334,25 @@ elseif(WIN32)
     # no 'lib' prefix, please...
     SET_TARGET_PROPERTIES(${PLUGIN_NAME} PROPERTIES PREFIX "")
 
+
+	# TODO: MS, not sure if all of this is needed. Added stuff from generic cmake file.
     # compile flags
     set(WIN32_COMPILE_FLAGS
         "/nologo /Zc:wchar_t /Zc:forScope /GX /GL /GF /GR /GS- /Zi /fp:precise /MP /W4 "
     )
     set(DEFAULT_COMPILE_FLAGS ${WIN32_COMPILE_FLAGS})
 
-    # target_link_libraries(${PLUGIN_NAME} debug ${LIBSERIAL_LIBRARIES} "setupapi.lib" )
-    # target_link_libraries(${PLUGIN_NAME} optimized ${LIBSERIAL_LIBRARIES} "setupapi.lib")
+	target_link_libraries(${PLUGIN_NAME} ${GUI_BIN_DIR}/open-ephys.lib)
+	target_compile_options(${PLUGIN_NAME} PRIVATE /sdl-)
+
+	install(TARGETS ${PLUGIN_NAME} RUNTIME DESTINATION ${GUI_BIN_DIR}/plugins)
+
+	# also install dependency DLLs for runtime loading
+	install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../libs/bin/${CMAKE_LIBRARY_ARCHITECTURE}/
+		DESTINATION ${GUI_BIN_DIR}/shared OPTIONAL)
+
+	list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../libs)
+
 else()
     # maybe non-apple unix
     message(FATAL_ERROR, "Build Platform Not Recognized: Aborting...")
