@@ -7,7 +7,7 @@ if (NOT DEFINED GUI_BASE_DIR)
     if (DEFINED ENV{GUI_BASE_DIR})
 		set(GUI_BASE_DIR $ENV{GUI_BASE_DIR})
     else()
-		set(GUI_BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../plugin-GUI)
+		set(GUI_BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../plugin-GUI)
     endif()
 endif()
 
@@ -36,7 +36,7 @@ set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS
     )
      
 # Get source files
-set(SOURCE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/PythonPlugin)
+set(SOURCE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/SOURCE)
 file(GLOB_RECURSE SRC_FILES LIST_DIRECTORIES false "${SOURCE_PATH}/*.cpp" "${SOURCE_PATH}/*.h")
 set(GUI_COMMONLIB_DIR ${GUI_BASE_DIR}/installed_libs)
 
@@ -70,14 +70,6 @@ if(WIN32)
 else()
     set(PY_PATH_SEP :)
 endif()
-
-# TODO: MS, will test this (also do we need this???)
-# might have to get file(TO_NATIVE_PATH "<path>" <variable>) involved for windows...
-set(PLUGIN_MODULES_PATH "${PROJECT_SOURCE_DIR}/python_modules" CACHE PATH "Where are the python modules you want to plug in?")
-file(TO_NATIVE_PATH "${PLUGIN_MODULES_PATH}" NATIVE_PLUGIN_MODULES_PATH)
-# Need this???
-set(PYTHON_PATH "${PY_PATH_SEP}${NATIVE_PLUGIN_MODULES_PATH}" CACHE PATH "What do you want on your PYTHONPATH?")
-message(STATUS "PYTHONPATH: " ${PYTHON_PATH})
 
 # put together path for common plugin libraries
 #get_filename_component(COMMON_DIR ${GUI_BASE_DIR}/Source/Plugins/CommonLibs ABSOLUTE)
@@ -320,7 +312,7 @@ elseif(LINUX)
     if("${isSystemDir}" STREQUAL "-1")
         set(CMAKE_INSTALL_RPATH "${PYTHON_LIB_DIR}")
     endif()
-elseif(WIN32)
+elseif(MSVC)
     # MS: Working!
 
     # install into the open ephy plugins directory
@@ -333,14 +325,6 @@ elseif(WIN32)
 
     # no 'lib' prefix, please...
     SET_TARGET_PROPERTIES(${PLUGIN_NAME} PROPERTIES PREFIX "")
-
-
-	# TODO: MS, not sure if all of this is needed. Added stuff from generic cmake file.
-    # compile flags
-    set(WIN32_COMPILE_FLAGS
-        "/nologo /Zc:wchar_t /Zc:forScope /GX /GL /GF /GR /GS- /Zi /fp:precise /MP /W4 "
-    )
-    set(DEFAULT_COMPILE_FLAGS ${WIN32_COMPILE_FLAGS})
 
 	target_link_libraries(${PLUGIN_NAME} ${GUI_BIN_DIR}/open-ephys.lib)
 	target_compile_options(${PLUGIN_NAME} PRIVATE /sdl-)
