@@ -30,7 +30,7 @@ class test2(object):
 
         def param_config(self):
                 """return button, sliders, etc to be present in the editor OE side"""
-                return []
+                return [("toggle", "enabled", True)]
 
         def update_settings(self, nchans, srate):
                 """handle changing number of channels and sample rates"""

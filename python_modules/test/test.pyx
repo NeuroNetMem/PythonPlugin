@@ -3,7 +3,7 @@ import numpy as np
 cimport numpy as np
 from cython cimport view
 
-isDebug = False
+isDebug = True
 
 class test(object):
         def __init__(self):
