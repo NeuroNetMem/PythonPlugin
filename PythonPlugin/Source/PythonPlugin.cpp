@@ -124,6 +124,7 @@ bool PythonPlugin::isReady()
     else
     {
         const PythonLock pyLock;
+
         if (pluginIsReady && !(*pluginIsReady)())
         {
             CoreServices::sendStatusMessage("Python Plugin is not ready");
@@ -359,7 +360,6 @@ void PythonPlugin::setFile(String fullpath)
         return;
     }
     pluginStartupFunction = (startupfunc_t)cfunc;
-    std::cout << "loaded pluginStartup \n \n \n \n \n ";
 
     cfunc = plugin.getFunction("getParamNum");
     if (!cfunc)
@@ -488,12 +488,12 @@ void PythonPlugin::setFile(String fullpath)
     // now the API should be fully loaded
 
     const PythonLock pyLock;
+
     // initialize the plugin
 
     DEBUG_LOG("before initplugin");
 
     (*initF)();
-
     DEBUG_LOG("after initplugin");
 
     (*pluginStartupFunction)(nChans, dataSampleRate, chanEnabled.getRawDataPointer());
