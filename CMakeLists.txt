@@ -107,6 +107,11 @@ add_definitions(-DPYTHON_PATH=${PYTHON_PATH})
 
 # platform specific stuff
 if(APPLE)
+    # macros for working with apple stuff
+    macro (set_xcode_property TARGET XCODE_PROPERTY XCODE_VALUE)
+        set_property(TARGET ${TARGET} PROPERTY XCODE_ATTRIBUTE_${XCODE_PROPERTY}
+            ${XCODE_VALUE})
+    endmacro (set_xcode_property)
     set_target_properties(${PLUGIN_NAME} PROPERTIES BUNDLE TRUE)
     set_property(TARGET ${PLUGIN_NAME} APPEND_STRING PROPERTY LINK_FLAGS
     "-undefined dynamic_lookup -rpath @loader_path/../../../../shared")
