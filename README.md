@@ -11,7 +11,7 @@ A tutorial on how to write a python module can be found below. Example modules c
 The Plugin is organized so that it can be compiled as much as possible outside of the main open-ephys source tree.
 A recent Python version is required.
 The Plugin needs to link to a recent enough version of Python.
-Development work was done with a recent [Anaconda Python](https://www.continuum.io/why-anaconda) distribution, supporting python 3.5 to 3.7.
+Development work was done with a recent [Anaconda Python](https://www.continuum.io/why-anaconda) distribution, supporting python 3.5 to 3.8.
 Windows users must use python 3.6 (see below).
 Onlinux it also work with standard pip+virtualenv installation.
 
@@ -89,8 +89,8 @@ gcc must forced to version 8 because due to juice the system have gcc-9 by defau
 ```
 cd /home/myusername/path_to_oe/PythonPlugin/Build
 export CC=gcc-8 && export CXX=g++-8
-export CONDA_HOME=/home/myusername/.virtualenvs/py38
-cmake -DPYTHON_PATH=/home/myusername/.virtualenvs/py38/lib/python3.8/site-packages ..
+export CONDA_HOME=/home/myusername/.virtualenvs/oeEnv
+cmake -DPYTHON_PATH=/home/myusername/.virtualenvs/oeEnv/lib/python3.8/site-packages ..
 make
 make install
 ```
